@@ -13,6 +13,8 @@ TagManager:
   - PlayerBody
   - Poll
   - Bullet
+  - Platform
+  - Missile
   layers:
   - Default
   - TransparentFX
@@ -26,11 +28,11 @@ TagManager:
   - BulletHittableLayer
   - BackGround
   - Enemy
+  - 
+  - Bridge
   - Bullet
   - Gun
-  - 
-  - 
-  - 
+  - Missile
   - 
   - 
   - 

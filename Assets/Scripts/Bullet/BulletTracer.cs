@@ -40,7 +40,7 @@ public class BulletTracer : MonoBehaviour
         {
             var hittable = storedHit.collider.GetComponent<IHittable>();
 
-            if(hittable != null)
+            if(hittable != null )
             {
                 _targetposition = new Vector3(storedHit.collider.transform.position.x, storedHit.collider.transform.position.y, -1);
                 _distance = Vector3.Distance(_startposition, _targetposition);

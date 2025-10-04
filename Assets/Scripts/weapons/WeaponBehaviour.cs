@@ -9,6 +9,7 @@ public class WeaponBehaviour : MonoBehaviour
     [Header("Reference")]
     [SerializeField] Transform GunBarrel;
     [SerializeField] GameObject bulletTrail;
+    [SerializeField] GameObject bulletPrefab;
     [SerializeField] LayerMask hitLayer;
     [SerializeField] TextMeshProUGUI ModeText;
     [SerializeField] TextMeshProUGUI BulletCountText;
@@ -18,7 +19,6 @@ public class WeaponBehaviour : MonoBehaviour
     [SerializeField] int MagSize;
     [SerializeField] float fireRate;
     [SerializeField] protected bool isAutomatic;
-    [SerializeField] float BulletRange = 50f;
     [SerializeField] int BurstCount = 3;
 
     [Header("Reloading")]
@@ -123,24 +123,33 @@ public class WeaponBehaviour : MonoBehaviour
         Vector3 mousepos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector3 TargetDirection = (mousepos - origin).normalized;
 
-        var RayHit = Physics2D.Raycast(origin, TargetDirection, BulletRange, hitLayer);
+        //var RayHit = Physics2D.Raycast(origin, TargetDirection, BulletRange, hitLayer);
 
         //Debug.DrawLine(origin, origin + TargetDirection * 100f, Color.magenta, .1f);
 
-        //Instantiating Bullet trails
-        var BulletTrail = PoolManager.SpawnObject(bulletTrail, origin, Quaternion.identity, PoolManager.PoolType.GameObjects);
-        _muzzleFlashAnimator.SetTrigger("Shoot");
+        ////Instantiating Bullet trails
+        //var BulletTrail = PoolManager.SpawnObject(bulletTrail, origin, Quaternion.identity, PoolManager.PoolType.GameObjects);
+        //_muzzleFlashAnimator.SetTrigger("Shoot");
 
-        var trailScript = BulletTrail.GetComponent<BulletTracer>();
+        //var trailScript = BulletTrail.GetComponent<BulletTracer>();
 
-        if (RayHit.collider)
+        //if (RayHit.collider)
+        //{
+        //    trailScript.initialize(origin, RayHit.point, RayHit);
+        //}
+        //else
+        //{
+        //    var endPosition = origin + TargetDirection * BulletRange;
+        //    trailScript.initialize(origin, endPosition, new RaycastHit2D());
+        //}
+
+        //Instantiating Bullet Prefab
+        var bulletPre = PoolManager.SpawnObject(bulletPrefab, GunBarrel.position, Quaternion.identity, PoolManager.PoolType.GameObjects);
+        var bulletScript = bulletPre.GetComponent<Bullet>();
+
+        if(bulletScript != null)
         {
-            trailScript.initialize(origin, RayHit.point, RayHit);
-        }
-        else
-        {
-            var endPosition = origin + TargetDirection * BulletRange;
-            trailScript.initialize(origin, endPosition, new RaycastHit2D());
+            bulletScript.bulletForce(TargetDirection);
         }
 
         BulletsLeft--;

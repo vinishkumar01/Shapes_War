@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Random =  UnityEngine.Random;
 
-public class Tracer_NPC_Test : MonoBehaviour
+public class Tracer_NPC_Test : MonoBehaviour, IHittable
 {
     [Header("Reference")]
     [SerializeField] Transform player;
@@ -70,6 +70,7 @@ public class Tracer_NPC_Test : MonoBehaviour
         FacingPlayer();
         playerDetection();
         SurroundingCheck();
+        
     }
 
     private void FixedUpdate()
@@ -77,6 +78,18 @@ public class Tracer_NPC_Test : MonoBehaviour
         Retreat();
     }
 
+    void IHittable.RecieveHit(RaycastHit2D RayHit)
+    {
+        Debug.Log("Got Hit: by Circle");
+        NPCHealth -= 10;
+
+        if (NPCHealth == 0)
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    #region Player-Detection, Get available Nodes, PathUpdate, Retreat if Player-Detected, Surrounding Check
     void playerDetection()
     {
         isPlayerDetected = Physics2D.OverlapCircle(transform.position, playerDetectionCheckRadius, player_Layer);
@@ -324,7 +337,6 @@ public class Tracer_NPC_Test : MonoBehaviour
         
     }
 
-
     void FacingPlayer()
     {
         if((path == null || path.Count == 0) && !isPlayerDetected)
@@ -342,6 +354,23 @@ public class Tracer_NPC_Test : MonoBehaviour
             }
         }
     }
+
+    void SurroundingCheck()
+    {
+        GroundCheckOffset = new Vector2(transform.position.x, NPCcollider.bounds.min.y);
+        isGrounded = Physics2D.OverlapCircle(GroundCheckOffset, 1f);
+
+        //Vector2 JumpOffsetOriginXMax = new Vector2(transform.position.x + 1f, NPCcollider.bounds.min.y);
+        //Vector2 jumpOffOriginXMin = new Vector2(transform.position.x - 1f, NPCcollider.bounds.min.y);
+        //noPlatformxMax = Physics2D.Raycast(JumpOffsetOriginXMax, Vector2.down, 0.51f, platformLayer);
+        //noPlatformxMin = Physics2D.Raycast(jumpOffOriginXMin, Vector2.down, 0.51f, platformLayer);
+
+        //Debug.DrawLine(JumpOffsetOriginXMax, JumpOffsetOriginXMax + Vector2.down * 0.51f, Color.magenta);
+        //Debug.DrawLine(jumpOffOriginXMin, jumpOffOriginXMin + Vector2.down * 0.51f, Color.magenta);
+
+
+    }
+#endregion
 
     private void OnDrawGizmos()
     {
@@ -372,6 +401,8 @@ public class Tracer_NPC_Test : MonoBehaviour
             prev = n.transform.position;
         }
 
+
+        //Draw bound Box around the Nodes
         if (isPlayerDetected)
         {
             if (path != null && path.Count > 0)
@@ -399,19 +430,4 @@ public class Tracer_NPC_Test : MonoBehaviour
        
     }
 
-    void SurroundingCheck()
-    {
-        GroundCheckOffset = new Vector2(transform.position.x , NPCcollider.bounds.min.y);
-        isGrounded = Physics2D.OverlapCircle(GroundCheckOffset, 1f);
-
-        //Vector2 JumpOffsetOriginXMax = new Vector2(transform.position.x + 1f, NPCcollider.bounds.min.y);
-        //Vector2 jumpOffOriginXMin = new Vector2(transform.position.x - 1f, NPCcollider.bounds.min.y);
-        //noPlatformxMax = Physics2D.Raycast(JumpOffsetOriginXMax, Vector2.down, 0.51f, platformLayer);
-        //noPlatformxMin = Physics2D.Raycast(jumpOffOriginXMin, Vector2.down, 0.51f, platformLayer);
-
-        //Debug.DrawLine(JumpOffsetOriginXMax, JumpOffsetOriginXMax + Vector2.down * 0.51f, Color.magenta);
-        //Debug.DrawLine(jumpOffOriginXMin, jumpOffOriginXMin + Vector2.down * 0.51f, Color.magenta);
-
-        
-    }
 }
