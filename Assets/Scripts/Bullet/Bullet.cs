@@ -7,11 +7,14 @@ public class Bullet : MonoBehaviour
     [Header("References")]
     [SerializeField] Rigidbody2D rb;
     [SerializeField] string[] bulletInteractable = new string[] { "Enemy", "Platform" };
+    [SerializeField] LayerMask bulletInteractables;
 
     [Header("Bullet Configs")]
-    [SerializeField] float bulletLife = 1.5f;
     [SerializeField] float bulletSpeed = 150f;
     [SerializeField] bool Collided;
+    [SerializeField] Vector3 SpawnPosition;
+    [SerializeField] Vector3 lastPosition;
+    [SerializeField] float BulletMaxTravelDistance = 30f;
 
     [Header("Particle Effect")]
     [SerializeField] GameObject Bullet_Collision;
@@ -20,15 +23,15 @@ public class Bullet : MonoBehaviour
     {
         Collided = false;
         rb.simulated = true;
-
+        bulletResetConfigs();
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
-
-        StartCoroutine(DisableBulletAfterSeconds(bulletLife));
+        lastPosition = transform.position;
     }
 
     private void OnDisable()
     {
-        StopAllCoroutines();
+        if(Collided)
+            StopAllCoroutines();
     }
 
     public void Awake()
@@ -36,20 +39,51 @@ public class Bullet : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
     }
 
+    //private void Update()
+    //{
+    //    // if the bullet is not collided with any thing and is travelled nearly the max distance the bullet is returned to pool
+    //    if(!Collided && Vector3.Distance(SpawnPosition, transform.position) > BulletMaxTravelDistance)
+    //    {
+    //        rb.simulated = false;
+    //        PoolManager.ReturnObjectToPool(gameObject, PoolManager.PoolType.GameObjects);
+    //    }
+    //}
+
+    private void FixedUpdate()
+    {
+        if (Collided) return;
+
+        Vector3 currentPosition = transform.position;
+        Vector3 direction = currentPosition - lastPosition;
+        float distance = direction.magnitude;
+
+        if(distance > 0f)
+        {
+            RaycastHit2D hit = Physics2D.Raycast(lastPosition, direction.normalized, distance);
+
+            if(hit.collider != null)
+            {
+                Debug.Log($"Bullet hit: {hit.collider.name} | Tag: {hit.collider.tag}");
+
+                if (hit.collider.CompareTag("Platform") || hit.collider.CompareTag("Enemy"))
+                {
+                    HandleCollision(hit.collider, hit.point);
+                }
+            }
+            else if(hit.collider == null && Vector3.Distance(SpawnPosition, transform.position) > BulletMaxTravelDistance)
+            {
+                rb.simulated = false;
+                PoolManager.ReturnObjectToPool(gameObject, PoolManager.PoolType.GameObjects);
+            }
+        }
+
+        lastPosition = currentPosition;
+    }
+
     public void bulletForce( Vector3 direction)
     {
-        //Vector3 MousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        //Vector2 Direction = (MousePos - transform.position).normalized;
-        //Vector2 rotation = transform.position - MousePos;
-
-        //This makes the bullet to follow the Mouse position every frame;  and call it in Update or FixedUpdate() method
-        //rb.velocity = Direction * bulletSpeed;
-
-        bulletResetConfigs();
-
+        SpawnPosition = transform.position;
         rb.velocity = direction * bulletSpeed;
-        //float BulletRot = Mathf.Atan2(Direction.y, Direction.x) * Mathf.Rad2Deg;
-        //transform.rotation = Quaternion.Euler(0, 0, BulletRot);
     }
 
     void bulletResetConfigs()
@@ -60,50 +94,33 @@ public class Bullet : MonoBehaviour
         rb.WakeUp();
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
+    private void HandleCollision(Collider2D collider, Vector2 hitPoint)
     {
         if (Collided) return;
+        Collided = true;
 
-        foreach (var tag in bulletInteractable)
+        //Particle
+        PoolManager.SpawnObject(Bullet_Collision, hitPoint, Quaternion.identity, PoolManager.PoolType.ParticleSystem);
+
+        //Detach trail before Pooling 
+        var trail = GetComponent<TrailRenderer>();
+        if (trail != null)
         {
-            if (collision.gameObject.CompareTag(tag))
-            {
-                Collided = true;
-
-                //Particle
-                Vector2 hitPoint = collision.contacts.Length > 0 ? collision.contacts[0].point : transform.position;
-                PoolManager.SpawnObject(Bullet_Collision, hitPoint, Quaternion.identity, PoolManager.PoolType.ParticleSystem);
-
-                //Detach trail before Pooling 
-                var trail = GetComponent<TrailRenderer>();
-                if(trail != null)
-                {
-                    trail.transform.parent = null;
-                    // just taking the reference to avoid returning null if bullet is reused
-                    var detachedTrail = trail;
-                    effectsManager.RunCoroutine(ReturnTrailAfterTime(detachedTrail, detachedTrail.time));
-                }
-
-                //reset before returning
-                rb.velocity = Vector2.zero;
-                rb.angularVelocity = 0f;
-                rb.simulated = false;
-                rb.Sleep();
-
-                
-                PoolManager.ReturnObjectToPool(gameObject, PoolManager.PoolType.GameObjects);
-                break;
-            }
+            trail.transform.parent = null;
+            // just taking the reference to avoid returning null if bullet is reused
+            var detachedTrail = trail;
+            StartCoroutine(ReturnTrailAfterTime(detachedTrail, detachedTrail.time));
+            //effectsManager.RunCoroutine(ReturnTrailAfterTime(detachedTrail, detachedTrail.time));
         }
 
-    }
+        //reset before returning
+        rb.velocity = Vector2.zero;
+        rb.angularVelocity = 0f;
+        rb.simulated = false;
+        rb.Sleep();
 
-    IEnumerator DisableBulletAfterSeconds(float time)
-    {
-        yield return new WaitForSeconds(time);
 
-        if(!Collided && gameObject.activeInHierarchy)
-            PoolManager.ReturnObjectToPool(gameObject, PoolManager.PoolType.GameObjects);
+        StartCoroutine(returnBulletinNextFrame());
     }
 
     IEnumerator ReturnTrailAfterTime(TrailRenderer trail, float time)
@@ -116,5 +133,11 @@ public class Bullet : MonoBehaviour
             PoolManager.ReturnObjectToPool(trail.gameObject, PoolManager.PoolType.GameObjects);
         }
         
+    }
+
+    IEnumerator returnBulletinNextFrame()
+    {
+        yield return null;
+        PoolManager.ReturnObjectToPool(gameObject, PoolManager.PoolType.GameObjects);
     }
 }

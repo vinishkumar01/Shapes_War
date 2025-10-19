@@ -474,4 +474,5 @@ public class NPC_Test : MonoBehaviour, IHittable
         Debug.DrawLine(jumpOffOriginXMin, jumpOffOriginXMin + Vector2.down * 1.1f, Color.magenta);
     }
 
+
 }

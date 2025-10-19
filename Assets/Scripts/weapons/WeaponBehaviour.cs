@@ -17,8 +17,10 @@ public class WeaponBehaviour : MonoBehaviour
 
     [Header("Weapon Stats")]
     [SerializeField] int MagSize;
-    [SerializeField] float fireRate;
+    [SerializeField] float BurstFireRate;
+    [SerializeField] float FullAutoFireRate;
     [SerializeField] protected bool isAutomatic;
+    [SerializeField] float BulletRange = 50f;
     [SerializeField] int BurstCount = 3;
 
     [Header("Reloading")]
@@ -82,7 +84,7 @@ public class WeaponBehaviour : MonoBehaviour
         while (CanShoot && BulletsLeft > 0)
         {
             ShootOnce();
-            yield return new WaitForSeconds(fireRate);
+            yield return new WaitForSeconds(FullAutoFireRate);
         }
 
         if (BulletsLeft == 0 && AutoReload)
@@ -98,7 +100,7 @@ public class WeaponBehaviour : MonoBehaviour
         {
             ShootOnce();
             shotsFired++;
-            yield return new WaitForSeconds(fireRate);
+            yield return new WaitForSeconds(BurstFireRate);
         }
         if (BulletsLeft == 0 && AutoReload)
         {
@@ -123,35 +125,30 @@ public class WeaponBehaviour : MonoBehaviour
         Vector3 mousepos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector3 TargetDirection = (mousepos - origin).normalized;
 
-        //var RayHit = Physics2D.Raycast(origin, TargetDirection, BulletRange, hitLayer);
+        var RayHit = Physics2D.Raycast(origin, TargetDirection, BulletRange, hitLayer);
 
-        //Debug.DrawLine(origin, origin + TargetDirection * 100f, Color.magenta, .1f);
+        Debug.DrawLine(origin, origin + TargetDirection * 100f, Color.magenta, .1f);
 
-        ////Instantiating Bullet trails
-        //var BulletTrail = PoolManager.SpawnObject(bulletTrail, origin, Quaternion.identity, PoolManager.PoolType.GameObjects);
-        //_muzzleFlashAnimator.SetTrigger("Shoot");
+        //Instantiating Bullet trails
+        var BulletTrail = PoolManager.SpawnObject(bulletTrail, origin, Quaternion.identity, PoolManager.PoolType.GameObjects);
+        _muzzleFlashAnimator.SetTrigger("Shoot");
 
-        //var trailScript = BulletTrail.GetComponent<BulletTracer>();
+        var trailScript = BulletTrail.GetComponent<BulletTracer>();
 
-        //if (RayHit.collider)
-        //{
-        //    trailScript.initialize(origin, RayHit.point, RayHit);
-        //}
-        //else
-        //{
-        //    var endPosition = origin + TargetDirection * BulletRange;
-        //    trailScript.initialize(origin, endPosition, new RaycastHit2D());
-        //}
-
-        //Instantiating Bullet Prefab
-        var bulletPre = PoolManager.SpawnObject(bulletPrefab, GunBarrel.position, Quaternion.identity, PoolManager.PoolType.GameObjects);
-        var bulletScript = bulletPre.GetComponent<Bullet>();
-
-        if(bulletScript != null)
+        if (RayHit.collider)
         {
-            bulletScript.bulletForce(TargetDirection);
+            trailScript.initialize(origin, RayHit.point, RayHit);
         }
-
+        else
+        {
+            var endPosition = origin + TargetDirection * BulletRange;
+            trailScript.initialize(origin, endPosition, new RaycastHit2D());
+        }
+        //-----------------------------
+        //Instantiating Bullet Prefab
+        //var bulletPre = PoolManager.SpawnObject(bulletPrefab, GunBarrel.position, Quaternion.identity, PoolManager.PoolType.GameObjects);
+        //_muzzleFlashAnimator.SetTrigger("Shoot");
+        //---------------------------------
         BulletsLeft--;
         BulletCountText.text = BulletsLeft.ToString();
         //Debug.Log("Bullets Decrementing while shooting: " + BulletsLeft);

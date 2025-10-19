@@ -35,6 +35,7 @@ Transform:
   m_Children:
   - {fileID: 4802973799267749360}
   - {fileID: 6770511513390824937}
+  - {fileID: 180126953928673167}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &7073001523693613926
@@ -79,7 +80,7 @@ SpriteRenderer:
   m_SortingLayer: 4
   m_SortingOrder: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 75f5f34dc1b5347e0b8351032682f224, type: 3}
-  m_Color: {r: 0, g: 0.36998907, b: 0.6037736, a: 1}
+  m_Color: {r: 0.6981132, g: 0.6981132, b: 0.6981132, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -186,6 +187,7 @@ MonoBehaviour:
   player_Layer:
     serializedVersion: 2
     m_Bits: 256
+  Missile: {fileID: 7348188028007044401, guid: 5ff097f55c7e88b4cb3f77b61253e137, type: 3}
   AllNodesInTheScene: []
   AllEdgeNodeInTheScene: []
   currentNode: {fileID: 0}
@@ -193,16 +195,21 @@ MonoBehaviour:
   pathCheckInterval: 0.5
   MoveSpeed: 10
   FacingDirection: {x: 0, y: 0, z: 0}
+  NumOfMissileInitiation: 1
+  IntervalBetweenMissiles: 6
+  firePoint: {fileID: 180126953928673167}
+  fireRate: 0.25
   isGrounded: 0
   wasGrounded: 0
   isPlayerDetected: 0
   isPlayerNear: 0
-  isFacingPlayer: 0
+  isFacingRight: 0
+  isAttacking: 0
   playerDetectionCheckRadius: 20
   PlayerNearCheckRadius: 30
   GroundCheckRadius: 0.9
   GroundCheckOffset: {x: 0, y: 0}
-  NPCHealth: 100000
+  NPCHealth: 100
 --- !u!1 &8123635146731484340
 GameObject:
   m_ObjectHideFlags: 0
@@ -287,6 +294,37 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!1 &8447318093746769453
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 180126953928673167}
+  m_Layer: 11
+  m_Name: FirePoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &180126953928673167
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8447318093746769453}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.382, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 132397240019180728}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &4780968785985110485
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -14,13 +14,14 @@ GameObject:
   - component: {fileID: 4132131381497919446}
   - component: {fileID: 3494977580295454643}
   - component: {fileID: 4278873804085579878}
-  m_Layer: 12
+  - component: {fileID: 1333142760395622980}
+  m_Layer: 14
   m_Name: Bullet_pre
   m_TagString: Bullet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &3233936252360071096
 Transform:
   m_ObjectHideFlags: 0
@@ -270,7 +271,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4555776977452315811}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ca1cd4c95c18a9b40b53d5bc5d777334, type: 3}
   m_Name: 
@@ -279,7 +280,34 @@ MonoBehaviour:
   bulletInteractable:
   - Enemy
   - Platform
-  bulletLife: 1.5
-  bulletSpeed: 250
+  bulletInteractables:
+    serializedVersion: 2
+    m_Bits: 2112
+  bulletSpeed: 150
   Collided: 0
+  SpawnPosition: {x: 0, y: 0, z: 0}
+  lastPosition: {x: 0, y: 0, z: 0}
+  BulletMaxTravelDistance: 30
   Bullet_Collision: {fileID: 1567822461625743984, guid: be24cae37cbe9d045b9e851e4ae1e11b, type: 3}
+--- !u!114 &1333142760395622980
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4555776977452315811}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23a5d2db394d0f1438fcc7b5ced1493c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rb: {fileID: 0}
+  bulletInteractables:
+    serializedVersion: 2
+    m_Bits: 2112
+  bulletSpeed: 150
+  SpawnPosition: {x: 0, y: 0, z: 0}
+  MousePosition: {x: 0, y: 0, z: 0}
+  lastPosition: {x: 0, y: 0, z: 0}
+  bulletMaxTravelDistance: 30
+  bullet_Collision: {fileID: 558299074034243505, guid: be24cae37cbe9d045b9e851e4ae1e11b, type: 3}

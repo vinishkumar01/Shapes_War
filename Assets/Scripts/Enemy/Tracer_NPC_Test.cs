@@ -13,6 +13,7 @@ public class Tracer_NPC_Test : MonoBehaviour, IHittable
     [SerializeField] ParticleSystem dust;
     [SerializeField] LayerMask platformLayer;
     [SerializeField] LayerMask player_Layer;
+    [SerializeField] GameObject Missile;
     [SerializeField] List<Node> AllNodesInTheScene = new List<Node>();
     [SerializeField] List<Node> AllEdgeNodeInTheScene = new List<Node>();
 
@@ -25,12 +26,19 @@ public class Tracer_NPC_Test : MonoBehaviour, IHittable
     [SerializeField] int MoveSpeed = 5;
     [SerializeField] Vector3 FacingDirection;
 
+    [Header("Attack Configs")]
+    [SerializeField] int NumOfMissileInitiation = 2;
+    [SerializeField] float IntervalBetweenMissiles = 6f;
+    [SerializeField] Transform firePoint;
+    [SerializeField] float fireRate;
+
     [Header("Conditions")]
     [SerializeField] bool isGrounded;
     [SerializeField] bool wasGrounded;
     [SerializeField] bool isPlayerDetected;
     [SerializeField] bool isPlayerNear;
-    [SerializeField] bool isFacingPlayer;
+    [SerializeField] bool isFacingRight;
+    [SerializeField] bool isAttacking;
     RaycastHit2D noPlatformxMax;
     RaycastHit2D noPlatformxMin;
     [SerializeField] float playerDetectionCheckRadius = 20f;
@@ -38,15 +46,18 @@ public class Tracer_NPC_Test : MonoBehaviour, IHittable
     [SerializeField] float GroundCheckRadius = 0.9f;
     [SerializeField] Vector2 GroundCheckOffset;
 
-
-
     [Header("NPC Health")]
     [SerializeField] int NPCHealth = 100000;
 
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        NPCcollider = rb.GetComponent<Collider2D>();
+        NPCcollider = rb.GetComponent<Collider2D>(); 
+
+        if(player == null)
+        {
+            player = GameObject.FindGameObjectWithTag("Player").transform;
+        }
 
         if(AStarManager.instance != null)
         {
@@ -70,6 +81,13 @@ public class Tracer_NPC_Test : MonoBehaviour, IHittable
         FacingPlayer();
         playerDetection();
         SurroundingCheck();
+
+        if(!isAttacking)
+        {
+            //Attack player
+            StartCoroutine(AttackPlayer());
+        }
+       
         
     }
 
@@ -80,7 +98,7 @@ public class Tracer_NPC_Test : MonoBehaviour, IHittable
 
     void IHittable.RecieveHit(RaycastHit2D RayHit)
     {
-        Debug.Log("Got Hit: by Circle");
+        Debug.Log("Got Hit: by tracer");
         NPCHealth -= 10;
 
         if (NPCHealth == 0)
@@ -155,17 +173,22 @@ public class Tracer_NPC_Test : MonoBehaviour, IHittable
         float direction = Mathf.Sign(targetPos.x - transform.position.x);
 
         //------Flipping the character to the targetNode if the Player is detected------
-        if (isPlayerDetected)
+        if(isGrounded && isPlayerDetected)
         {
-            if (direction > 0)
+            float flipThreshold = 0.2f;
+
+            if (direction > flipThreshold && !isFacingRight)
             {
+                isFacingRight = true;
                 transform.localScale = FacingDirection;
             }
-            else if (direction < 0)
+            else if (direction < -flipThreshold && isFacingRight)
             {
+                isFacingRight = false;
                 transform.localScale = new Vector2(-FacingDirection.x, FacingDirection.y);
             }
         }
+        
 
         // ------------ Horizontal Movements-------------
         if (isGrounded)
@@ -370,7 +393,49 @@ public class Tracer_NPC_Test : MonoBehaviour, IHittable
 
 
     }
-#endregion
+    #endregion
+
+    #region NPC_Attack
+
+    IEnumerator AttackPlayer()
+    {
+        isAttacking = true;
+
+        if(isPlayerDetected)
+        {
+            NumOfMissileInitiation = 4;
+            IntervalBetweenMissiles = 2;
+        }
+        else
+        {
+            NumOfMissileInitiation = 2;
+            IntervalBetweenMissiles = 6;
+        }
+
+        //Shoot 
+        StartCoroutine(Shoot());
+        yield return new WaitForSeconds(IntervalBetweenMissiles);
+
+        isAttacking = false;
+
+    }
+
+    IEnumerator Shoot()
+    {
+        int MissilesFired = 0;
+
+        while(MissilesFired < NumOfMissileInitiation)
+        {
+            Vector3 Origin = firePoint.position;
+
+            PoolManager.SpawnObject(Missile, Origin, Quaternion.identity, PoolManager.PoolType.GameObjects);
+            MissilesFired++;
+
+            yield return new WaitForSeconds(fireRate);
+        }
+    }
+
+    #endregion
 
     private void OnDrawGizmos()
     {
