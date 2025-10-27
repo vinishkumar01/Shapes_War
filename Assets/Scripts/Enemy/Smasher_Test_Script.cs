@@ -7,27 +7,29 @@ public class Smasher_Test_Script : MonoBehaviour
 {
     [Header("Smasher Configs")]
     [SerializeField] int playerDetectionDistance;
-    [SerializeField] float maintainDistancewithPlayer;
     [SerializeField] float GroundCheckRadius;
     [SerializeField] float platformDetectionDistance;
+    [SerializeField] float checkDistance;
     [SerializeField] float moveSpeed;
     [SerializeField] int facingDirection;
 
     [Header("Reference")]
     [SerializeField] GameObject GroundCheck;
-    [SerializeField] GameObject platformSBCheck;
+    [SerializeField] public GameObject platformSBCheck;
     [SerializeField] GameObject playerCheck;
-    [SerializeField] Collider2D NPCcollider;
+    [SerializeField] GameObject distanceToPlayerCheck;
+    
     [SerializeField] LayerMask platformLayer;
     [SerializeField] LayerMask playerLayer;
     [SerializeField] Rigidbody2D rb;
 
     [Header("Conditions")]
     [SerializeField] bool isGrounded;
-    [SerializeField] bool platformBelow;
-    [SerializeField] bool platformside;
+    [SerializeField] public bool platformBelow;
+    [SerializeField] public bool platformside;
     [SerializeField] bool isPlayerDetected;
     [SerializeField] bool isplayerDetectedBack;
+    [SerializeField] public bool maintainDistance;
     [SerializeField] bool isfacingLeft;
     [SerializeField] bool isfacingRight;
 
@@ -35,7 +37,6 @@ public class Smasher_Test_Script : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        NPCcollider = GetComponent<Collider2D>();
         rb = GetComponent<Rigidbody2D>();
         facingDirection = 1;
         isfacingRight = true;
@@ -67,13 +68,23 @@ public class Smasher_Test_Script : MonoBehaviour
 
         Debug.DrawLine(playerCheck.transform.position, playerCheck.transform.position + transform.right * playerDetectionDistance, isPlayerDetected ? Color.red : Color.yellow);
         Debug.DrawLine(playerCheck.transform.position, playerCheck.transform.position + -transform.right * playerDetectionDistance, isplayerDetectedBack ? Color.red : Color.magenta);
+
+        //Stop at certain distance when moving towards to the player
+        maintainDistance = Physics2D.Raycast(distanceToPlayerCheck.transform.position, transform.right, checkDistance, playerLayer);
+
+        Debug.DrawLine(distanceToPlayerCheck.transform.position, distanceToPlayerCheck.transform.position + transform.right * checkDistance, maintainDistance ? Color.red : Color.black);
     }
 
     void MoveAndChase()
     {
         if (isGrounded)
         {
-            rb.velocity = new Vector2(facingDirection * Time.deltaTime * moveSpeed, rb.velocity.y);
+            //rb.velocity = new Vector2(facingDirection * Time.deltaTime * moveSpeed, rb.velocity.y);
+        }
+
+        if(maintainDistance)
+        {
+            //rb.velocity = new Vector2(0, 0);
         }
     }
 

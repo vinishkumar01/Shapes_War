@@ -47,7 +47,7 @@ public class Tracer_NPC_Test : MonoBehaviour, IHittable
     [SerializeField] Vector2 GroundCheckOffset;
 
     [Header("NPC Health")]
-    [SerializeField] int NPCHealth = 100000;
+    [SerializeField] int NPCHealth = 100;
 
     private void Start()
     {
