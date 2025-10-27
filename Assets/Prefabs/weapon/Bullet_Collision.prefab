@@ -11,7 +11,8 @@ GameObject:
   - component: {fileID: 2726741624494841787}
   - component: {fileID: 558299074034243505}
   - component: {fileID: 6727777321318741315}
-  m_Layer: 0
+  - component: {fileID: 6720553361572462485}
+  m_Layer: 6
   m_Name: Bullet_Collision
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4853,8 +4854,8 @@ ParticleSystemRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: -1165586547
-  m_SortingLayer: 3
+  m_SortingLayerID: 1734499553
+  m_SortingLayer: 4
   m_SortingOrder: 1
   m_RenderMode: 0
   m_MeshDistribution: 0
@@ -4888,3 +4889,15 @@ ParticleSystemRenderer:
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
   m_MaskInteraction: 0
+--- !u!114 &6720553361572462485
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1567822461625743984}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe99e1614a9092544b57445f89b77ce2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

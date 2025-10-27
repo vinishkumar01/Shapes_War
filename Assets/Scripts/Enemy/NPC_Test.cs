@@ -17,9 +17,8 @@ public class NPC_Test : MonoBehaviour, IHittable
     [SerializeField] List<Node> AllEdgeNodesinTheScene = new List<Node>();
     [SerializeField] ParticleSystem Dust;
 
-    //[SerializeField] Animator ChaserAnimator;
     [SerializeField] Vector3 FacingDirection;
-    //[SerializeField] bool isFacingRight = true;
+ 
     [SerializeField] LayerMask platformLayer;
  
 
@@ -202,7 +201,7 @@ public class NPC_Test : MonoBehaviour, IHittable
 
         }
 
-        // Making a slight force in x so that the NPC keeps moving while it jumps
+        // Making a slight force in x so that the NPC keeps moving while it jumps and not get stuck by jumping straight while it want to reach a ledge of a platform
         if (Mathf.Approximately(direction, 0f))
         {
             rb.velocity = new Vector2(0f, rb.velocity.y);
@@ -319,6 +318,7 @@ public class NPC_Test : MonoBehaviour, IHittable
         bool closeEnoughY = Mathf.Abs(transform.position.y - targetPos.y) <= (vertThreshold * 2f);
         bool closeEnough = closeEnoughX && closeEnoughY;
 
+        // We dont have to check the vertical threshold when the NPC jumps (Reason: When the NPC jumps from platform below to platform which is above or platform to platform)
         if (!isGrounded)
         {
             closeEnough = closeEnoughX;
@@ -403,6 +403,28 @@ public class NPC_Test : MonoBehaviour, IHittable
             Gizmos.DrawLine(prev, n.transform.position);
             prev = n.transform.position;
         }
+
+        if (path != null && path.Count > 0)
+        {
+            Node targetNode = path[0];
+            Vector3 targetPos = targetNode.transform.position;
+
+            float horiThreshold = Mathf.Max(NPCcollider.bounds.extents.x * 1.0f, 1.5f);
+            float vertiThreshold = Mathf.Max(NPCcollider.bounds.extents.y * 1.2f, 1.5f);
+
+            Vector3 size = new Vector3(horiThreshold * 2f, vertiThreshold * 2f, 0.1f);
+
+            if (Mathf.Abs(transform.position.x - targetPos.x) <= horiThreshold &&
+                Mathf.Abs(transform.position.y - targetPos.y) <= vertiThreshold)
+            {
+                Gizmos.color = Color.yellow; // inside threshold
+            }
+            else
+            {
+                Gizmos.color = Color.green; // outside
+            }
+            Gizmos.DrawWireCube(targetPos, size);
+        }
     }
 
     void NPCAnimations()
@@ -451,5 +473,6 @@ public class NPC_Test : MonoBehaviour, IHittable
         Debug.DrawLine(JumpOffsetOriginXMax, JumpOffsetOriginXMax + Vector2.down * 1.1f, Color.magenta);
         Debug.DrawLine(jumpOffOriginXMin, jumpOffOriginXMin + Vector2.down * 1.1f, Color.magenta);
     }
+
 
 }
