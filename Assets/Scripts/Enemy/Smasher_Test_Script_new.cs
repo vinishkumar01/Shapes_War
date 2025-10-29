@@ -62,7 +62,8 @@ public class Smasher_Test_Script_new : MonoBehaviour
     [SerializeField] float SecondsToReachApex = 0.1f;
     [SerializeField] float pauseBeforeNextJump = 1f;
 
-    bool isJumping;
+    [SerializeField] bool isJumping;
+    [SerializeField] bool isBusy;
 
     [Header("Animation")]
     [SerializeField] Animator NPCanimator;
@@ -87,40 +88,71 @@ public class Smasher_Test_Script_new : MonoBehaviour
     void Update()
     {
         DrawRaysAndSpheres();
-        MoveAndChase();
 
-        if(!isSlaming && !isJumping)
+        if(!isBusy)
         {
-            Flip();
-            flipWhenPlayerDetected();
-        }
-
-
-        if(!isJumping && isPlayerNearToPerformJumpAttack)
-        {
-            isJumping = true;
-            if(isSlaming) 
+            if(isPlayerNearToPorformSlam)
             {
-                StopCoroutine(Slam());
-                isSlaming = false;
+                if (isplayerDetectedBack)
+                {
+                    slamAngle = 90f;
+                }
+                else if (isPlayerDetected)
+                {
+                    slamAngle = -90f;
+                }
+                StartCoroutine(Slam());
             }
-            StartCoroutine(JumpAttack());
-        }
-        //Check for Slam
-        else if(!isSlaming && !isJumping && isPlayerNearToPorformSlam)
-        {
-            if(isplayerDetectedBack)
+            else if(isPlayerNearToPerformJumpAttack)
             {
-                slamAngle = 90f;
+                StartCoroutine(JumpAttack());
             }
-            else if(isPlayerDetected)
+            else
             {
-                slamAngle = -90f;
+                MoveAndChase();
+                Flip();
+                flipWhenPlayerDetected();
             }
-
-            StartCoroutine(Slam());
         }
+        //if(isPlayerNearToPerformJumpAttack)
+        //{
+        //    //ONly start jump attack if not already jumping
+        //    if(!isJumping)
+        //    {
+        //        isJumping = true;
+        //        StartCoroutine(JumpAttack());
+        //    }
+        //    return; // Skip the next logic
+        //}
+        //else if(isPlayerNearToPorformSlam)
+        //{
+        //    rb.velocity = Vector2.zero;
 
+        //    //Only Start slam if not already slamming
+        //    if(!isSlaming)
+        //    {
+        //        isSlaming = true;
+
+        //        if (isplayerDetectedBack)
+        //        {
+        //            slamAngle = 90f;
+        //        }
+        //        else if (isPlayerDetected)
+        //        {
+        //            slamAngle = -90f;
+        //        }
+        //        StartCoroutine(Slam());
+        //    }
+        //    return; //Skip furthur logic
+        //}
+
+        //MoveAndChase();
+
+        //if (!isSlaming && !isJumping)
+        //{
+        //    Flip();
+        //    flipWhenPlayerDetected();
+        //}
     }
     
     void DrawRaysAndSpheres()
@@ -143,14 +175,26 @@ public class Smasher_Test_Script_new : MonoBehaviour
         Debug.DrawLine(playerCheck.transform.position, playerCheck.transform.position + -transform.right * playerDetectionDistance, isplayerDetectedBack ? Color.red : Color.magenta);
 
         //Stop at certain distance when moving towards to the player
-        isPlayerNearToPorformSlam = Physics2D.Raycast(distanceToPlayerCheck.transform.position, rayDirection, checkDistance, playerLayer);
+        if(!isPlayerNearToPerformJumpAttack)
+        {
+            isPlayerNearToPorformSlam = Physics2D.Raycast(distanceToPlayerCheck.transform.position, rayDirection, checkDistance, playerLayer);
 
-        Debug.DrawLine(distanceToPlayerCheck.transform.position, distanceToPlayerCheck.transform.position + (Vector3)(rayDirection * checkDistance), isPlayerNearToPorformSlam ? Color.red : Color.black);
+            Debug.DrawLine(distanceToPlayerCheck.transform.position, distanceToPlayerCheck.transform.position + (Vector3)(rayDirection * checkDistance), isPlayerNearToPorformSlam ? Color.red : Color.black);
+        }
+        //isPlayerNearToPorformSlam = Physics2D.Raycast(distanceToPlayerCheck.transform.position, rayDirection, checkDistance, playerLayer);
+
+        //Debug.DrawLine(distanceToPlayerCheck.transform.position, distanceToPlayerCheck.transform.position + (Vector3)(rayDirection * checkDistance), isPlayerNearToPorformSlam ? Color.red : Color.black);
 
         //Casting an ray to detect the player when detected the slam is deactivated and the NPC make the Jump attack
-        isPlayerNearToPerformJumpAttack = Physics2D.Raycast(distancetoPlayerCheck_Jp.transform.position, rayDirection, checkDistanceForJA, playerLayer);
+        if(!isPlayerNearToPorformSlam)
+        {
+            isPlayerNearToPerformJumpAttack = Physics2D.Raycast(distancetoPlayerCheck_Jp.transform.position, rayDirection, checkDistanceForJA, playerLayer);
 
-        Debug.DrawLine(distancetoPlayerCheck_Jp.transform.position, distancetoPlayerCheck_Jp.transform.position + (Vector3)(rayDirection * checkDistanceForJA), isPlayerNearToPerformJumpAttack ? Color.green : Color.white);
+            Debug.DrawLine(distancetoPlayerCheck_Jp.transform.position, distancetoPlayerCheck_Jp.transform.position + (Vector3)(rayDirection * checkDistanceForJA), isPlayerNearToPerformJumpAttack ? Color.green : Color.white);
+        }
+        //isPlayerNearToPerformJumpAttack = Physics2D.Raycast(distancetoPlayerCheck_Jp.transform.position, rayDirection, checkDistanceForJA, playerLayer);
+
+        //Debug.DrawLine(distancetoPlayerCheck_Jp.transform.position, distancetoPlayerCheck_Jp.transform.position + (Vector3)(rayDirection * checkDistanceForJA), isPlayerNearToPerformJumpAttack ? Color.green : Color.white);
     }
 
     void MoveAndChase()
@@ -207,7 +251,7 @@ public class Smasher_Test_Script_new : MonoBehaviour
 
     IEnumerator JumpAttack()
     {
-
+        isBusy = true;
         isJumping = true;
 
         rb.gravityScale = acentGravity;
@@ -231,11 +275,13 @@ public class Smasher_Test_Script_new : MonoBehaviour
         yield return new WaitForSeconds(pauseBeforeNextJump);
 
         isJumping = false;
+        isBusy = false;
     }
 
 
     IEnumerator Slam()
     {
+        isBusy = true;
         isSlaming = true;
         flipactive = false;
 
@@ -299,6 +345,7 @@ public class Smasher_Test_Script_new : MonoBehaviour
 
         isSlaming = false;
         flipactive = true;
+        isBusy = false;
     }
 
     private void OnDrawGizmos()
