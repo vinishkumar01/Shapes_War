@@ -17,6 +17,8 @@ public class GunAiming : MonoBehaviour
     [Header("Weapon UI")]
     [SerializeField] RectTransform RectImage;
     [SerializeField] RectTransform[] weaponImage;
+
+    [SerializeField] GameObject player;
     
 
     public enum WeaponType
@@ -69,6 +71,9 @@ public class GunAiming : MonoBehaviour
         {
             weaponBehave.fireMode = WeaponBehaviour.FireMode.SemiAuto;
         }
+
+        //Checking whether the player body is active and if not we are deactivating this gun pivot
+        DestroyIfThePlayerBodyisNull();
     }
 
 
@@ -194,4 +199,12 @@ public class GunAiming : MonoBehaviour
         RectImage.position = weaponImage[(int)weaponType].position;
     }
 
+
+    void DestroyIfThePlayerBodyisNull()
+    {
+        if(!player.activeInHierarchy)
+        {
+            gameObject.SetActive(false);
+        }
+    }
 }

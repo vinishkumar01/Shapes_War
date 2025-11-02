@@ -16,6 +16,8 @@ public class Tracer_NPC_Test : MonoBehaviour, IHittable
     [SerializeField] GameObject Missile;
     [SerializeField] List<Node> AllNodesInTheScene = new List<Node>();
     [SerializeField] List<Node> AllEdgeNodeInTheScene = new List<Node>();
+    private FlashEffect _flashEffect;
+    private HealthBar _healthBar;
 
     [Header("Nodes Config")]
     [SerializeField] Node currentNode;
@@ -47,12 +49,15 @@ public class Tracer_NPC_Test : MonoBehaviour, IHittable
     [SerializeField] Vector2 GroundCheckOffset;
 
     [Header("NPC Health")]
-    [SerializeField] int NPCHealth = 100;
+    [SerializeField] int NPCMaxHealth = 100;
+    [SerializeField] int NPCCurrenthealth;
 
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         NPCcollider = rb.GetComponent<Collider2D>(); 
+        _flashEffect = GetComponent<FlashEffect>();
+        _healthBar = GetComponentInChildren<HealthBar>();
 
         if(player == null)
         {
@@ -74,6 +79,9 @@ public class Tracer_NPC_Test : MonoBehaviour, IHittable
 
         // Starts creating a path when player is detected
         StartCoroutine(PathUpdater());
+
+        //initialize the Health
+        NPCCurrenthealth = NPCMaxHealth;
     }
 
     private void Update()
@@ -99,13 +107,19 @@ public class Tracer_NPC_Test : MonoBehaviour, IHittable
     void IHittable.RecieveHit(RaycastHit2D RayHit)
     {
         Debug.Log("Got Hit: by tracer");
-        NPCHealth -= 10;
+        NPCCurrenthealth -= 20;
 
-        if (NPCHealth == 0)
+        _flashEffect.CallDamageFlash();
+
+        //Update Health Bar
+        _healthBar.UpdateHealthBar(NPCMaxHealth, NPCCurrenthealth);
+
+        if (NPCCurrenthealth == 0)
         {
             Destroy(gameObject);
         }
     }
+
 
     #region Player-Detection, Get available Nodes, PathUpdate, Retreat if Player-Detected, Surrounding Check
     void playerDetection()
@@ -493,6 +507,15 @@ public class Tracer_NPC_Test : MonoBehaviour, IHittable
             }
         }
        
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.TryGetComponent(out IDamageable damageable))
+        {
+            Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
+            damageable.Damage(25f, hitDirection);
+        }
     }
 
 }

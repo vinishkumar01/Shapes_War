@@ -6,7 +6,7 @@ using UnityEditor.Tilemaps;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public class Smasher_Test_Script_new : MonoBehaviour
+public class Smasher_Test_Script_new : MonoBehaviour, IHittable
 {
     [Header("Smasher Configs")]
     [SerializeField] int playerDetectionDistance;
@@ -24,6 +24,8 @@ public class Smasher_Test_Script_new : MonoBehaviour
     [SerializeField] GameObject playerCheck;
     [SerializeField] GameObject distanceToPlayerCheck;
     [SerializeField] GameObject distancetoPlayerCheck_Jp;
+    private HealthBar _healthBar;
+    [SerializeField] private FlashEffect _flashEffect;
 
     [SerializeField] LayerMask platformLayer;
     [SerializeField] LayerMask playerLayer;
@@ -37,8 +39,6 @@ public class Smasher_Test_Script_new : MonoBehaviour
     [SerializeField] bool isplayerDetectedBack;
     [SerializeField] bool isPlayerNearToPorformSlam;
     [SerializeField] bool isPlayerNearToPerformJumpAttack;
-    [SerializeField] bool isfacingLeft;
-    [SerializeField] bool isfacingRight;
     [SerializeField] bool flipactive;
 
     [Header("Attack Config")]
@@ -68,21 +68,47 @@ public class Smasher_Test_Script_new : MonoBehaviour
     [Header("Animation")]
     [SerializeField] Animator NPCanimator;
 
+    [Header("Health")]
+    [SerializeField] int NPCMaxHealth = 200;
+    [SerializeField] int NPCCurrenthealth;
+
 
     // Start is called before the first frame update
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         NPCanimator = GetComponent<Animator>();
+        _flashEffect = GetComponent<FlashEffect>();
+        _healthBar = GetComponentInChildren<HealthBar>();
         facingDirection = 1;
-        isfacingRight = true;
         
         //Rotation Config
         initialRotation = transform.rotation;
         targetRotation = Quaternion.Euler(0,0, slamAngle);
 
         spriteRenderer = GetComponent<SpriteRenderer>();
+
+        //initialize the Health
+        NPCCurrenthealth = NPCMaxHealth;
     }
+
+    void IHittable.RecieveHit(RaycastHit2D RayHit)
+    {
+        Debug.Log("Got Hit: by Smasher");
+
+        NPCCurrenthealth -= 20;
+
+        _flashEffect.CallDamageFlash();
+
+        //Update Health Bar
+        _healthBar.UpdateHealthBar(NPCMaxHealth, NPCCurrenthealth);
+
+        if (NPCCurrenthealth == 0)
+        {
+            Destroy(gameObject);
+        }
+    }
+
 
     // Update is called once per frame
     void Update()
@@ -114,45 +140,7 @@ public class Smasher_Test_Script_new : MonoBehaviour
                 flipWhenPlayerDetected();
             }
         }
-        //if(isPlayerNearToPerformJumpAttack)
-        //{
-        //    //ONly start jump attack if not already jumping
-        //    if(!isJumping)
-        //    {
-        //        isJumping = true;
-        //        StartCoroutine(JumpAttack());
-        //    }
-        //    return; // Skip the next logic
-        //}
-        //else if(isPlayerNearToPorformSlam)
-        //{
-        //    rb.velocity = Vector2.zero;
 
-        //    //Only Start slam if not already slamming
-        //    if(!isSlaming)
-        //    {
-        //        isSlaming = true;
-
-        //        if (isplayerDetectedBack)
-        //        {
-        //            slamAngle = 90f;
-        //        }
-        //        else if (isPlayerDetected)
-        //        {
-        //            slamAngle = -90f;
-        //        }
-        //        StartCoroutine(Slam());
-        //    }
-        //    return; //Skip furthur logic
-        //}
-
-        //MoveAndChase();
-
-        //if (!isSlaming && !isJumping)
-        //{
-        //    Flip();
-        //    flipWhenPlayerDetected();
-        //}
     }
     
     void DrawRaysAndSpheres()
@@ -175,26 +163,18 @@ public class Smasher_Test_Script_new : MonoBehaviour
         Debug.DrawLine(playerCheck.transform.position, playerCheck.transform.position + -transform.right * playerDetectionDistance, isplayerDetectedBack ? Color.red : Color.magenta);
 
         //Stop at certain distance when moving towards to the player
-        if(!isPlayerNearToPerformJumpAttack)
+        if(!isPlayerNearToPerformJumpAttack && !isJumping)
         {
             isPlayerNearToPorformSlam = Physics2D.Raycast(distanceToPlayerCheck.transform.position, rayDirection, checkDistance, playerLayer);
 
             Debug.DrawLine(distanceToPlayerCheck.transform.position, distanceToPlayerCheck.transform.position + (Vector3)(rayDirection * checkDistance), isPlayerNearToPorformSlam ? Color.red : Color.black);
         }
-        //isPlayerNearToPorformSlam = Physics2D.Raycast(distanceToPlayerCheck.transform.position, rayDirection, checkDistance, playerLayer);
-
-        //Debug.DrawLine(distanceToPlayerCheck.transform.position, distanceToPlayerCheck.transform.position + (Vector3)(rayDirection * checkDistance), isPlayerNearToPorformSlam ? Color.red : Color.black);
-
-        //Casting an ray to detect the player when detected the slam is deactivated and the NPC make the Jump attack
-        if(!isPlayerNearToPorformSlam)
+        if(!isPlayerNearToPorformSlam && !isSlaming)
         {
             isPlayerNearToPerformJumpAttack = Physics2D.Raycast(distancetoPlayerCheck_Jp.transform.position, rayDirection, checkDistanceForJA, playerLayer);
 
             Debug.DrawLine(distancetoPlayerCheck_Jp.transform.position, distancetoPlayerCheck_Jp.transform.position + (Vector3)(rayDirection * checkDistanceForJA), isPlayerNearToPerformJumpAttack ? Color.green : Color.white);
         }
-        //isPlayerNearToPerformJumpAttack = Physics2D.Raycast(distancetoPlayerCheck_Jp.transform.position, rayDirection, checkDistanceForJA, playerLayer);
-
-        //Debug.DrawLine(distancetoPlayerCheck_Jp.transform.position, distancetoPlayerCheck_Jp.transform.position + (Vector3)(rayDirection * checkDistanceForJA), isPlayerNearToPerformJumpAttack ? Color.green : Color.white);
     }
 
     void MoveAndChase()
@@ -218,9 +198,6 @@ public class Smasher_Test_Script_new : MonoBehaviour
             Vector3 scale = transform.localScale;
             scale.x *= -1;
             transform.localScale = scale;
-
-            isfacingLeft = true;
-            isfacingRight = false;
         }
     }
 
@@ -232,9 +209,6 @@ public class Smasher_Test_Script_new : MonoBehaviour
             Vector3 scale = transform.localScale;
             scale.x = Mathf.Abs(scale.x);
             transform.localScale = scale;
-
-            isfacingLeft = false;
-            isfacingRight = true;
         }
 
         if (isplayerDetectedBack && facingDirection == 1)
@@ -243,9 +217,6 @@ public class Smasher_Test_Script_new : MonoBehaviour
             Vector3 scale = transform.localScale;
             scale.x = -Mathf.Abs(scale.x);
             transform.localScale = scale;
-
-            isfacingLeft = true;
-            isfacingRight = false;
         }
     }
 
@@ -283,7 +254,6 @@ public class Smasher_Test_Script_new : MonoBehaviour
     {
         isBusy = true;
         isSlaming = true;
-        flipactive = false;
 
         //Calculate bottom right pivot from spriteRenderer bounds
         Bounds bounds = spriteRenderer.bounds; // world space bounds
@@ -344,7 +314,6 @@ public class Smasher_Test_Script_new : MonoBehaviour
         yield return new WaitForSeconds(coolDown);
 
         isSlaming = false;
-        flipactive = true;
         isBusy = false;
     }
 
@@ -385,5 +354,14 @@ public class Smasher_Test_Script_new : MonoBehaviour
             Debug.DrawLine(platformSBCheck.transform.position, (Vector2)platformSBCheck.transform.position + Vector2.down * platformDetectionDistance);
         }
        
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.TryGetComponent(out IDamageable damageable))
+        {
+            Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
+            damageable.Damage(25f, hitDirection);
+        }
     }
 }

@@ -9,6 +9,7 @@ public class PlayerController : MonoBehaviour
     public Rigidbody2D rb;
     [SerializeField] Animator playerAnimator;
     [SerializeField] TextMeshPro Dashtext;
+    [SerializeField] KnockBack knockBack;
 
     [Header("Gravity Configs")]
     [SerializeField]float gravityStrength; //Downwards force (gravity) needed for the desired jumpHeight and jumpTimeToApex.
@@ -74,6 +75,7 @@ public class PlayerController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         playerAnimator = GetComponent<Animator>();
+        knockBack = GetComponent<KnockBack>();
         
         //Getting the groundcheck gameObjects transform(position)
         GroundCheck = GameObject.Find("GC").GetComponent<Transform>();
@@ -93,14 +95,17 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        CheckInputs();
-        CheckDash();
-        CheckPlayerAttachedToRope();
-
+        if (!knockBack.IsBeingKnockedBack)
+        {
+            CheckDash();
+            CheckPlayerAttachedToRope();
+            CheckInputs();
+        }
     }
 
     private void FixedUpdate()
     {
+        
         ApplyMovements();
         CheckSurrounding();
         RopeCheck();

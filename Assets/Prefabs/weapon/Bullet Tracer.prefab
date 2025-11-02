@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 7754038133418113546}
   - component: {fileID: 3047832309092085139}
   - component: {fileID: -6561378671299191382}
+  - component: {fileID: 7890664359629403694}
   m_Layer: 14
   m_Name: Bullet Tracer
   m_TagString: Bullet
@@ -163,3 +164,38 @@ MonoBehaviour:
   _trialLife: 0.05
   Bullet_Collision: {fileID: 1567822461625743984, guid: be24cae37cbe9d045b9e851e4ae1e11b, type: 3}
   hasHit: 0
+--- !u!58 &7890664359629403694
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5913132409892484899}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  serializedVersion: 2
+  m_Radius: 0.06

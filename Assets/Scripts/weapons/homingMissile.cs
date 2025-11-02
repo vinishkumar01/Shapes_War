@@ -10,6 +10,7 @@ public class homingMissile : MonoBehaviour, IHittable
     [SerializeField] Transform player;
     Rigidbody2D rb;
     [SerializeField] LayerMask playerLayer;
+    private FlashEffect _flashEffect;
 
     [Header("Missile Configs")]
     [SerializeField] int MissileSpeed = 10;
@@ -35,6 +36,7 @@ public class homingMissile : MonoBehaviour, IHittable
     void Start()
     {
         rb = GetComponent<Rigidbody2D>(); 
+        _flashEffect = GetComponent<FlashEffect>();
 
         if(player == null)
         {
@@ -53,6 +55,8 @@ public class homingMissile : MonoBehaviour, IHittable
     {
         Debug.Log("Got Hit: by missile");
         MissileHealth -= 10;
+
+        _flashEffect.CallDamageFlash();
 
         if (MissileHealth == 0)
         {
@@ -147,6 +151,12 @@ public class homingMissile : MonoBehaviour, IHittable
                 explodeOnContact();
                 PoolManager.ReturnObjectToPool(gameObject, PoolManager.PoolType.GameObjects);
             }
+        }
+
+        if (collision.gameObject.TryGetComponent(out IDamageable damageable))
+        {
+            Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
+            damageable.Damage(10f, hitDirection);
         }
     }
 }

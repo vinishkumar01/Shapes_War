@@ -16,6 +16,8 @@ public class NPC_Test : MonoBehaviour, IHittable
     [SerializeField] List<Node> AllNodesinTheScene = new List<Node>();
     [SerializeField] List<Node> AllEdgeNodesinTheScene = new List<Node>();
     [SerializeField] ParticleSystem Dust;
+    private FlashEffect _flashEffect;
+    private HealthBar _healthBar;
 
     [SerializeField] Vector3 FacingDirection;
  
@@ -35,7 +37,8 @@ public class NPC_Test : MonoBehaviour, IHittable
     bool wasGrounded = true;
 
     [Header("NPC health")]
-    [SerializeField] int NPCHealth = 100;
+    [SerializeField] int NPCMaxHealth = 100;
+    [SerializeField] int NPCCurrentHealth;
 
     [Header("NPC Animations")]
     [SerializeField] Animator Chaser_Animator;
@@ -47,6 +50,8 @@ public class NPC_Test : MonoBehaviour, IHittable
         NPCcollider = GetComponent<Collider2D>();
         Sprite = GetComponent<Transform>();
         Chaser_Animator = GetComponent<Animator>();
+        _flashEffect = GetComponent<FlashEffect>();
+        _healthBar = GetComponentInChildren<HealthBar>();
 
         // Adding all the Nodes in the Scene to the list
         if(AStarManager.instance != null)
@@ -65,6 +70,9 @@ public class NPC_Test : MonoBehaviour, IHittable
 
         // Setting the default scale direction of the NPC
         FacingDirection = transform.localScale;
+
+        //Initializing MaxHealth of the NPC
+        NPCCurrentHealth = NPCMaxHealth;
     }
 
     void Update()
@@ -86,9 +94,14 @@ public class NPC_Test : MonoBehaviour, IHittable
     void IHittable.RecieveHit(RaycastHit2D RayHit)
     {
         Debug.Log("Got Hit: by Circle");
-        NPCHealth -= 10;
+        NPCCurrentHealth -= 20;
 
-        if (NPCHealth == 0)
+        _flashEffect.CallDamageFlash();
+
+        //Update Health Bar
+        _healthBar.UpdateHealthBar(NPCMaxHealth, NPCCurrentHealth);
+
+        if (NPCCurrentHealth == 0)
         {
             Destroy(gameObject);
         }
@@ -475,4 +488,13 @@ public class NPC_Test : MonoBehaviour, IHittable
     }
 
 
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if(collision.gameObject.TryGetComponent(out IDamageable damageable))
+        {
+            Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
+            damageable.Damage(25f, hitDirection);
+        }
+    }
 }

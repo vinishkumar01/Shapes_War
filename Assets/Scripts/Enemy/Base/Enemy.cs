@@ -136,5 +136,10 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, ITriggerCheckabl
         IsWithinStrikingDistance = isWithinStrikingDistance;
     }
 
+    public void Damage(float damageAmount, Vector2 hitDirection)
+    {
+        throw new System.NotImplementedException();
+    }
+
     #endregion
 }

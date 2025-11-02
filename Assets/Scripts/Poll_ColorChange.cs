@@ -5,10 +5,11 @@ using UnityEngine;
 public class Poll_ColorChange : MonoBehaviour, IHittable
 {
     [SerializeField] SpriteRenderer sprite;
-
+    private FlashEffect _flashEffect;
     private void Start()
     {
         sprite = GetComponent<SpriteRenderer>();
+        _flashEffect = GetComponent<FlashEffect>();
         StartCoroutine(ChangeColor());
 
     }
@@ -16,8 +17,9 @@ public class Poll_ColorChange : MonoBehaviour, IHittable
 
     void IHittable.RecieveHit(RaycastHit2D RayHit)
     {
-        this.sprite.color = Color.red;
+        _flashEffect.CallDamageFlash();
     }
+
 
     IEnumerator ChangeColor()
     {

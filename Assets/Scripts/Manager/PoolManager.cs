@@ -209,7 +209,7 @@ public class PoolManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("Trying to an object that is not pooled: " + obj.name);
+            Debug.LogWarning("Trying to return an object that is not pooled: " + obj.name);
         }
            
     }

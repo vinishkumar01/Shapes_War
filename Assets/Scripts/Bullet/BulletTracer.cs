@@ -15,6 +15,7 @@ public class BulletTracer : MonoBehaviour
     [SerializeField] float _trialLife = 0.1f;
     [SerializeField] GameObject Bullet_Collision;
     [SerializeField] bool hasHit = false;
+    bool hasBeenReturnedToPool = false;
 
     RaycastHit2D storedHit;
 
@@ -39,11 +40,10 @@ public class BulletTracer : MonoBehaviour
     {
         if (!hasHit && storedHit.collider != null)
         {
-            var hittable = storedHit.collider.GetComponent<IHittable>();
-
-            if (hittable != null)
+            
+            if (storedHit.collider.TryGetComponent<IHittable>(out var hittable))
             {
-                Vector3 worldHitPoint = new Vector3(storedHit.collider.transform.position.x, storedHit.collider.transform.position.y, -1);
+                Vector3 worldHitPoint = new(storedHit.collider.transform.position.x, storedHit.collider.transform.position.y, -1);
                 _targetposition = new Vector3(worldHitPoint.x, worldHitPoint.y, -1);
                 _distance = Vector3.Distance(_startposition, _targetposition);
             }
@@ -61,8 +61,7 @@ public class BulletTracer : MonoBehaviour
                 GameObject impact = PoolManager.SpawnObject(Bullet_Collision, _targetposition, Quaternion.identity, PoolManager.PoolType.ParticleSystem);
                 StartCoroutine(ReturnAfterSeconds(impact, 1f));
 
-                var hittable = storedHit.collider.GetComponent<IHittable>();
-                if (hittable != null)
+                if (storedHit.collider.TryGetComponent<IHittable>(out var hittable))
                 {
                     hittable.RecieveHit(storedHit);
                     StartCoroutine(DisableWhenHit()); 
@@ -77,13 +76,23 @@ public class BulletTracer : MonoBehaviour
     IEnumerator DisableAfterTrail()
     {
         yield return new WaitForSeconds(_trialLife + 1.5f);
-        PoolManager.ReturnObjectToPool(gameObject, PoolManager.PoolType.GameObjects);
+        if(!hasBeenReturnedToPool)
+        {
+            hasBeenReturnedToPool = true;
+            PoolManager.ReturnObjectToPool(gameObject, PoolManager.PoolType.GameObjects);
+        }
+        
     }
 
     public IEnumerator DisableWhenHit()
     {
         yield return new WaitForSeconds(_trialLife + 0.1f);
-        PoolManager.ReturnObjectToPool(gameObject, PoolManager.PoolType.GameObjects);
+        if(!hasBeenReturnedToPool)
+        {
+            hasBeenReturnedToPool = true;
+            PoolManager.ReturnObjectToPool(gameObject, PoolManager.PoolType.GameObjects);
+        }
+        
     }
 
     IEnumerator ReturnAfterSeconds(GameObject obj, float time)
