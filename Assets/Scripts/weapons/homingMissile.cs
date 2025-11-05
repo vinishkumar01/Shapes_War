@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Security;
+using System.Security.Cryptography;
 using Unity.Burst.CompilerServices;
 using UnityEngine;
 
@@ -28,9 +29,16 @@ public class homingMissile : MonoBehaviour, IHittable
     [Header("Tags")]
     [SerializeField] string[] destTag = { "Player", "Missile"};
 
+    [Header("Explosion Effect")]
+    [SerializeField] private GameObject explosionPrefab;
+
     private void OnEnable()
     {
         MissileHealth = 20;
+        if(_flashEffect != null)
+        {
+            _flashEffect.ResetFlash();
+        }
     }
 
     void Start()
@@ -60,6 +68,8 @@ public class homingMissile : MonoBehaviour, IHittable
 
         if (MissileHealth == 0)
         {
+            ExplosionEffectAnimation();
+
             PoolManager.ReturnObjectToPool(gameObject, PoolManager.PoolType.GameObjects);
         }
     }
@@ -149,6 +159,7 @@ public class homingMissile : MonoBehaviour, IHittable
             {
                 PlayerCollided = true;
                 explodeOnContact();
+                ExplosionEffectAnimation();
                 PoolManager.ReturnObjectToPool(gameObject, PoolManager.PoolType.GameObjects);
             }
         }
@@ -158,5 +169,11 @@ public class homingMissile : MonoBehaviour, IHittable
             Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
             damageable.Damage(10f, hitDirection);
         }
+    }
+
+    private void ExplosionEffectAnimation()
+    {
+        PoolManager.SpawnObject(explosionPrefab, transform.position, Quaternion.identity, PoolManager.PoolType.GameObjects);
+
     }
 }

@@ -63,4 +63,9 @@ public class FlashEffect : MonoBehaviour
         //Set the flash Amount
         _material.SetFloat("_flashAmount", amount);
     }
+
+    public void ResetFlash()
+    {
+        SetFlashAmount(0f);
+    }
 }
