@@ -20,7 +20,7 @@ public class EnemyIdleState : EnemyState
     {
         base.EnterState();
 
-        _targetPos = GetRandomPointInCircle();
+       
     }
 
     public override void ExitState()
@@ -32,19 +32,8 @@ public class EnemyIdleState : EnemyState
     {
         base.FrameUpdate();
 
-        if(enemy.isAggroed)
-        {
-            enemy.stateMachine.ChangeState(enemy.chaseState);
-        }
+        enemy.MoveEnemy(Vector2.zero);
 
-        _direction = (_targetPos - enemy.transform.position).normalized;
-
-        enemy.MoveEnemy(_direction * enemy.RandomMovementSpeed);
-
-        if((enemy.transform.position - _targetPos).sqrMagnitude < 0.01f)
-        {
-            _targetPos = GetRandomPointInCircle();
-        }
     }
 
     public override void PhysicsUpdate()
@@ -52,8 +41,4 @@ public class EnemyIdleState : EnemyState
         base.PhysicsUpdate();
     }
 
-    private Vector3 GetRandomPointInCircle()
-    {
-        return enemy.transform.position + (Vector3)UnityEngine.Random.insideUnitCircle * enemy.RandomMovementRange;
-    }
 }

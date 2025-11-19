@@ -5,12 +5,12 @@ using System.Security.Cryptography;
 using Unity.Burst.CompilerServices;
 using UnityEngine;
 
-public class homingMissile : MonoBehaviour, IHittable
+public class homingMissile : MonoBehaviour, IDamageable
 {
     [Header("References")]
-    [SerializeField] Transform player;
-    Rigidbody2D rb;
-    [SerializeField] LayerMask playerLayer;
+    [SerializeField] private Transform playerTransform;
+    private Rigidbody2D rb;
+    [SerializeField] private LayerMask playerLayer;
     private FlashEffect _flashEffect;
 
     [Header("Missile Configs")]
@@ -18,8 +18,13 @@ public class homingMissile : MonoBehaviour, IHittable
     [SerializeField] float rotateSpeed = 400f;
     [SerializeField] bool isPlayerDetected;
     [SerializeField] bool PlayerCollided;
+    [SerializeField] bool hasReturnedToPool = false;
     [SerializeField] float playerDetectionCheckRadius = 8f;
-    [SerializeField] int MissileHealth = 20;
+
+    [Header("Missile Health")]
+    [SerializeField] int MissileMaxHealth = 20;
+    [SerializeField] int MissileCurrentHealth;
+    [SerializeField] int MDamageAmount;
 
     [Header("Explode Configs")]
     [SerializeField] float impactField;
@@ -32,9 +37,13 @@ public class homingMissile : MonoBehaviour, IHittable
     [Header("Explosion Effect")]
     [SerializeField] private GameObject explosionPrefab;
 
+    public int MaxHealth { get => MissileMaxHealth; set => MissileMaxHealth = value; }
+    public int CurrentHealth { get => MissileCurrentHealth; set => MissileCurrentHealth = value; }
+    public int DamageAmount { get => MDamageAmount; set => MDamageAmount = value; }
+
     private void OnEnable()
     {
-        MissileHealth = 20;
+        hasReturnedToPool = false;
         if(_flashEffect != null)
         {
             _flashEffect.ResetFlash();
@@ -43,13 +52,12 @@ public class homingMissile : MonoBehaviour, IHittable
 
     void Start()
     {
-        rb = GetComponent<Rigidbody2D>(); 
+        rb = GetComponent<Rigidbody2D>();
         _flashEffect = GetComponent<FlashEffect>();
 
-        if(player == null)
-        {
-            player = GameObject.FindGameObjectWithTag("Player").transform;
-        }
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        playerTransform = player.GetComponent<Transform>();
+        
     }
 
     // Update is called once per frame
@@ -59,24 +67,29 @@ public class homingMissile : MonoBehaviour, IHittable
         MissileSpeedAndRotateConfig();
     }
 
-    void IHittable.RecieveHit(RaycastHit2D RayHit)
+    void IDamageable.RecieveHit(RaycastHit2D RayHit)
     {
         Debug.Log("Got Hit: by missile");
-        MissileHealth -= 10;
+
+        MissileCurrentHealth -= MDamageAmount;
 
         _flashEffect.CallDamageFlash();
 
-        if (MissileHealth == 0)
-        {
-            ExplosionEffectAnimation();
-
-            PoolManager.ReturnObjectToPool(gameObject, PoolManager.PoolType.GameObjects);
+        if (MissileCurrentHealth < 1)
+        { 
+            ExplosionEffect();
+            Die();
         }
+    }
+
+    public void Die()
+    {
+        ReturnToPoolOnce();
     }
 
     void FollowPlayer()
     {
-        Vector2 direction = ((Vector2)player.position - rb.position).normalized;
+        Vector2 direction = ((Vector2)playerTransform.position - rb.position).normalized;
 
         float rotateAmount = Vector3.Cross(direction, transform.up).z;
 
@@ -122,6 +135,17 @@ public class homingMissile : MonoBehaviour, IHittable
         }
     }
 
+    void ExplosionEffect()
+    {
+        GameObject explosion = PoolManager.SpawnObject(explosionPrefab, transform.position, Quaternion.identity, PoolManager.PoolType.GameObjects);
+    }
+
+    void ReturnToPoolOnce()
+    {
+        if(hasReturnedToPool) return;
+        hasReturnedToPool = true;
+        PoolManager.ReturnObjectToPool(gameObject, PoolManager.PoolType.GameObjects);
+    }
 
     private void OnDrawGizmos()
     {
@@ -159,21 +183,21 @@ public class homingMissile : MonoBehaviour, IHittable
             {
                 PlayerCollided = true;
                 explodeOnContact();
-                ExplosionEffectAnimation();
-                PoolManager.ReturnObjectToPool(gameObject, PoolManager.PoolType.GameObjects);
+
+                //Return the Missile to the Pool
+                ReturnToPoolOnce();
+
+                //Play Explosion Effect
+                ExplosionEffect();
+
+
             }
         }
 
-        if (collision.gameObject.TryGetComponent(out IDamageable damageable))
+        if (collision.gameObject.TryGetComponent(out IPlayerDamageable damageable))
         {
             Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
             damageable.Damage(10f, hitDirection);
         }
-    }
-
-    private void ExplosionEffectAnimation()
-    {
-        PoolManager.SpawnObject(explosionPrefab, transform.position, Quaternion.identity, PoolManager.PoolType.GameObjects);
-
     }
 }

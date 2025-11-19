@@ -34,6 +34,7 @@ public class BulletTracer : MonoBehaviour
 
         storedHit = hit;
         hasHit = false;
+        hasBeenReturnedToPool = false;
     }
 
     void Update()
@@ -41,7 +42,7 @@ public class BulletTracer : MonoBehaviour
         if (!hasHit && storedHit.collider != null)
         {
             
-            if (storedHit.collider.TryGetComponent<IHittable>(out var hittable))
+            if (storedHit.collider.TryGetComponent<IDamageable>(out var damageable))
             {
                 Vector3 worldHitPoint = new(storedHit.collider.transform.position.x, storedHit.collider.transform.position.y, -1);
                 _targetposition = new Vector3(worldHitPoint.x, worldHitPoint.y, -1);
@@ -61,15 +62,16 @@ public class BulletTracer : MonoBehaviour
                 GameObject impact = PoolManager.SpawnObject(Bullet_Collision, _targetposition, Quaternion.identity, PoolManager.PoolType.ParticleSystem);
                 StartCoroutine(ReturnAfterSeconds(impact, 1f));
 
-                if (storedHit.collider.TryGetComponent<IHittable>(out var hittable))
+                if (storedHit.collider.TryGetComponent<IDamageable>(out var damageable))
                 {
-                    hittable.RecieveHit(storedHit);
-                    StartCoroutine(DisableWhenHit()); 
+                    damageable.RecieveHit(storedHit);
                 }
+                StartCoroutine(DisableWhenHit());
             }
-
-            StopAllCoroutines();
-            StartCoroutine(DisableAfterTrail());
+            else
+            {
+                StartCoroutine(DisableAfterTrail());
+            }
         }
     }
 

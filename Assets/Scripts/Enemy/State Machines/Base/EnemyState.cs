@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-// This script acts as a Base class for the Enemy State Machine
+// This script acts as a Base class for all Enemy State 
 
 public class EnemyState
 {
@@ -21,7 +21,10 @@ public class EnemyState
 
     public virtual void FrameUpdate() { }
 
-    public virtual void PhysicsUpdate() { } 
+    public virtual void PhysicsUpdate() { }
+
+    public virtual void LateFrameUpdate() { }
 
     public virtual void AnimationTriggerEvent(Enemy.AnimationTriggerType triggerType) { }
+
 }

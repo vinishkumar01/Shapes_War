@@ -25,7 +25,12 @@ public class FlashEffect : MonoBehaviour
 
     public void CallDamageFlash()
     {
-        damageFlashCoroutine = StartCoroutine(DamageFlasher());
+        if(this.isActiveAndEnabled)
+        {
+            if(damageFlashCoroutine != null)
+                StopCoroutine(damageFlashCoroutine);
+            damageFlashCoroutine = StartCoroutine(DamageFlasher());
+        }
     }
 
     private IEnumerator DamageFlasher()

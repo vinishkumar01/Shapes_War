@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using static UnityEngine.EventSystems.EventTrigger;
 
-public class NPC_Test : MonoBehaviour, IHittable
+public class NPC_Test : MonoBehaviour, IDamageable
 {
     [Header("References")]
     //Lets Store the initialize currentNode and create a list for path
@@ -36,12 +36,17 @@ public class NPC_Test : MonoBehaviour, IHittable
     bool noPlatformxMin;
     bool wasGrounded = true;
 
+    [Header("NPC Animations")]
+    [SerializeField] Animator Chaser_Animator;
+
     [Header("NPC health")]
     [SerializeField] int NPCMaxHealth = 100;
     [SerializeField] int NPCCurrentHealth;
+    [SerializeField] int NPCDamageAmount = 20;
 
-    [Header("NPC Animations")]
-    [SerializeField] Animator Chaser_Animator;
+    public int MaxHealth { get => NPCMaxHealth; set => NPCMaxHealth = value; }
+    public int CurrentHealth { get => NPCCurrentHealth; set => NPCCurrentHealth = value; }
+    public int DamageAmount { get => NPCDamageAmount; set => NPCDamageAmount = value; }
 
     private void Start()
     {
@@ -91,16 +96,21 @@ public class NPC_Test : MonoBehaviour, IHittable
         Sprite.transform.rotation = Quaternion.identity;    
     }
 
-    void IHittable.RecieveHit(RaycastHit2D RayHit)
+    public void RecieveHit(RaycastHit2D RayHit)
     {
         Debug.Log("Got Hit: by Circle");
-        NPCCurrentHealth -= 20;
+        NPCCurrentHealth -= NPCDamageAmount;
 
         _flashEffect.CallDamageFlash();
 
         //Update Health Bar
         _healthBar.UpdateHealthBar(NPCMaxHealth, NPCCurrentHealth);
 
+        Die();
+    }
+
+    public void Die()
+    {
         if (NPCCurrentHealth == 0)
         {
             Destroy(gameObject);
@@ -491,10 +501,12 @@ public class NPC_Test : MonoBehaviour, IHittable
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if(collision.gameObject.TryGetComponent(out IDamageable damageable))
+        if(collision.gameObject.TryGetComponent(out IPlayerDamageable damageable))
         {
             Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
             damageable.Damage(25f, hitDirection);
         }
     }
+
+    
 }

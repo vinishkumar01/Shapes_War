@@ -10,7 +10,7 @@ public class EnemyChaseState : EnemyState
 
     private float _MovementSpeed = 5f;
 
-    // As we are instantiating this class in Enemy - Awake function this constructor too act like an awake fucntion
+    // As we are instantiating this class in Enemy - Awake function this constructor too act like an awake function
     public EnemyChaseState(Enemy enemy, EnemyStateMachine enemyStateMachine) : base(enemy, enemyStateMachine)
     {
         _playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
@@ -25,6 +25,7 @@ public class EnemyChaseState : EnemyState
     public override void EnterState()
     {
         base.EnterState();
+        
     }
 
     public override void ExitState()

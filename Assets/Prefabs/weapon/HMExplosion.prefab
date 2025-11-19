@@ -11,10 +11,10 @@ GameObject:
   - component: {fileID: 3519574347464023464}
   - component: {fileID: 5808298627407270762}
   - component: {fileID: 254047555718583778}
-  - component: {fileID: 5123991855922664434}
-  m_Layer: 0
+  - component: {fileID: 1580982409860545508}
+  m_Layer: 16
   m_Name: HMExplosion
-  m_TagString: Untagged
+  m_TagString: MissileExplosion
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -27,7 +27,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4928105915182433932}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 67.95, y: 4.94, z: 0}
   m_LocalScale: {x: 0.8, y: 0.8, z: 1}
   m_ConstrainProportionsScale: 0
@@ -107,7 +107,7 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &5123991855922664434
+--- !u!114 &1580982409860545508
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -116,6 +116,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 4928105915182433932}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e2ec14bf376e4c74e9359a7fba2a953d, type: 3}
+  m_Script: {fileID: 11500000, guid: 09d04c812beca1c41820e82d37947677, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

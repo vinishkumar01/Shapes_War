@@ -1,0 +1,413 @@
+fileFormatVersion: 2
+guid: 271c201bc3c30ec429e1a0823a73a818
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Smasher_Jump_Left_Attack_11
+      rect:
+        serializedVersion: 2
+        x: 1223
+        y: 12
+        width: 51
+        height: 131
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ba05f41d69b389641aa8590bcd3e3b37
+      internalID: -1272680280
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Smasher_Jump_Left_Attack_12
+      rect:
+        serializedVersion: 2
+        x: 1342
+        y: 38
+        width: 53
+        height: 111
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 952dfd0936c10944f896f6fa71c958a4
+      internalID: 82337978
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Smasher_Jump_Left_Attack_2
+      rect:
+        serializedVersion: 2
+        x: 168
+        y: 15
+        width: 26
+        height: 56
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1baaf32b8ddd5ff4c8f39c14f4f312bf
+      internalID: 1901864774
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Smasher_Jump_Left_Attack_3
+      rect:
+        serializedVersion: 2
+        x: 289
+        y: 39
+        width: 23
+        height: 38
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ce285b39332e4414bb26a333e80a55e0
+      internalID: 421182934
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Smasher_Jump_Left_Attack_5
+      rect:
+        serializedVersion: 2
+        x: 527
+        y: 18
+        width: 31
+        height: 76
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 12518b5834924f0449175873f68fa82c
+      internalID: 1003595125
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Smasher_Jump_Left_Attack_8
+      rect:
+        serializedVersion: 2
+        x: 886
+        y: 9
+        width: 38
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8e6068324fbc7af468a90f49127cf782
+      internalID: 459742243
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Smasher_Jump_Left_Attack_9
+      rect:
+        serializedVersion: 2
+        x: 1003
+        y: 47
+        width: 45
+        height: 75
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5606615ec7f453841aeb4e3acee4397c
+      internalID: 392827604
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Smasher_Jump_Left_Attack_6
+      rect:
+        serializedVersion: 2
+        x: 649
+        y: 41
+        width: 31
+        height: 55
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ade41a3426fcb0b478025eff314efe3c
+      internalID: 1732426072
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Smasher_Jump_Left_Attack_1
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 15
+        width: 29
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3cc303e792794644fbeceba4b9f95aec
+      internalID: -935187538
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Smasher_Jump_Left_Attack_4
+      rect:
+        serializedVersion: 2
+        x: 406
+        y: 18
+        width: 28
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: eae500732d5518b40b7b9517a2badb51
+      internalID: 1175517342
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Smasher_Jump_Left_Attack_7
+      rect:
+        serializedVersion: 2
+        x: 766
+        y: 23
+        width: 28
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 187e4ff04ca6b3d499ce8d446618d6a4
+      internalID: 479864154
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Smasher_Jump_Left_Attack_10
+      rect:
+        serializedVersion: 2
+        x: 1125
+        y: 14
+        width: 29
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 374842df799bfbf4fbd27fc279f0e245
+      internalID: 2109861476
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    nameFileIdTable:
+      Smasher_Jump_Left_Attack_1: -935187538
+      Smasher_Jump_Left_Attack_10: 2109861476
+      Smasher_Jump_Left_Attack_11: -1272680280
+      Smasher_Jump_Left_Attack_12: 82337978
+      Smasher_Jump_Left_Attack_120x180_1: 1973104088
+      Smasher_Jump_Left_Attack_120x180_11: 1197983250
+      Smasher_Jump_Left_Attack_120x180_12: 2073225614
+      Smasher_Jump_Left_Attack_120x180_13: 1015220165
+      Smasher_Jump_Left_Attack_120x180_14: 1831723711
+      Smasher_Jump_Left_Attack_120x180_15: 548933320
+      Smasher_Jump_Left_Attack_120x180_16: 1651427101
+      Smasher_Jump_Left_Attack_120x180_17: 502560820
+      Smasher_Jump_Left_Attack_120x180_18: 1469581784
+      Smasher_Jump_Left_Attack_120x180_19: 1055398566
+      Smasher_Jump_Left_Attack_120x180_21: 1380449240
+      Smasher_Jump_Left_Attack_120x180_22: -287338347
+      Smasher_Jump_Left_Attack_120x180_23: 318316047
+      Smasher_Jump_Left_Attack_120x180_24: 1983559139
+      Smasher_Jump_Left_Attack_120x180_25: -362467907
+      Smasher_Jump_Left_Attack_120x180_26: -901934177
+      Smasher_Jump_Left_Attack_120x180_30: -1625838697
+      Smasher_Jump_Left_Attack_120x180_31: -398216089
+      Smasher_Jump_Left_Attack_120x180_33: 1320921826
+      Smasher_Jump_Left_Attack_120x180_5: -329352058
+      Smasher_Jump_Left_Attack_120x180_7: 328205753
+      Smasher_Jump_Left_Attack_120x180_8: -1800016061
+      Smasher_Jump_Left_Attack_2: 1901864774
+      Smasher_Jump_Left_Attack_3: 421182934
+      Smasher_Jump_Left_Attack_4: 1175517342
+      Smasher_Jump_Left_Attack_5: 1003595125
+      Smasher_Jump_Left_Attack_6: 1732426072
+      Smasher_Jump_Left_Attack_7: 479864154
+      Smasher_Jump_Left_Attack_8: 459742243
+      Smasher_Jump_Left_Attack_9: 392827604
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

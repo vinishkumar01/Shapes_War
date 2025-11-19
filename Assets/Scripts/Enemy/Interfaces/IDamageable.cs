@@ -4,11 +4,13 @@ using UnityEngine;
 
 public interface IDamageable 
 {
-    void Damage(float damageAmount, Vector2 hitDirection);
+    public void RecieveHit(RaycastHit2D RayHit);
 
     void Die();
 
-    float MaxHealth { get; set; }
+    int MaxHealth { get; set; }
 
-    float CurrentHealth { get; set; }   
+    int CurrentHealth { get; set; }   
+
+    int DamageAmount { get; set; }
 }

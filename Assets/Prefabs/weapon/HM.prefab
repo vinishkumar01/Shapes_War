@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 6736459077995948404}
   - component: {fileID: 1045746091161384690}
   - component: {fileID: 5620319587894363368}
+  - component: {fileID: 705921168720884473}
   m_Layer: 16
   m_Name: Exhaust
   m_TagString: Untagged
@@ -4883,6 +4884,27 @@ ParticleSystemRenderer:
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
   m_MaskInteraction: 0
+--- !u!95 &705921168720884473
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4204322162561345807}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 7a807b8462d52f64b9552a4dcbd4dc80, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &7348188028007044401
 GameObject:
   m_ObjectHideFlags: 0
@@ -4897,7 +4919,6 @@ GameObject:
   - component: {fileID: 5297005401148272751}
   - component: {fileID: 840502086591895670}
   - component: {fileID: -7459697775064362926}
-  - component: {fileID: 2066094543347475072}
   m_Layer: 16
   m_Name: HM
   m_TagString: Missile
@@ -5012,7 +5033,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8b7272a035dc0c48addf4bb8ef12544, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  player: {fileID: 0}
+  playerTransform: {fileID: 0}
   playerLayer:
     serializedVersion: 2
     m_Bits: 256
@@ -5020,8 +5041,11 @@ MonoBehaviour:
   rotateSpeed: 400
   isPlayerDetected: 0
   PlayerCollided: 0
+  hasReturnedToPool: 0
   playerDetectionCheckRadius: 7
-  MissileHealth: 20
+  MissileMaxHealth: 20
+  MissileCurrentHealth: 0
+  MDamageAmount: 10
   impactField: 2.5
   force: 3500
   explosionHitlayer:
@@ -5099,24 +5123,3 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!95 &2066094543347475072
-Animator:
-  serializedVersion: 5
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7348188028007044401}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 58a9cd43aecc1e348ae027d7bf78acc8, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0

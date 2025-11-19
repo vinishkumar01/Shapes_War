@@ -8,7 +8,7 @@ public interface IEnemyMovable
 
     bool isFacingRight { get; set; }
 
-    void MoveEnemy(Vector3 velocity);
+    void MoveEnemy(Vector2 velocity);
 
     void CheckForLeftorRightFacing(Vector2 velocity);
 }
