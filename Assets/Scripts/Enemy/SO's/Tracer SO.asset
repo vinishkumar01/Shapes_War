@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b0a94c30af7e94438b360afa6d3a6b6, type: 3}
+  m_Name: Tracer SO
+  m_EditorClassIdentifier: 
+  enemyTypeforAttributes: 1
+  _chaserMaxHealth: 0
+  _chaserDamageDealAmount: 0
+  _chaser_Movespeed: 0
+  _tracerMaxHealth: 100
+  _tracerDamageDealAmount: 10
+  _tracer_MoveSpeed: 10
+  _numOfMissileInitiation: 1
+  _intervalBetweenMissiles: 6
+  _fireRate: 0.25
+  _playerDetectionCheckRadius: 10
+  _playerNearCheckRadius: 20
+  _smasherMaxHealth: 0
+  _smasherDamageDealAmount: 0
+  _playerDetectionDistance: 0
+  _smasher_MoveSpeed: 0

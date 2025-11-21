@@ -6,8 +6,8 @@ using UnityEngine;
 // This is a derived class from Enemy 
 public class Chaser : Enemy
 {
-    [Header("References")]
 
+    [Header("References")]
     //Lets Store the initialize currentNode and create a list for path
     [SerializeField] Node currentNode;
     [SerializeField] Transform player;
@@ -20,9 +20,9 @@ public class Chaser : Enemy
     [SerializeField] LayerMask platformLayer;
 
     [Header("Movement / Pathing")]
-    [SerializeField] int Movespeed = 5;
     [SerializeField] List<Node> path = new List<Node>();
     [SerializeField] float pathCheckInterval = 0.5f;
+    int Movespeed { get; set; }
 
     [Header("Debug")]
     [SerializeField] bool debugLogs = false;
@@ -34,6 +34,9 @@ public class Chaser : Enemy
 
     private bool wasGroundedLastFrame = true;
 
+    private int _chaserMaxHealth { get; set; }
+    private int _chaserDamageDealAmount { get; set; }
+
 
     public override void EnemyOnStart()
     {
@@ -44,6 +47,7 @@ public class Chaser : Enemy
         //Assets\Scripts\Enemy\Enemy Types\Chaser.cs(35,18): warning CS0108: 'Chaser.Start()' hides inherited member 'Enemy.Start()'. Use the new keyword if hiding was intended.
         //As the Start and Update methods are not virtual we get this warning when we try to implement this way to not to override the Enemy scripts Start.
 
+        AssignChaserAttributes();
 
         //Getting all the required Components
         NPCcollider = GetComponent<Collider2D>();
@@ -63,6 +67,20 @@ public class Chaser : Enemy
 
         //PathUpdation
         pathUpdating();
+    }
+
+    private void AssignChaserAttributes()
+    {
+        if (statsSO.enemyTypeforAttributes != EnemyType.Chaser)
+        {
+            Debug.LogWarning("Assigned SO does not match Tracer type");
+
+        }
+        //Setting the MoveSpeed for the Chaser
+        _chaserMaxHealth = statsSO._chaserMaxHealth;
+        _chaserDamageDealAmount = statsSO._chaserDamageDealAmount;
+        Movespeed = statsSO._chaser_Movespeed;
+
     }
 
     public void pathUpdating()

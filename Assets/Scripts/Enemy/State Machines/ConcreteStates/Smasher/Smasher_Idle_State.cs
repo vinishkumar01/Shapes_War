@@ -30,7 +30,16 @@ public class Smasher_Idle_State : EnemyState
     {
         base.FrameUpdate();
 
+        // Cast Rays and Ray Spheres for environment detection
+        ((Smasher)enemy).DrawRaysAndSpheres();
+
         enemy.MoveEnemy(Vector2.zero);
+
+        if (enemy.IsPlayerActive())
+        {
+            Debug.Log("Switching to Chase State");
+            enemy.stateMachine.ChangeState(enemy.chaseState);
+        }
 
     }
 

@@ -21,14 +21,14 @@ public class Tracer : Enemy
     [SerializeField] List<Node> AllEdgeNodeInTheScene = new List<Node>();
 
     [Header("NPC movements Config")]
-    [SerializeField] int MoveSpeed = 5;
     [SerializeField] Vector3 FacingDirection;
+    int MoveSpeed { get; set; }
 
     [Header("Attack Configs")]
-    [SerializeField] int NumOfMissileInitiation = 2;
-    [SerializeField] float IntervalBetweenMissiles = 6f;
     [SerializeField] Transform firePoint;
-    [SerializeField] float fireRate;
+    int NumOfMissileInitiation { get; set; }
+    float IntervalBetweenMissiles { get; set; }
+    float FireRate { get; set; }
 
     [Header("Conditions")]
     [SerializeField] bool isGrounded;
@@ -39,15 +39,22 @@ public class Tracer : Enemy
     [SerializeField] public bool isIntimidating;
     RaycastHit2D noPlatformxMax;
     RaycastHit2D noPlatformxMin;
-    [SerializeField] float playerDetectionCheckRadius = 20f;
-    [SerializeField] float PlayerNearCheckRadius = 30f;
+    float playerDetectionCheckRadius { get; set; }
+    float PlayerNearCheckRadius { get; set; }
     [SerializeField] float GroundCheckRadius = 0.9f;
     [SerializeField] Vector2 GroundCheckOffset;
+
+
+    private int _tracerMaxHealth { get; set; }
+    private int _tracerDamageDealAmount { get; set; }
 
     public override void EnemyOnStart()
     {
         base.EnemyOnStart();
 
+
+        AssignTracerAttributes();
+        
         NPCcollider = RB.GetComponent<Collider2D>();
 
         if (AStarManager.instance != null)
@@ -67,6 +74,27 @@ public class Tracer : Enemy
         {
             player = GameObject.FindGameObjectWithTag("Player").transform;
         }
+    }
+
+    private void AssignTracerAttributes()
+    {
+        if (statsSO.enemyTypeforAttributes != EnemyType.Tracer)
+        {
+            Debug.LogWarning("Assigned SO does not match Tracer type");
+
+        }
+        //Setting the Tracer Attributes
+        _tracerMaxHealth = statsSO._tracerMaxHealth;
+        _tracerDamageDealAmount = statsSO._tracerDamageDealAmount;
+        MoveSpeed = statsSO._tracer_MoveSpeed;
+
+        NumOfMissileInitiation = statsSO._numOfMissileInitiation;
+        IntervalBetweenMissiles = statsSO._intervalBetweenMissiles;
+        FireRate = statsSO._fireRate;
+
+        playerDetectionCheckRadius = statsSO._playerDetectionCheckRadius;
+        PlayerNearCheckRadius = statsSO._playerNearCheckRadius;
+
     }
 
     #region PathUpdation and Get Nodes for Retreat and nearest to the Enemy
@@ -392,7 +420,7 @@ public class Tracer : Enemy
             PoolManager.SpawnObject(Missile, Origin, Quaternion.identity, PoolManager.PoolType.GameObjects);
             MissilesFired++;
 
-            yield return new WaitForSeconds(fireRate);
+            yield return new WaitForSeconds(FireRate);
         }
     }
 

@@ -30,8 +30,27 @@ public class Smasher_Attack_State : EnemyState
     {
         base.FrameUpdate();
 
-        enemy.MoveEnemy(Vector2.zero);
+        // Cast Rays and Ray Spheres for environment detection
+        ((Smasher)enemy).DrawRaysAndSpheres();
 
+        //Flip the NPC when it hits the edge
+        ((Smasher)enemy).FlipToAvoidEdges();
+
+        //Move the Character
+        ((Smasher)enemy).MoveAndAttack();
+
+        //Switch to idle if player is not active.
+        if (!enemy.IsPlayerActive())
+        {
+            Debug.Log("Switching to Chase State");
+            enemy.stateMachine.ChangeState(enemy.IdleState);
+        }
+
+        //Switch to attack state when the player gets near the NPC
+        if (!((Smasher)enemy).isPlayerNearToPorformSlam || !((Smasher)enemy).isPlayerNearToPerformJumpAttack)
+        {
+            enemy.stateMachine.ChangeState(enemy.chaseState);
+        }
     }
 
     public override void PhysicsUpdate()

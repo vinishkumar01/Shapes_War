@@ -6,7 +6,9 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, ITriggerCheckable
 {
-    [field: SerializeField] public int MaxHealth { get; set; } = 100;
+    [SerializeField] protected EnemiesSO statsSO;
+
+    [field: SerializeField] public int MaxHealth { get; set; }
     [field: SerializeField] public int CurrentHealth { get; set; }
     [field: SerializeField] public int DamageAmount { get; set; }
 
@@ -38,6 +40,8 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, ITriggerCheckabl
         //Here we are setting up the instances for those classes
         stateMachine = new EnemyStateMachine();
 
+        AssignHealthAttributes();
+
         switch (_enemyType)
         {
             case EnemyType.Chaser:
@@ -56,9 +60,36 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, ITriggerCheckabl
                 attackState = new Smasher_Attack_State(this, stateMachine);
                 break;
         }
+    }
 
-        
+    public void AssignHealthAttributes()
+    {
+        //Setting the health and the DamageDeal Amount
+        if(statsSO == null)
+        {
+            Debug.LogError($"statsSO is not assigned for enemy Type {_enemyType}");
+        }
 
+        switch (_enemyType)
+        {
+            case EnemyType.Chaser:
+                MaxHealth = statsSO._chaserMaxHealth;
+                DamageAmount = statsSO._chaserDamageDealAmount;
+                break;
+
+            case EnemyType.Tracer:
+                MaxHealth = statsSO._tracerMaxHealth;
+                DamageAmount = statsSO._tracerDamageDealAmount;
+                break;
+
+            case EnemyType.Smasher:
+                MaxHealth = statsSO._smasherMaxHealth;
+                DamageAmount = statsSO._smasherDamageDealAmount;
+                break;
+        }
+
+        // Setting the current health to MaxHealth
+        CurrentHealth = MaxHealth;
     }
 
     public virtual void EnemyOnStart() { }
@@ -161,13 +192,6 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, ITriggerCheckabl
     public void AnimationTriggerEvent(AnimationTriggerType triggerType)
     {
         stateMachine.currentEnemyState.AnimationTriggerEvent(triggerType);
-    }
-
-    public enum EnemyType
-    {
-        Chaser,
-        Tracer,
-        Smasher
     }
 
     public enum AnimationTriggerType
