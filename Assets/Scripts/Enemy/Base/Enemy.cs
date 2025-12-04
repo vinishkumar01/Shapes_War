@@ -4,7 +4,7 @@ using UnityEngine;
 
 //This is the base class for all the Enemy, and this inherits from two interfaces and all the stats and configs will be modified here
 
-public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, ITriggerCheckable
+public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver, IFixedUpdateObserver, ILateUpdateObserver
 {
     [SerializeField] protected EnemiesSO statsSO;
 
@@ -29,11 +29,17 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, ITriggerCheckabl
 
     #endregion
 
-    public bool isAggroed { get; set; }
     public bool IsWithinStrikingDistance { get; set; }
 
 
     public EnemyType _enemyType;
+
+    private void OnEnable()
+    {
+        UpdateManager.RegisterObserver(this);   
+        FixedUpdateManager.RegisterObserver(this);
+        LateUpdateManager.RegisterObserver(this);
+    }
 
     private void Awake()
     {
@@ -96,7 +102,7 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, ITriggerCheckabl
 
     private void Start()
     {
-        Debug.Log("Enemy Start() called");
+        //Debug.Log("Enemy Start() called");
 
         CurrentHealth = MaxHealth;
 
@@ -109,7 +115,7 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, ITriggerCheckabl
 
         if (stateMachine != null && IdleState != null)
         {
-            Debug.Log("Initializing state machine...");
+            //Debug.Log("Initializing state machine...");
             stateMachine.initialize(IdleState);
         }
         else
@@ -119,19 +125,19 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, ITriggerCheckabl
 
     }
 
-    private void Update()
+    public void ObservedUpdate()
     {
         if(stateMachine.currentEnemyState != null)
             stateMachine.currentEnemyState.FrameUpdate();
     }
 
-    private void FixedUpdate()
+    public void ObservedFixedUpdate()
     {
         if (stateMachine.currentEnemyState != null)
             stateMachine.currentEnemyState.PhysicsUpdate();
     }
 
-    private void LateUpdate()
+    public void ObservedLateUpdate()
     {
         if(stateMachine.currentEnemyState != null)
             stateMachine.currentEnemyState.LateFrameUpdate();
@@ -210,29 +216,21 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, ITriggerCheckabl
 
     #endregion
 
-    #region Distance Checks
-
-    public void SetAggroedStatus(bool aggroed)
-    {
-        isAggroed = aggroed;
-    }
-
-    public void SetStrikingDistance(bool isWithinStrikingDistance)
-    {
-        IsWithinStrikingDistance = isWithinStrikingDistance;
-    }
-
-
-    #endregion
-
     public bool IsPlayerActive()
     {
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         return player != null && player.activeInHierarchy;
     }
 
-    private void OnGUI()
+    private void OnDisable()
     {
-        GUI.Label(new Rect(500, 10, 300, 100), $"Current State: {stateMachine.currentEnemyState?.GetType().Name}");
+        UpdateManager.UnregisterObserver(this);
+        FixedUpdateManager.UnregisterObserver(this);
+        LateUpdateManager.UnregisterObserver(this);
     }
+
+    //private void OnGUI()
+    //{
+    //    GUI.Label(new Rect(500, 10, 300, 100), $"Current State: {stateMachine.currentEnemyState?.GetType().Name}");
+    //}
 }

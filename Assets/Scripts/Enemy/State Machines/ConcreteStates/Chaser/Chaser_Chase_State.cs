@@ -20,14 +20,14 @@ public class Chaser_Chase_State : EnemyState
 
         if (triggerType == Enemy.AnimationTriggerType.ReadyToRun)
         {
-            Debug.Log("ReadyToRun to Run animation event recieved by state machine");
+            //Debug.Log("ReadyToRun to Run animation event recieved by state machine");
         }
     }
 
     public override void EnterState()
     {
         base.EnterState();
-        Debug.Log("Entered Chase State");
+        //Debug.Log("Entered Chase State");
         enemy._animator.SetBool("IsStartedMoving", true);
     }
 

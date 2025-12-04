@@ -42,7 +42,7 @@ public class Smasher_Attack_State : EnemyState
         //Switch to idle if player is not active.
         if (!enemy.IsPlayerActive())
         {
-            Debug.Log("Switching to Chase State");
+            //Debug.Log("Switching to Chase State");
             enemy.stateMachine.ChangeState(enemy.IdleState);
         }
 

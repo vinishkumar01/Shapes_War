@@ -59,8 +59,8 @@ public class Chaser : Enemy
             AllNodesinTheScene = AStarManager.instance.AllNodesInTheScene;
             AllEdgeNodesinTheScene = AStarManager.instance.AllEdgeNodesInTheScene;
         }
-        Debug.Log("All Nodes" + AllNodesinTheScene.Count);
-        Debug.Log("All Edge Nodes" + AllEdgeNodesinTheScene.Count);
+        //Debug.Log("All Nodes" + AllNodesinTheScene.Count);
+        //Debug.Log("All Edge Nodes" + AllEdgeNodesinTheScene.Count);
 
         //Getting the Current Node of the NPC
         currentNode = GetNearestNode(transform.position);
@@ -466,7 +466,7 @@ public class Chaser : Enemy
         if (collision.gameObject.TryGetComponent(out IPlayerDamageable damageable))
         {
             Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
-            damageable.Damage(5f, hitDirection);
+            damageable.Damage(5, hitDirection);
         }
     }
 }

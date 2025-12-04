@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76e493f1a9698034785fb59e5044ded0, type: 3}
+  m_Name: PlayerData
+  m_EditorClassIdentifier: 
+  maxHealth: 200
+  damageAmount: 20
+  groundCheckRadius: 0.5
+  ropeCheckRadius: 2
+  reattachDelay: 0.5
+  fallGravityMult: 1.5
+  maxFallSpeed: 25
+  fastFallGravityMult: 2
+  maxFastFallSpeed: 30
+  jumpHeight: 3
+  jumpTimeToApex: 0.2
+  jumpTime: 0.25
+  coyoteTime: 0.5
+  jumpBufferTime: 0.5
+  movementSpeed: 16
+  accelerationTimeAirBorne: 0.2
+  accelerationTimeGround: 0.1
+  ropeSwingForce: 8
+  doubleJumpForce: 25
+  doubleJumpSkill: 0
+  airMovementSpeed: 16
+  accelerationTimeAir: 0.15
+  ropeSwingForceInJump: 8
+  dashTime: 0.2
+  dashSpeed: 50
+  dashCoolDown: 2.5

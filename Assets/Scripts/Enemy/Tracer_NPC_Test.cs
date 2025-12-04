@@ -514,7 +514,7 @@ public class Tracer_NPC_Test : MonoBehaviour, IHittable
         if (collision.gameObject.TryGetComponent(out IPlayerDamageable damageable))
         {
             Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
-            damageable.Damage(25f, hitDirection);
+            damageable.Damage(25, hitDirection);
         }
     }
 

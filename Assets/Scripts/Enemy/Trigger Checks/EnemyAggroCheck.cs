@@ -15,19 +15,5 @@ public class EnemyAggroCheck : MonoBehaviour
         _enemy = GetComponentInParent<Enemy>();
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        if(collision.gameObject == playerTarget)
-        {
-            _enemy.SetAggroedStatus(true);
-        }
-    }
-
-    private void OnTriggerExit2D(Collider2D collision)
-    {
-        if (collision.gameObject == playerTarget)
-        {
-            _enemy.SetAggroedStatus(true);
-        }
-    }
+    
 }

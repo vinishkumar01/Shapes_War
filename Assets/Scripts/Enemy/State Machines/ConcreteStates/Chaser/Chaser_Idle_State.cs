@@ -19,7 +19,7 @@ public class Chaser_Idle_State : EnemyState
         
         if(triggerType == Enemy.AnimationTriggerType.EnemyIdle)
         {
-            Debug.Log("Idle animation event recieved by state machine");
+            //Debug.Log("Idle animation event recieved by state machine");
         }
     }
 
@@ -38,13 +38,13 @@ public class Chaser_Idle_State : EnemyState
     {
         base.FrameUpdate();
 
-        Debug.Log("Idle State FrameUpdate running");
+        //Debug.Log("Idle State FrameUpdate running");
 
         ((Chaser)enemy).MoveEnemy(Vector2.zero);
 
         if(enemy.IsPlayerActive())
         {
-            Debug.Log("Switching to Chase State");
+            //Debug.Log("Switching to Chase State");
             enemy.stateMachine.ChangeState(enemy.chaseState);
         }
     }

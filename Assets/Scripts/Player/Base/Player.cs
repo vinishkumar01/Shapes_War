@@ -1,0 +1,409 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.ComponentModel.Design;
+using TMPro;
+using Unity.VisualScripting;
+using UnityEditor.Experimental.GraphView;
+using UnityEditorInternal;
+using UnityEngine;
+
+public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedUpdateObserver, ILateUpdateObserver
+{
+    #region Player Attributes
+
+    [Header("Player Health Attributes")]
+    public int _currentHealth;
+
+    public int MaxHealth { get => _playerDataSO.maxHealth; set => _playerDataSO.maxHealth = Mathf.Max(0, value); }
+    public int CurrentHealth { get; set; }
+
+    [Header("References")]
+    private HealthBar _healthBar;
+    public KnockBack _knockBack;
+    private FlashEffect _flashEffect;
+
+    public Animator _animator;
+    public Rigidbody2D RB { get; set; }
+    public bool IsFacingRight = true;
+
+    [Header("Surrounding and Rope Check")]
+    public bool _isGrounded;
+    [SerializeField]private Transform _groundCheck;
+    [SerializeField] private LayerMask _groundLayer;
+
+    public bool _isRope;
+    [SerializeField] private Transform _ropeCheck;
+    [SerializeField] private LayerMask _ropelayer;
+
+    [Header("Rope Configs")]
+    private HingeJoint2D _hingeJoint;
+    private Transform _attachedTo;
+    private GameObject _disregard;
+    private Rigidbody2D _ropeInRange = null;
+    public bool _attachedToRope;
+    private float _detachTime;
+
+    [Header("Camera Look Controller")]
+    [SerializeField] private CameraLookController _cameraLookController;
+
+    [Header("Facing Direction")]
+    [SerializeField] private Transform _gun;
+    private Vector3 _startingPos;
+
+    [Header("Gravity Configs")]
+    [SerializeField] private float _gravityStrength; //Downwards force (gravity) needed for the desired jumpHeight and jumpTimeToApex.
+    public float _gravityScale; //Strength of the player's gravity as a multiplier of gravity (set in ProjectSettings/Physics2D).
+
+    [Header("Jump configs")]
+    public float _jumpForce;
+    public bool _isJumping;
+
+    [Header("Player UI")]
+    public TextMeshPro _dashText;
+
+    [Header("Mario Jump Effect")]
+    public float _jumpTimeCounter;
+
+    [Header("Coyote Time")]
+    public float _coyoteTimeCounter;
+
+    [Header("Jump Buffer")]
+    public float _jumpBufferTimeCounter;
+
+    [Header("Double Jump")]
+    public bool _doubleJump;
+
+    #endregion
+
+    #region State Machine Variables
+
+    public PlayerStateMachine _playerStateMachine { get; set; }
+
+    public PlayerIdleState _playerIdleState { get; set; }
+    public PlayerMoveState _playerMoveState { get; set; }
+    public PlayerJumpState _playerJumpState { get; set; }
+    public PlayerDashState _playerDashState { get; set; }
+
+    #endregion
+
+    [Header("Player Data")]
+    public PlayerDataSO _playerDataSO;
+
+    private void OnEnable()
+    {
+        UpdateManager.RegisterObserver(this);
+        FixedUpdateManager.RegisterObserver(this);
+        LateUpdateManager.RegisterObserver(this);
+    }
+
+    private void Awake()
+    {
+        _playerStateMachine = new PlayerStateMachine();
+
+        _playerIdleState = new PlayerIdleState(this, _playerStateMachine, _playerDataSO);
+        _playerMoveState = new PlayerMoveState(this, _playerStateMachine, _playerDataSO);
+        _playerJumpState = new PlayerJumpState(this, _playerStateMachine, _playerDataSO);
+        _playerDashState = new PlayerDashState(this, _playerStateMachine, _playerDataSO);
+    }
+
+
+    private void Start()
+    {
+        RB = GetComponent<Rigidbody2D>();
+        
+        //Player health References
+        _healthBar = GetComponentInChildren<HealthBar>();
+        _flashEffect = GetComponent<FlashEffect>();
+        _knockBack = GetComponent<KnockBack>();
+
+        //Player Hinge Joint Configs for Rope Config
+        _hingeJoint = GetComponent<HingeJoint2D>();
+
+        //Player Animator
+        _animator = GetComponent<Animator>();
+
+        //Player Starting Position
+        _startingPos = transform.localScale;
+
+        //Player health
+        _currentHealth = _playerDataSO.maxHealth;
+
+        //Initializing the default state for the player
+        _playerStateMachine.Initialize(_playerIdleState);
+    }
+
+    #region Player Health configs
+    public void Damage(int damageAmount, Vector2 hitDirection)
+    {
+        _currentHealth -= damageAmount;
+
+        //KnockBack
+        _knockBack.CallKnockBackCoroutine(hitDirection, Vector2.up, Input.GetAxisRaw("Horizontal"));
+
+        //Damage Flash
+        _flashEffect.CallDamageFlash();
+
+        //Update Health Bar
+        _healthBar.UpdateHealthBar(_playerDataSO.maxHealth, _currentHealth);
+
+        if (_currentHealth <= 0)
+        {
+            Die();
+        }
+    }
+
+    public void Die()
+    {
+        //Die
+        gameObject.SetActive(false);
+    }
+
+    #endregion
+
+    #region Inputs for Players
+
+    public float MovementInputXDirection => UserInputs.instance.moveInputs.x;
+
+    public float MovementInputYDirection => UserInputs.instance.moveInputs.y;
+
+    public bool JumpPressed => UserInputs.instance._playerInputs.Player.Jump.WasPressedThisFrame();
+    public bool JumpHeld => UserInputs.instance._playerInputs.Player.Jump.IsPressed();
+    public bool JumpReleased => UserInputs.instance._playerInputs.Player.Jump.WasReleasedThisFrame();
+    public bool DashPressed => UserInputs.instance._playerInputs.Player.Dash.WasPressedThisFrame();
+
+    #endregion
+
+    public void ObservedUpdate()
+    {
+        CheckPlayerAttachedToRope();
+        JumpCounters();
+        PlayerFacing();
+
+        _playerStateMachine._currentPlayerState.FrameUpdate();
+    }
+
+    public void ObservedFixedUpdate()
+    {
+        CheckSurroundingAndRope();
+        GravityConfigs();
+
+        _playerStateMachine._currentPlayerState.PhysicsUpdate();
+    }
+
+    public void ObservedLateUpdate()
+    {
+        _playerStateMachine._currentPlayerState.LateFrameUpdate();
+    }
+
+    #region Player gravity configs
+
+    private void GravityConfigs()
+    {
+        //Calculating the gravity Strength using the below formula
+        //Physics2D.gravity is been set to -30, jump height = 3, jumpTimeToApex = 0.2;
+        _gravityStrength = -(2 * _playerDataSO.jumpHeight) / (_playerDataSO.jumpTimeToApex * _playerDataSO.jumpTimeToApex);
+
+        //calculate the rigidBody's gravity Scale (i.e. gravity strength relative to Unity's gravity value)
+        _gravityScale = _gravityStrength / Physics2D.gravity.y;
+
+        //Calculate the jumpForce using the formula (InitialJumpVelocity = gravity * timeToJumpApex)
+        _jumpForce = Mathf.Abs(_gravityStrength) * _playerDataSO.jumpTimeToApex;
+
+        //Apply Force vertically when Falling
+        if (RB.velocity.y < 0 && MovementInputYDirection < 0) 
+        {
+            //Much higher gravity pull if holding down
+            SetGravityScale( _gravityScale * _playerDataSO.fastFallGravityMult);
+            //lets Cap the maximum fast fall speed, so when falling over large distance we dont accelerate to insane speed
+            RB.velocity = new Vector2(RB.velocity.x, Mathf.Max(RB.velocity.y, -_playerDataSO.maxFastFallSpeed));
+        }
+        else if(RB.velocity.y < 0)
+        {
+            //Higher gravity if falling 
+            SetGravityScale(_gravityScale * _playerDataSO.fallGravityMult);
+
+            //lets cap the maximum fall speed, so when falling over larger distance we dont accelerate to insanly
+            RB.velocity = new Vector2(RB.velocity.x, Mathf.Max(RB.velocity.y, -_playerDataSO.maxFallSpeed));
+        }
+        else
+        {
+            SetGravityScale(_gravityScale);
+        }
+    }
+
+    private void SetGravityScale(float Scale)
+    {
+        RB.gravityScale = Scale;
+    }
+
+    #endregion
+
+    #region Player surrounding Configs
+    private void CheckSurroundingAndRope()
+    {
+        _isGrounded = Physics2D.OverlapCircle(_groundCheck.position, _playerDataSO.groundCheckRadius, _groundLayer);
+
+        Collider2D ropeHit = Physics2D.OverlapCircle(_ropeCheck.position, _playerDataSO.ropeCheckRadius, _ropelayer);
+
+        if (ropeHit != null)
+        {
+            _isRope = true;
+            _ropeInRange = ropeHit.attachedRigidbody;
+        }
+        else
+        {
+            _isRope = false;
+            _ropeInRange = null;
+        }
+    }
+    #endregion
+
+    #region Player Rope Configs
+
+    private void CheckPlayerAttachedToRope()
+    {
+        if(!_attachedToRope && _ropeInRange != null && _isRope)
+        {
+            if(Time.time > _detachTime + _playerDataSO.reattachDelay)
+            {
+                if(UserInputs.instance._playerInputs.Player.PerformAction.WasPressedThisFrame())
+                {
+                    if(_attachedTo != _ropeInRange.transform.parent)
+                    {
+                        if(_disregard == null || _ropeInRange.transform.parent.gameObject != _disregard)
+                        {
+                            Attach(_ropeInRange);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private Rigidbody2D GetEndSegmentOfRope(Transform ropeParent, int offsetFromEnd = 0)
+    {
+        int count = ropeParent.childCount;
+        int index = Mathf.Clamp(count - 1 - offsetFromEnd, 0, count - 1);
+
+        Transform targetSegment = ropeParent.GetChild(index);
+        return  targetSegment.GetComponent<Rigidbody2D>();
+    }
+
+    private void Attach(Rigidbody2D ropeBone)
+    {
+        Transform ropeParent = ropeBone.transform.parent;
+        Rigidbody2D targetSegment = GetEndSegmentOfRope(ropeParent, 1);
+
+        _hingeJoint.connectedBody = targetSegment;
+        _hingeJoint.enabled = true;
+        _attachedToRope = true;
+        _attachedTo = ropeParent;
+    }
+
+    public void Detach()
+    {
+        _hingeJoint.connectedBody = null;
+        _hingeJoint.enabled = false;
+        _attachedToRope = false;
+        _attachedTo = null;
+        _detachTime = Time.time;
+
+        //Apply force while detachig from rope in both x and y
+        RB.velocity = new Vector2(RB.velocity.x, _jumpForce);
+    }
+
+    #endregion
+
+    #region Player Facing Direction configs
+
+    private void PlayerFacing()
+    {
+        float gunAngle = _gun.eulerAngles.z;
+
+        IsFacingRight = gunAngle <= 90f || gunAngle >= 270f;
+
+        if(IsFacingRight)
+        {
+            transform.localScale = _startingPos;
+        }
+        else
+        {
+            transform.localScale = new Vector2(-_startingPos.x, _startingPos.y);
+        }
+
+        _cameraLookController.SetFacing(IsFacingRight);
+    }
+
+    #endregion
+
+    #region Animation triggers
+
+    public void AnimationTriggerEvent(AnimationTriggerType triggerType)
+    {
+      _playerStateMachine._currentPlayerState.AnimationTriggerEvent(triggerType);
+    }
+
+    public enum AnimationTriggerType
+    {
+        Idle,
+        Run,
+        Jump,
+        Dash,
+    }
+
+    #endregion
+
+    #region Player Jump Counters
+
+    private void JumpCounters()
+    {
+        if(_isGrounded)
+        {
+            _coyoteTimeCounter = _playerDataSO.coyoteTime;
+
+            //Double Jump
+            _doubleJump = true;
+        }
+        else
+        {
+            _coyoteTimeCounter -= Time.deltaTime;
+        }
+
+        if (JumpPressed)
+        {
+            _jumpBufferTimeCounter = _playerDataSO.jumpBufferTime;   
+        }
+        else
+        {
+            _jumpBufferTimeCounter -= Time.deltaTime;
+        }
+
+        if(_isGrounded)
+        {
+            _jumpTimeCounter = _playerDataSO.jumpTime;
+        }
+    }
+
+    #endregion
+
+    #region Debugging
+    private void OnDrawGizmos()
+    {
+        Gizmos.DrawWireSphere(_groundCheck.position, _playerDataSO.groundCheckRadius);
+        Gizmos.DrawWireSphere(_ropeCheck.position, _playerDataSO.ropeCheckRadius);
+    }
+
+    #endregion
+
+    private void OnDisable()
+    {
+        UpdateManager.UnregisterObserver(this);
+        FixedUpdateManager.UnregisterObserver(this);
+        LateUpdateManager.UnregisterObserver(this); 
+    }
+
+    private void OnGUI()
+    {
+        GUI.Label(new Rect(500, 10, 300, 100), $"Current State: {_playerStateMachine._currentPlayerState?.GetType().Name}");
+    }
+}

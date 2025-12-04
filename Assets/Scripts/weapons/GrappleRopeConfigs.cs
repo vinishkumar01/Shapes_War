@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GrappleRopeConfigs : MonoBehaviour
+public class GrappleRopeConfigs : MonoBehaviour, IUpdateObserver
 {
     [Header("General References:")]
      [SerializeField]GrapplingGunConfig grapplingGun;
@@ -26,16 +26,11 @@ public class GrappleRopeConfigs : MonoBehaviour
     bool StraightLine = true;
 
 
-
-
-    private void Awake()
-    {
-        grapplingGun = GetComponentInParent<GrapplingGunConfig>();
-        _lineRenderer.enabled = false;
-    }
-
     private void OnEnable()
     {
+        //Register in UpdateManager
+        UpdateManager.RegisterObserver(this);
+
         moveTime = 0;
         _lineRenderer.positionCount = precision;
         WaveSize = StartWaveSize;
@@ -46,8 +41,17 @@ public class GrappleRopeConfigs : MonoBehaviour
         _lineRenderer.enabled = true;
     }
 
+    private void Awake()
+    {
+        grapplingGun = GetComponentInParent<GrapplingGunConfig>();
+        _lineRenderer.enabled = false;
+    }
+
     private void OnDisable()
     {
+        //UnRegister in UpdateManager
+        UpdateManager.UnregisterObserver(this);
+
         _lineRenderer.enabled = false;
         isgrappling = false;
     }
@@ -62,7 +66,7 @@ public class GrappleRopeConfigs : MonoBehaviour
     }
 
 
-    private void Update()
+    public void ObservedUpdate()
     {
         moveTime += Time.deltaTime;
         DrawRope();

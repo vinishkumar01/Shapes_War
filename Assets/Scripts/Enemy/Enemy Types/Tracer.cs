@@ -72,7 +72,13 @@ public class Tracer : Enemy
 
         if(player == null)
         {
-            player = GameObject.FindGameObjectWithTag("Player").transform;
+            GameObject playerGO = GameObject.FindGameObjectWithTag("Player");
+            player = playerGO?.transform;
+
+            if(player == null)
+            {
+                Debug.LogWarning("Player not found");
+            }
         }
     }
 
@@ -257,6 +263,12 @@ public class Tracer : Enemy
             Vector2 direction = new Vector2(watchingPlayer, 0);
 
             CheckForLeftorRightFacing(direction);
+        }
+
+        if(player.position == null)
+        {
+            Vector2 sapcedOutDirection = new Vector2(transform.localScale.x,transform.localScale.y);
+            CheckForLeftorRightFacing(sapcedOutDirection);
         }
     }
 
@@ -497,7 +509,7 @@ public class Tracer : Enemy
         if (collision.gameObject.TryGetComponent(out IPlayerDamageable damageable))
         {
             Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
-            damageable.Damage(25f, hitDirection);
+            damageable.Damage(25, hitDirection);
         }
     }
 }

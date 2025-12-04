@@ -361,7 +361,7 @@ public class Smasher_Test_Script_new : MonoBehaviour, IHittable
         if (collision.gameObject.TryGetComponent(out IPlayerDamageable damageable))
         {
             Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
-            damageable.Damage(25f, hitDirection);
+            damageable.Damage(25, hitDirection);
         }
     }
 }

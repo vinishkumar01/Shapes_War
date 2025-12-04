@@ -504,7 +504,7 @@ public class NPC_Test : MonoBehaviour, IDamageable
         if(collision.gameObject.TryGetComponent(out IPlayerDamageable damageable))
         {
             Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
-            damageable.Damage(25f, hitDirection);
+            damageable.Damage(25, hitDirection);
         }
     }
 

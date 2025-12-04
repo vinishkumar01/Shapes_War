@@ -37,7 +37,7 @@ public class Smasher_Idle_State : EnemyState
 
         if (enemy.IsPlayerActive())
         {
-            Debug.Log("Switching to Chase State");
+            //Debug.Log("Switching to Chase State");
             enemy.stateMachine.ChangeState(enemy.chaseState);
         }
 

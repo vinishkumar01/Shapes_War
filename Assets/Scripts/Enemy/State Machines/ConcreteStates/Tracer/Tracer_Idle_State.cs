@@ -37,11 +37,15 @@ public class Tracer_Idle_State : EnemyState
         // Make sure that the NPC always looks at the player until it retreats.
         ((Tracer)enemy).FacingPlayer();
 
-        //Intimidate the Player
-        if(!((Tracer)enemy).isIntimidating)
+        if(enemy.IsPlayerActive())
         {
-            enemy.StartCoroutine(((Tracer)enemy).IntimidatePlayer());
+            //Intimidate the Player
+            if (!((Tracer)enemy).isIntimidating)
+            {
+                enemy.StartCoroutine(((Tracer)enemy).IntimidatePlayer());
+            }
         }
+       
 
         //Check if player enters the detection radius
         ((Tracer)enemy).playerDetection();

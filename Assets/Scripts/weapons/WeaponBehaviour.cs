@@ -121,9 +121,12 @@ public class WeaponBehaviour : MonoBehaviour
             return;
         }
 
+        Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(Camera.main, UserInputs.instance._cursorTransform.position);
+        float z = GunBarrel.position.z - Camera.main.transform.position.z;
+        Vector3 cursorWorldPos = Camera.main.ScreenToWorldPoint(new Vector3(screenPoint.x, screenPoint.y, z));
+
         Vector3 origin = GunBarrel.position;
-        Vector3 mousepos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Vector3 TargetDirection = (mousepos - origin).normalized;
+        Vector3 TargetDirection = (cursorWorldPos - origin).normalized;
 
         var RayHit = Physics2D.Raycast(origin, TargetDirection, BulletRange, hitLayer);
 

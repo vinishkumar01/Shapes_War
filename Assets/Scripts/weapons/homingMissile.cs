@@ -55,14 +55,24 @@ public class homingMissile : MonoBehaviour, IDamageable
         rb = GetComponent<Rigidbody2D>();
         _flashEffect = GetComponent<FlashEffect>();
 
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        playerTransform = player.GetComponent<Transform>();
+        if(playerTransform == null)
+        {
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            playerTransform = player?.GetComponent<Transform>();
+            if (player == null)
+            {
+                Debug.LogWarning("Player not found");
+            }
+        }
+        
+        
         
     }
 
     // Update is called once per frame
     void FixedUpdate()
     {
+        playerNotFound();
         FollowPlayer();
         MissileSpeedAndRotateConfig();
     }
@@ -147,6 +157,14 @@ public class homingMissile : MonoBehaviour, IDamageable
         PoolManager.ReturnObjectToPool(gameObject, PoolManager.PoolType.GameObjects);
     }
 
+    private void playerNotFound()
+    {
+        if (playerTransform == null)
+        {
+            Invoke("ReturnToPoolOnce", 2f);
+        }
+    }
+
     private void OnDrawGizmos()
     {
         if (isPlayerDetected)
@@ -197,7 +215,7 @@ public class homingMissile : MonoBehaviour, IDamageable
         if (collision.gameObject.TryGetComponent(out IPlayerDamageable damageable))
         {
             Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
-            damageable.Damage(10f, hitDirection);
+            damageable.Damage(10, hitDirection);
         }
     }
 }

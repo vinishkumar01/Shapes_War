@@ -6,6 +6,7 @@ public class GrapplingGunConfig : MonoBehaviour
 {
     [SerializeField] GunAiming gunAiming;
     [SerializeField] PlayerController playerController;
+    [SerializeField] Player player;
     [SerializeField] GrappleRopeConfigs grappleRope;
 
     #region GrapplingGun Attributes
@@ -45,6 +46,7 @@ public class GrapplingGunConfig : MonoBehaviour
     {
         gunAiming = GetComponentInParent<GunAiming>();
         playerController = GameObject.FindGameObjectWithTag("Player").GetComponentInParent<PlayerController>();
+        player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
         grappleRope = GetComponentInChildren<GrappleRopeConfigs>();
     }
 
@@ -63,12 +65,12 @@ public class GrapplingGunConfig : MonoBehaviour
 
     void GrappleGunAimAndSomeStuff()
     {
-        if (Input.GetKeyDown(KeyCode.Mouse0))
+        if (UserInputs.instance._playerInputs.Player.Fire.WasPressedThisFrame())
         {
             SetGrapplingPoint();
             //Debug.Log("Grapple Shot");
         }
-        else if (Input.GetKey(KeyCode.Mouse0))
+        else if (UserInputs.instance._playerInputs.Player.Fire.IsPressed())
         {
             if (grappleRope.enabled)
             {
@@ -77,21 +79,20 @@ public class GrapplingGunConfig : MonoBehaviour
             }
             else
             {
-                Vector2 MousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                gunAiming.GunAim(MousePos, true);
+                gunAiming.GunAim_with_CursorUI_To_World_Conversion();
             }
         }
-        else if (Input.GetKeyUp(KeyCode.Mouse0))
+        else if (UserInputs.instance._playerInputs.Player.Fire.WasReleasedThisFrame())
         {
             grappleRope.enabled = false;
             _springJoint2D.enabled = false;
-            playerController.rb.gravityScale = playerController.gravityScale;
+            //playerController.rb.gravityScale = playerController.gravityScale;
+            player.RB.gravityScale = player._gravityScale;
 
         }
         else
         {
-            Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            gunAiming.GunAim(mousePos, true);
+            gunAiming.GunAim_with_CursorUI_To_World_Conversion();
         }
 
     }
@@ -99,7 +100,7 @@ public class GrapplingGunConfig : MonoBehaviour
 
     void SetGrapplingPoint()
     {
-        Vector2 distanceVector = Camera.main.ScreenToWorldPoint(Input.mousePosition) - GunPivot.position;
+        Vector2 distanceVector = UserInputs.instance._cursorTransform.position - GunPivot.position;
 
         // We are drawing RayCast to the Mouse position from the firePoint when this happens if there is something between these two distance like (interactable layer to grapple) we will store the position maybe
         Vector2 origin = firePoint.position;

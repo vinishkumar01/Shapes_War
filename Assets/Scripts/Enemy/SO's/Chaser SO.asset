@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Chaser SO
   m_EditorClassIdentifier: 
   enemyTypeforAttributes: 0
-  _chaserMaxHealth: 200
+  _chaserMaxHealth: 1000
   _chaserDamageDealAmount: 20
   _chaser_Movespeed: 15
   _tracerMaxHealth: 0
