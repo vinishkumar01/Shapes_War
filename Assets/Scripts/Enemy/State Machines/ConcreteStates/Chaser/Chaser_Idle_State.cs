@@ -19,7 +19,7 @@ public class Chaser_Idle_State : EnemyState
         
         if(triggerType == Enemy.AnimationTriggerType.EnemyIdle)
         {
-            //Debug.Log("Idle animation event recieved by state machine");
+            Debug.Log("Idle animation event recieved by state machine");
         }
     }
 

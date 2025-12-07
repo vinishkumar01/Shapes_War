@@ -42,7 +42,7 @@ public class Tracer_Retreat_State : EnemyState
         if (((Tracer)enemy).isPlayerNear)
         {
             Debug.Log("Player is Near");
-            if (!((Tracer)enemy).isAttacking)
+            if (!((Tracer)enemy).isAttacking && enemy.IsPlayerActive())
             {
                 enemy.StartCoroutine(((Tracer)enemy).AttackPlayer());
             }

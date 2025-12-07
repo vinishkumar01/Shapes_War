@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 using Unity.Burst.CompilerServices;
 using UnityEngine;
 
-public class homingMissile : MonoBehaviour, IDamageable
+public class homingMissile : MonoBehaviour, IDamageable, IUpdateObserver, IFixedUpdateObserver
 {
     [Header("References")]
     [SerializeField] private Transform playerTransform;
@@ -43,6 +43,11 @@ public class homingMissile : MonoBehaviour, IDamageable
 
     private void OnEnable()
     {
+        //Register to Update Manager
+        UpdateManager.RegisterObserver(this);
+        //Register to FixedUpdate Manager
+        FixedUpdateManager.RegisterObserver(this);
+
         hasReturnedToPool = false;
         if(_flashEffect != null)
         {
@@ -70,11 +75,15 @@ public class homingMissile : MonoBehaviour, IDamageable
     }
 
     // Update is called once per frame
-    void FixedUpdate()
+    public void ObservedFixedUpdate()
     {
         playerNotFound();
-        FollowPlayer();
         MissileSpeedAndRotateConfig();
+
+        if(playerTransform != null)
+        {
+            FollowPlayer();
+        }
     }
 
     void IDamageable.RecieveHit(RaycastHit2D RayHit)
@@ -108,7 +117,7 @@ public class homingMissile : MonoBehaviour, IDamageable
         rb.velocity = transform.up * MissileSpeed;
     }
 
-    private void Update()
+    public void ObservedUpdate()
     {
         DrawCircleAroundMissile();
     }
@@ -217,5 +226,13 @@ public class homingMissile : MonoBehaviour, IDamageable
             Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
             damageable.Damage(10, hitDirection);
         }
+    }
+
+    private void OnDisable()
+    {
+        //Register to Update Manager
+        UpdateManager.UnregisterObserver(this);
+        //Register to FixedUpdate Manager
+        FixedUpdateManager.UnregisterObserver(this);
     }
 }

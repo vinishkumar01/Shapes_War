@@ -66,6 +66,16 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver,
                 attackState = new Smasher_Attack_State(this, stateMachine);
                 break;
         }
+
+        if (stateMachine != null && IdleState != null)
+        {
+            //Debug.Log("Initializing state machine...");
+            stateMachine.initialize(IdleState);
+        }
+        else
+        {
+            Debug.LogError("StateMachine or idleState is null in Awake");
+        }
     }
 
     public void AssignHealthAttributes()
@@ -113,15 +123,6 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver,
 
         EnemyOnStart();
 
-        if (stateMachine != null && IdleState != null)
-        {
-            //Debug.Log("Initializing state machine...");
-            stateMachine.initialize(IdleState);
-        }
-        else
-        {
-            Debug.LogError("StateMachine or idleState is null in Awake");
-        }
 
     }
 

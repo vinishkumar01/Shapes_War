@@ -15,7 +15,7 @@ MonoBehaviour:
   enemyTypeforAttributes: 0
   _chaserMaxHealth: 1000
   _chaserDamageDealAmount: 20
-  _chaser_Movespeed: 15
+  _chaser_Movespeed: 5
   _tracerMaxHealth: 0
   _tracerDamageDealAmount: 0
   _tracer_MoveSpeed: 0

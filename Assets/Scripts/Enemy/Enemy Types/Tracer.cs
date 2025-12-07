@@ -255,7 +255,7 @@ public class Tracer : Enemy
 
     public void FacingPlayer()
     {
-        if ((path == null || path.Count == 0) && !isPlayerDetected)
+        if ((path == null || path.Count == 0) && !isPlayerDetected && IsPlayerActive())
         {
             //Flip the Character
             float watchingPlayer = Mathf.Sign(player.position.x - transform.position.x);
@@ -265,7 +265,7 @@ public class Tracer : Enemy
             CheckForLeftorRightFacing(direction);
         }
 
-        if(player.position == null)
+        if(!IsPlayerActive())
         {
             Vector2 sapcedOutDirection = new Vector2(transform.localScale.x,transform.localScale.y);
             CheckForLeftorRightFacing(sapcedOutDirection);

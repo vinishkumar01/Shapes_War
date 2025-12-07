@@ -37,7 +37,7 @@ public class NPC_Test : MonoBehaviour, IDamageable
     bool wasGrounded = true;
 
     [Header("NPC Animations")]
-    [SerializeField] Animator Chaser_Animator;
+    //[SerializeField] Animator Chaser_Animator;
 
     [Header("NPC health")]
     [SerializeField] int NPCMaxHealth = 100;
@@ -54,7 +54,7 @@ public class NPC_Test : MonoBehaviour, IDamageable
         rb = GetComponent<Rigidbody2D>();
         NPCcollider = GetComponent<Collider2D>();
         Sprite = GetComponent<Transform>();
-        Chaser_Animator = GetComponent<Animator>();
+        ///Chaser_Animator = GetComponent<Animator>();
         _flashEffect = GetComponent<FlashEffect>();
         _healthBar = GetComponentInChildren<HealthBar>();
 
@@ -305,7 +305,7 @@ public class NPC_Test : MonoBehaviour, IDamageable
                 // Apply one precise jump impulse
                 rb.AddForce(new Vector2(requiredVX, requiredVy) * rb.mass, ForceMode2D.Impulse);
 
-                Chaser_Animator.SetTrigger("Jump");
+                //Chaser_Animator.SetTrigger("Jump");
                 Dust.Play();
 
                 //Jumping across the platform
@@ -455,30 +455,33 @@ public class NPC_Test : MonoBehaviour, IDamageable
         //NPC Move Animations
         if (path.Count == 0)
         {
-            Chaser_Animator.SetBool("IsStartedMoving", false);
+            //Chaser_Animator.SetBool("IsStartedMoving", false);
         }
         else
         {
             if (Mathf.Abs(rb.velocity.x) > 2 && isGrounded)
             {
-                Chaser_Animator.SetBool("IsStartedMoving", true);
+                //Chaser_Animator.SetBool("IsStartedMoving", true);
                 Dust.Play();
             }  
         }
 
         if(!isGrounded)
         {
-            Chaser_Animator.SetBool("inAir", true);
+            //Chaser_Animator.SetBool("inAir", true);
         }
         else
         {
             if (!wasGrounded)
             {
                 
-                Chaser_Animator.SetTrigger("Landed");
+                //Chaser_Animator.SetTrigger("Landed");
             }
             else
-                Chaser_Animator.SetBool("inAir", false);
+            {
+                //Chaser_Animator.SetBool("inAir", false);
+            }
+
         }
         wasGrounded = isGrounded;
     }

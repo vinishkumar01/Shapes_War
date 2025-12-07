@@ -40,7 +40,7 @@ public class Tracer_Idle_State : EnemyState
         if(enemy.IsPlayerActive())
         {
             //Intimidate the Player
-            if (!((Tracer)enemy).isIntimidating)
+            if (!((Tracer)enemy).isIntimidating && enemy.IsPlayerActive())
             {
                 enemy.StartCoroutine(((Tracer)enemy).IntimidatePlayer());
             }

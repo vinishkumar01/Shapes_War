@@ -9,26 +9,26 @@ public class Chaser : Enemy
 
     [Header("References")]
     //Lets Store the initialize currentNode and create a list for path
-    [SerializeField] Node currentNode;
-    [SerializeField] Transform player;
-    [SerializeField] Transform Sprite;
-    [SerializeField] Collider2D NPCcollider;
-    [SerializeField] List<Node> AllNodesinTheScene = new List<Node>();
-    [SerializeField] List<Node> AllEdgeNodesinTheScene = new List<Node>();
-    [SerializeField] ParticleSystem Dust;
+    [SerializeField] private Node currentNode;
+    [SerializeField] private Transform player;
+    [SerializeField] private Transform Sprite;
+    [SerializeField] private Collider2D NPCcollider;
+    [SerializeField] private List<Node> AllNodesinTheScene = new List<Node>();
+    [SerializeField] private List<Node> AllEdgeNodesinTheScene = new List<Node>();
+    [SerializeField] private ParticleSystem Dust;
 
-    [SerializeField] LayerMask platformLayer;
+    [SerializeField] private LayerMask platformLayer;
 
     [Header("Movement / Pathing")]
-    [SerializeField] List<Node> path = new List<Node>();
-    [SerializeField] float pathCheckInterval = 0.5f;
-    int Movespeed { get; set; }
+    [SerializeField] private List<Node> path = new List<Node>();
+    [SerializeField] private float pathCheckInterval = 0.5f;
+    private int Movespeed { get; set; }
 
     [Header("Debug")]
-    [SerializeField] bool debugLogs = false;
-    bool isGrounded;
-    bool noPlatformxMax;
-    bool noPlatformxMin;
+    [SerializeField]private bool debugLogs = false;
+    [SerializeField] private bool isGrounded;
+    private bool noPlatformxMax;
+    private bool noPlatformxMin;
 
     public Coroutine PathUpdaterHandler;
 
@@ -46,6 +46,17 @@ public class Chaser : Enemy
         //base.Start();
         //Assets\Scripts\Enemy\Enemy Types\Chaser.cs(35,18): warning CS0108: 'Chaser.Start()' hides inherited member 'Enemy.Start()'. Use the new keyword if hiding was intended.
         //As the Start and Update methods are not virtual we get this warning when we try to implement this way to not to override the Enemy scripts Start.
+
+        //Assign the Player To the Chaser to track
+        if (player == null)
+        {
+            GameObject playerGO = GameObject.FindGameObjectWithTag("Player");
+            player = playerGO?.GetComponent<Transform>();
+            if (player == null)
+            {
+                Debug.LogWarning("Player not found");
+            }
+        }
 
         AssignChaserAttributes();
 
@@ -93,13 +104,6 @@ public class Chaser : Enemy
         Sprite.transform.rotation = Quaternion.identity;
     }
 
-    public override void MoveEnemy(Vector2 velocity)
-    {
-        RB.AddForce(new Vector2(velocity.x, 0));
-
-        CheckForLeftorRightFacing(velocity);
-    }
-
     public void FollowPlayer()
     {
         //Setting the Grounded Bool for animator
@@ -111,8 +115,8 @@ public class Chaser : Enemy
             return;
         }
 
-
-        Node targetNode = path[0];
+        int lookAhead = Mathf.Min(2, path.Count - 1);
+        Node targetNode = path[lookAhead];
         Node nextNode = null; // will be used in checking if the node above is blocked by the platoform
         Vector3 targetPos = targetNode.transform.position;
 
@@ -135,10 +139,13 @@ public class Chaser : Enemy
 
         float direction = Mathf.Sign(targetPos.x - transform.position.x);
 
-        Vector2 MoveVec = new Vector2(direction * Movespeed, 0);
+        float speedMultiplier = isGrounded ? 1f : 0.5f;
+
+        //Flip the Enemy
+        CheckForLeftorRightFacing(new Vector2(direction,0));
 
 
-        if (isGrounded)
+        if (isGrounded && !Mathf.Approximately(direction, 0f))
         {
             //-------------Horizontal Movement--------------
             if (Mathf.Approximately(direction, 0f))
@@ -147,25 +154,25 @@ public class Chaser : Enemy
             }
             else
             {
-                MoveEnemy(MoveVec);
-
+                RB.AddForce(new Vector2(direction * Movespeed * speedMultiplier, 0));
+                Debug.Log("Dust particle has to play");
                 //Particle Effect for Dust when the NPC moves
-                Dust.Play();
-
             }
 
+            if(Mathf.Abs(RB.velocity.x) > 2)
+            {
+                Dust.Play();
+            }
         }
 
         // Making a slight force in x so that the NPC keeps moving while it jumps and not get stuck by jumping straight while it want to reach a ledge of a platform
-        Vector2 MoveVecInAir = new Vector2(direction * Movespeed * 2f, 0);
-
         if (Mathf.Approximately(direction, 0f))
         {
             RB.velocity = new Vector2(0f, RB.velocity.y);
         }
         else
         {
-            MoveEnemy(MoveVecInAir);
+            RB.AddForce(new Vector2(direction * Movespeed * speedMultiplier, 0));
         }
 
         //----------Check if next node is straight above but its blocked----------
