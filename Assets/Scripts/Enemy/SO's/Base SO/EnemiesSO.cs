@@ -12,11 +12,13 @@ public class EnemiesSO : ScriptableObject
     [Header("Chaser Attributes")]
     public int _chaserMaxHealth;
     public int _chaserDamageDealAmount;
+    public int _chaserDamageGives;
     public int _chaser_Movespeed;
 
     [Header("Tracer Attributes")]
     public int _tracerMaxHealth;
     public int _tracerDamageDealAmount;
+    public int _tracerDamageGives;
     public int _tracer_MoveSpeed;
 
     public int _numOfMissileInitiation = 2;
@@ -29,8 +31,9 @@ public class EnemiesSO : ScriptableObject
     [Header("Smasher Attributes")]
     public int _smasherMaxHealth;
     public int _smasherDamageDealAmount;
+    public int _smasherDamageGives;
     public int _playerDetectionDistance;
-    public float _smasher_MoveSpeed;
+    public int _smasher_MoveSpeed;
 
 }
 
@@ -52,12 +55,14 @@ public class EnemiesSOEditor : Editor
             case EnemyType.Chaser:
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_chaserMaxHealth"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_chaserDamageDealAmount"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("_chaserDamageGives"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_chaser_Movespeed"));
                 break;
 
             case EnemyType.Tracer:
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_tracerMaxHealth"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_tracerDamageDealAmount"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("_tracerDamageGives"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_tracer_MoveSpeed"));
 
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_numOfMissileInitiation"));
@@ -71,6 +76,7 @@ public class EnemiesSOEditor : Editor
             case EnemyType.Smasher:
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_smasherMaxHealth"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_smasherDamageDealAmount"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("_smasherDamageGives"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_playerDetectionDistance"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_smasher_MoveSpeed"));
                 break;

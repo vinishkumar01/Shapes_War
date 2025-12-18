@@ -15,16 +15,19 @@ MonoBehaviour:
   enemyTypeforAttributes: 1
   _chaserMaxHealth: 0
   _chaserDamageDealAmount: 0
+  _chaserDamageGives: 0
   _chaser_Movespeed: 0
   _tracerMaxHealth: 100
   _tracerDamageDealAmount: 10
+  _tracerDamageGives: 20
   _tracer_MoveSpeed: 10
   _numOfMissileInitiation: 1
   _intervalBetweenMissiles: 6
   _fireRate: 0.25
-  _playerDetectionCheckRadius: 10
-  _playerNearCheckRadius: 20
+  _playerDetectionCheckRadius: 5
+  _playerNearCheckRadius: 10
   _smasherMaxHealth: 0
   _smasherDamageDealAmount: 0
+  _smasherDamageGives: 0
   _playerDetectionDistance: 0
   _smasher_MoveSpeed: 0

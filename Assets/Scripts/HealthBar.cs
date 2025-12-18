@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,7 +9,7 @@ using UnityEngine.UI;
 public class HealthBar : MonoBehaviour
 {
     private Image _image;
-    [SerializeField] private float _timeToDrain = 0.25f;
+    [SerializeField] private float _timeToDrain = 0.5f;
     [SerializeField] private Gradient _healthBarGradient;
 
     private float _target = 1f;
@@ -20,7 +21,6 @@ public class HealthBar : MonoBehaviour
     private void Start()
     {
         _image = GetComponent<Image>();
-
         _image.color = _healthBarGradient.Evaluate(_target);
 
         CheckHealthBarGradientColorAmount();
@@ -28,6 +28,8 @@ public class HealthBar : MonoBehaviour
 
     public void UpdateHealthBar(float maxHealth, float currentHealth)
     {
+        if(!gameObject.activeInHierarchy) return;
+
         _target = currentHealth / maxHealth ;
 
         drainHealthBarCoroutine = StartCoroutine(DrainHealth());

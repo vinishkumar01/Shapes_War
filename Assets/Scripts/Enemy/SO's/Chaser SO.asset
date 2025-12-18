@@ -13,11 +13,13 @@ MonoBehaviour:
   m_Name: Chaser SO
   m_EditorClassIdentifier: 
   enemyTypeforAttributes: 0
-  _chaserMaxHealth: 1000
+  _chaserMaxHealth: 100
   _chaserDamageDealAmount: 20
+  _chaserDamageGives: 10
   _chaser_Movespeed: 5
   _tracerMaxHealth: 0
   _tracerDamageDealAmount: 0
+  _tracerDamageGives: 0
   _tracer_MoveSpeed: 0
   _numOfMissileInitiation: 2
   _intervalBetweenMissiles: 6
@@ -26,5 +28,6 @@ MonoBehaviour:
   _playerNearCheckRadius: 30
   _smasherMaxHealth: 0
   _smasherDamageDealAmount: 0
+  _smasherDamageGives: 0
   _playerDetectionDistance: 0
   _smasher_MoveSpeed: 0

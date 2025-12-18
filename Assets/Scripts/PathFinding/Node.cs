@@ -8,6 +8,7 @@ using static UnityEngine.RuleTile.TilingRuleOutput;
 public class Node : MonoBehaviour 
 {
     public Node cameFrom;
+    public ConnectionType connectionType;
 
     public enum ConnectionType
     {

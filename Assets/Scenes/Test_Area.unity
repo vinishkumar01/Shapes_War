@@ -702,10 +702,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9cf0ad5184d63d940a81b83b232568ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _enemySpawnListSO: {fileID: 11400000, guid: fcf18a7a6156fd24c962f36338181a8b, type: 2}
-  _distanceFromPlayer: 0
   _allNodesInTheScene: []
-  _allEdgeNodesInTheScene: []
+  _enemySpawnListSO: {fileID: 11400000, guid: fcf18a7a6156fd24c962f36338181a8b, type: 2}
+  _chaserAttributes: {fileID: 11400000, guid: f80d370358f08a0449ce6a212c889d42, type: 2}
+  _tracerAttributes: {fileID: 11400000, guid: f33db28470b04944eb53db06ac2f5591, type: 2}
+  _smasherAttributes: {fileID: 11400000, guid: 3a7dcf9c3d5ac594b9a9016d4167ab54, type: 2}
+  _spawnInterval: 10
+  _spawnLimitPerWave: 5
+  _timeBetweenWave: 5
+  _spawnScalingFactor: 0.25
+  _partialSpawnScalingFactor: 0.05
+  _currentWave: 0
+  _enemiesToSpawn: 0
+  _enemiesSpawnedCount: 0
+  timeSinceLastSpawn: 0
+  _enemiesAlive: 0
+  _waveActive: 0
 --- !u!1 &125482423
 GameObject:
   m_ObjectHideFlags: 0
@@ -2963,7 +2975,7 @@ SpringJoint2D:
   m_Anchor: {x: 0, y: 0}
   m_ConnectedAnchor: {x: 7.88, y: -3.07}
   m_AutoConfigureDistance: 1
-  m_Distance: 52.82938
+  m_Distance: 188.53087
   m_DampingRatio: 1
   m_Frequency: 1
 --- !u!114 &681418370
@@ -6161,6 +6173,140 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!1 &1623610887
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1623610888}
+  - component: {fileID: 1623610890}
+  - component: {fileID: 1623610889}
+  m_Layer: 11
+  m_Name: TracerHealthText
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1623610888
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1623610887}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1.5, y: 18, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8236210759323663400}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -1247.7, y: 130}
+  m_SizeDelta: {x: -1721.3, y: -1030}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1623610889
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1623610887}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: 0
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: d307627fef432b244aa25306016c8d8b, type: 2}
+  m_sharedMaterial: {fileID: -4717380412168427218, guid: d307627fef432b244aa25306016c8d8b, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 65
+  m_fontSizeBase: 65
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 0
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_enableWordWrapping: 1
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 1
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: -3.8733745, z: -92.03256, w: -5.422743}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!222 &1623610890
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1623610887}
+  m_CullTransparentMesh: 1
 --- !u!1 &1632105040
 GameObject:
   m_ObjectHideFlags: 0
@@ -6488,7 +6634,7 @@ Transform:
   m_GameObject: {fileID: 1655699674}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 60.56, y: 0.9, z: 0}
+  m_LocalPosition: {x: 195.9, y: 10.8, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -8239,10 +8385,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 44c29d403e402e44e9e7d2021bc95776, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  statsSO: {fileID: 11400000, guid: f33db28470b04944eb53db06ac2f5591, type: 2}
   <MaxHealth>k__BackingField: 100
   <CurrentHealth>k__BackingField: 0
   <DamageAmount>k__BackingField: 20
+  _healthText: {fileID: 0}
   _animator: {fileID: 0}
   _enemyType: 1
   player: {fileID: 0}
@@ -10257,7 +10403,7 @@ HingeJoint2D:
   m_BreakAction: 3
   m_AutoConfigureConnectedAnchor: 1
   m_Anchor: {x: 0, y: 0}
-  m_ConnectedAnchor: {x: 0.088013805, y: -0.00034765003}
+  m_ConnectedAnchor: {x: 0.088013425, y: -0.00034764496}
   m_UseMotor: 0
   m_Motor:
     m_MotorSpeed: 0
@@ -10949,24 +11095,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf45094bc9ceeff43a18adba1d2e42d8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  statsSO: {fileID: 11400000, guid: f80d370358f08a0449ce6a212c889d42, type: 2}
   <MaxHealth>k__BackingField: 0
   <CurrentHealth>k__BackingField: 0
   <DamageAmount>k__BackingField: 0
+  _healthText: {fileID: 0}
   _animator: {fileID: 0}
   _enemyType: 0
   currentNode: {fileID: 0}
-  player: {fileID: 681418380}
+  player: {fileID: 0}
   Sprite: {fileID: 0}
   NPCcollider: {fileID: 0}
   AllNodesinTheScene: []
   AllEdgeNodesinTheScene: []
-  Dust: {fileID: 6633040601008421682}
+  Dust: {fileID: 0}
   platformLayer:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 0
   path: []
-  pathCheckInterval: 0.25
+  pathCheckInterval: 0.5
   debugLogs: 0
   isGrounded: 0
 --- !u!4 &1536534389456283682
@@ -16105,7 +16251,7 @@ HingeJoint2D:
   m_BreakAction: 3
   m_AutoConfigureConnectedAnchor: 1
   m_Anchor: {x: 0, y: 0}
-  m_ConnectedAnchor: {x: 0.066827044, y: 0.00034535333}
+  m_ConnectedAnchor: {x: 0.066827424, y: 0.00034535996}
   m_UseMotor: 0
   m_Motor:
     m_MotorSpeed: 0
@@ -16458,7 +16604,7 @@ HingeJoint2D:
   m_BreakAction: 3
   m_AutoConfigureConnectedAnchor: 1
   m_Anchor: {x: 0, y: 0}
-  m_ConnectedAnchor: {x: 173.23984, y: 24.566654}
+  m_ConnectedAnchor: {x: 173.23984, y: 24.944653}
   m_UseMotor: 0
   m_Motor:
     m_MotorSpeed: 0
@@ -16721,7 +16867,7 @@ Transform:
   m_GameObject: {fileID: 3331281187016127796}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 97.05, y: 9.55, z: 10.497601}
+  m_LocalPosition: {x: 97.05, y: 9.928, z: 10.497601}
   m_LocalScale: {x: 3.5, y: 5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -76833,7 +76979,7 @@ HingeJoint2D:
   m_BreakAction: 3
   m_AutoConfigureConnectedAnchor: 1
   m_Anchor: {x: 0, y: 0}
-  m_ConnectedAnchor: {x: 0.06845734, y: -0.00034544087}
+  m_ConnectedAnchor: {x: 0.06845696, y: -0.00034543435}
   m_UseMotor: 0
   m_Motor:
     m_MotorSpeed: 0
@@ -78405,7 +78551,7 @@ HingeJoint2D:
   m_BreakAction: 3
   m_AutoConfigureConnectedAnchor: 1
   m_Anchor: {x: 0, y: 0}
-  m_ConnectedAnchor: {x: 0.104311116, y: -0.00035086472}
+  m_ConnectedAnchor: {x: 0.104311496, y: -0.00035086897}
   m_UseMotor: 0
   m_Motor:
     m_MotorSpeed: 0
@@ -79789,7 +79935,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 1
-  m_AdditionalShaderChannelsFlag: 0
+  m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 1734499553
   m_SortingOrder: 0
@@ -86434,7 +86580,7 @@ HingeJoint2D:
   m_BreakAction: 3
   m_AutoConfigureConnectedAnchor: 1
   m_Anchor: {x: 0, y: 0}
-  m_ConnectedAnchor: {x: 0.070082106, y: 0.00000013566029}
+  m_ConnectedAnchor: {x: 0.070081726, y: 0.00000013565955}
   m_UseMotor: 0
   m_Motor:
     m_MotorSpeed: 0
@@ -86717,7 +86863,7 @@ HingeJoint2D:
   m_BreakAction: 3
   m_AutoConfigureConnectedAnchor: 1
   m_Anchor: {x: 0, y: 0}
-  m_ConnectedAnchor: {x: 0.08312432, y: 0.00035480506}
+  m_ConnectedAnchor: {x: 0.0831247, y: 0.00035481039}
   m_UseMotor: 0
   m_Motor:
     m_MotorSpeed: 0
@@ -87440,7 +87586,7 @@ HingeJoint2D:
   m_BreakAction: 3
   m_AutoConfigureConnectedAnchor: 1
   m_Anchor: {x: 0, y: 0}
-  m_ConnectedAnchor: {x: 0.10104868, y: -0.0000005787786}
+  m_ConnectedAnchor: {x: 0.1010483, y: -0.0000005787764}
   m_UseMotor: 0
   m_Motor:
     m_MotorSpeed: 0
@@ -87458,7 +87604,7 @@ Transform:
   m_GameObject: {fileID: 4515084712553640682}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 124.36, y: 10.31, z: 0}
+  m_LocalPosition: {x: 70.27, y: 0.99, z: 0}
   m_LocalScale: {x: 3, y: 3, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -87595,10 +87741,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16eb71176112bdd4bbb7924ffb6b30a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  statsSO: {fileID: 11400000, guid: 3a7dcf9c3d5ac594b9a9016d4167ab54, type: 2}
   <MaxHealth>k__BackingField: 100
   <CurrentHealth>k__BackingField: 0
   <DamageAmount>k__BackingField: 1
+  _healthText: {fileID: 0}
   _animator: {fileID: 0}
   _enemyType: 2
   GroundCheckRadius: 1.2
@@ -87717,7 +87863,7 @@ HingeJoint2D:
   m_BreakAction: 3
   m_AutoConfigureConnectedAnchor: 1
   m_Anchor: {x: 0, y: 0}
-  m_ConnectedAnchor: {x: 0.0871952, y: -0.0000011824956}
+  m_ConnectedAnchor: {x: 0.08719482, y: -0.0000011824903}
   m_UseMotor: 0
   m_Motor:
     m_MotorSpeed: 0
@@ -87830,13 +87976,14 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1623610888}
   m_Father: {fileID: 216615181028099327}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 1920, y: 1080}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &8240260784816816667
 GameObject:

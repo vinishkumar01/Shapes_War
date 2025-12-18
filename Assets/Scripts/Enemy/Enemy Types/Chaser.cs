@@ -36,16 +36,13 @@ public class Chaser : Enemy
 
     private int _chaserMaxHealth { get; set; }
     private int _chaserDamageDealAmount { get; set; }
+    private int _chaserDamageGives { get; set; }
 
-
-    public override void EnemyOnStart()
+    public override void EnemyOnEnable()
     {
-        base.EnemyOnStart();
+        base.EnemyOnEnable();
 
-        //Lets execute the Start method in the Enemy class first and then do the other initializtions, If this "base.Start();" is not implemented the Start method in the child class overrides the parent classes start method
-        //base.Start();
-        //Assets\Scripts\Enemy\Enemy Types\Chaser.cs(35,18): warning CS0108: 'Chaser.Start()' hides inherited member 'Enemy.Start()'. Use the new keyword if hiding was intended.
-        //As the Start and Update methods are not virtual we get this warning when we try to implement this way to not to override the Enemy scripts Start.
+        AssignChaserAttributes();
 
         //Assign the Player To the Chaser to track
         if (player == null)
@@ -58,20 +55,12 @@ public class Chaser : Enemy
             }
         }
 
-        AssignChaserAttributes();
-
-        //Getting all the required Components
-        NPCcollider = GetComponent<Collider2D>();
-        Sprite = GetComponent<Transform>();
-
         // Adding all the Nodes in the Scene to the list
         if (AStarManager.instance != null)
         {
             AllNodesinTheScene = AStarManager.instance.AllNodesInTheScene;
             AllEdgeNodesinTheScene = AStarManager.instance.AllEdgeNodesInTheScene;
         }
-        //Debug.Log("All Nodes" + AllNodesinTheScene.Count);
-        //Debug.Log("All Edge Nodes" + AllEdgeNodesinTheScene.Count);
 
         //Getting the Current Node of the NPC
         currentNode = GetNearestNode(transform.position);
@@ -80,18 +69,30 @@ public class Chaser : Enemy
         pathUpdating();
     }
 
+    public override void EnemyOnStart()
+    {
+        base.EnemyOnStart();
+
+        //Getting all the required Components
+        NPCcollider = GetComponent<Collider2D>();
+        Sprite = GetComponent<Transform>();
+
+        //Debug.Log("All Nodes" + AllNodesinTheScene.Count);
+        //Debug.Log("All Edge Nodes" + AllEdgeNodesinTheScene.Count);
+
+        
+    }
+
     private void AssignChaserAttributes()
     {
-        if (statsSO.enemyTypeforAttributes != EnemyType.Chaser)
+        GameObject chaserPrefab = GameManager._instance.GetPrefabByEnemyType(EnemyType.Chaser);
+
+        if(GameManager._instance != null && GameManager._instance.TryGetEnemyData(chaserPrefab, out var data))
         {
-            Debug.LogWarning("Assigned SO does not match Tracer type");
-
+            //Setting the MoveSpeed and damage Gives to the Chaser
+            Movespeed = data._moveSpeed;
+            _chaserDamageGives = data._damageGives;
         }
-        //Setting the MoveSpeed for the Chaser
-        _chaserMaxHealth = statsSO._chaserMaxHealth;
-        _chaserDamageDealAmount = statsSO._chaserDamageDealAmount;
-        Movespeed = statsSO._chaser_Movespeed;
-
     }
 
     public void pathUpdating()
@@ -156,6 +157,7 @@ public class Chaser : Enemy
             {
                 RB.AddForce(new Vector2(direction * Movespeed * speedMultiplier, 0));
                 Debug.Log("Dust particle has to play");
+
                 //Particle Effect for Dust when the NPC moves
             }
 
@@ -473,7 +475,7 @@ public class Chaser : Enemy
         if (collision.gameObject.TryGetComponent(out IPlayerDamageable damageable))
         {
             Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
-            damageable.Damage(5, hitDirection);
+            damageable.Damage(_chaserDamageGives, hitDirection);
         }
     }
 }

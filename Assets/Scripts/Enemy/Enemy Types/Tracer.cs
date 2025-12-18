@@ -12,6 +12,7 @@ public class Tracer : Enemy
     [SerializeField] LayerMask platformLayer;
     [SerializeField] LayerMask player_Layer;
     [SerializeField] GameObject Missile;
+    private GameManager.EnemySpawnData _tracerData;
 
     [Header("Nodes Config")]
     [SerializeField] Node currentNode;
@@ -44,63 +45,71 @@ public class Tracer : Enemy
     [SerializeField] float GroundCheckRadius = 0.9f;
     [SerializeField] Vector2 GroundCheckOffset;
 
-
     private int _tracerMaxHealth { get; set; }
     private int _tracerDamageDealAmount { get; set; }
+    private int _tracerDamageGives { get; set; }
 
-    public override void EnemyOnStart()
+    public override void EnemyOnEnable()
     {
-        base.EnemyOnStart();
+        base.EnemyOnEnable();
 
+        if (player == null)
+        {
+            GameObject playerGO = GameObject.FindGameObjectWithTag("Player");
+            player = playerGO?.transform;
+
+            if (player == null)
+            {
+                Debug.LogWarning("Player not found");
+            }
+        }
+
+        //Reset the condition state
+        isAttacking = false;
+        isIntimidating = false;
 
         AssignTracerAttributes();
-        
-        NPCcollider = RB.GetComponent<Collider2D>();
 
         if (AStarManager.instance != null)
         {
             AllNodesInTheScene = AStarManager.instance.AllNodesInTheScene;
             AllEdgeNodeInTheScene = AStarManager.instance.AllEdgeNodesInTheScene;
         }
-        Debug.Log("ALL NODES:" + AllNodesInTheScene.Count + "ALL EDGE NODES" + AllEdgeNodeInTheScene.Count);
+        //Debug.Log("ALL NODES:" + AllNodesInTheScene.Count + "ALL EDGE NODES" + AllEdgeNodeInTheScene.Count);
 
         // getting the node near NPC for every frame
         currentNode = GetNearestNode(transform.position);
 
         // Starts creating a path when player is detected
         StartCoroutine(PathUpdater());
+    }
 
-        if(player == null)
-        {
-            GameObject playerGO = GameObject.FindGameObjectWithTag("Player");
-            player = playerGO?.transform;
+    public override void EnemyOnStart()
+    {
+        base.EnemyOnStart();
 
-            if(player == null)
-            {
-                Debug.LogWarning("Player not found");
-            }
-        }
+        NPCcollider = RB.GetComponent<Collider2D>();
     }
 
     private void AssignTracerAttributes()
     {
-        if (statsSO.enemyTypeforAttributes != EnemyType.Tracer)
+        GameObject tracerPrefab = GameManager._instance.GetPrefabByEnemyType(EnemyType.Tracer);
+
+        if(GameManager._instance != null && GameManager._instance.TryGetEnemyData(tracerPrefab, out var data))
         {
-            Debug.LogWarning("Assigned SO does not match Tracer type");
+            _tracerData = data;
 
+            // Setting the tracer Attributes
+            MoveSpeed = data._moveSpeed;
+            _tracerDamageGives = data._damageGives;
+
+            NumOfMissileInitiation = data._missileInitiation;
+            IntervalBetweenMissiles = data._intervalbetweenMissiles;
+            FireRate = data._fireRate;
+
+            playerDetectionCheckRadius = data._detectionCheckRadius; 
+            PlayerNearCheckRadius = data._nearCheckRadius;
         }
-        //Setting the Tracer Attributes
-        _tracerMaxHealth = statsSO._tracerMaxHealth;
-        _tracerDamageDealAmount = statsSO._tracerDamageDealAmount;
-        MoveSpeed = statsSO._tracer_MoveSpeed;
-
-        NumOfMissileInitiation = statsSO._numOfMissileInitiation;
-        IntervalBetweenMissiles = statsSO._intervalBetweenMissiles;
-        FireRate = statsSO._fireRate;
-
-        playerDetectionCheckRadius = statsSO._playerDetectionCheckRadius;
-        PlayerNearCheckRadius = statsSO._playerNearCheckRadius;
-
     }
 
     #region PathUpdation and Get Nodes for Retreat and nearest to the Enemy
@@ -222,10 +231,10 @@ public class Tracer : Enemy
     {
         isIntimidating = true;
 
-        if(!isPlayerNear || !isPlayerDetected)
+        if (!isPlayerDetected || !isPlayerNear)
         {
-            NumOfMissileInitiation = 2;
-            IntervalBetweenMissiles = 6;
+            NumOfMissileInitiation = _tracerData._missileInitiation;
+            IntervalBetweenMissiles = _tracerData._intervalbetweenMissiles;
         }
 
         //shoot
@@ -243,6 +252,11 @@ public class Tracer : Enemy
         {
             NumOfMissileInitiation = 4;
             IntervalBetweenMissiles = 2;
+        }
+        else
+        {
+            NumOfMissileInitiation = _tracerData._missileInitiation;
+            IntervalBetweenMissiles = _tracerData._intervalbetweenMissiles;
         }
 
         //Shoot 
@@ -509,7 +523,7 @@ public class Tracer : Enemy
         if (collision.gameObject.TryGetComponent(out IPlayerDamageable damageable))
         {
             Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
-            damageable.Damage(25, hitDirection);
+            damageable.Damage(_tracerDamageGives, hitDirection);
         }
     }
 }

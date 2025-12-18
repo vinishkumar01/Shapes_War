@@ -31,7 +31,7 @@ public class LateUpdateManager : MonoBehaviour
         {
             int actualIndex = _observers.IndexOf(_observersToRemove[i]);
             _observers.Remove(_observersToRemove[i]);
-            Debug.Log($"Removed the Update Method {_observersToRemove[i]} at index {actualIndex} (loop i = {i})");
+            //Debug.Log($"Removed the Update Method {_observersToRemove[i]} at index {actualIndex} (loop i = {i})");
         }
         _observersToRemove.Clear();
 
@@ -50,7 +50,7 @@ public class LateUpdateManager : MonoBehaviour
         if(!_observers.Contains(observer) && !_pendingObservers.Contains(observer))
         {
             _pendingObservers.Add(observer);
-            Debug.Log($"Added the Update Method {observer}");
+            //Debug.Log($"Added the Update Method {observer}");
         }    
     }
 
@@ -63,7 +63,7 @@ public class LateUpdateManager : MonoBehaviour
         else if(_observers.Contains(observer))
         {
             _observersToRemove.Add(observer);
-            Debug.Log($"UnRegistered the Update Method {observer}");
+            //Debug.Log($"UnRegistered the Update Method {observer}");
         }  
     }
 

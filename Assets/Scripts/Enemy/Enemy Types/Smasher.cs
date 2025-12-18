@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Build.Content;
 using UnityEngine;
 
 public class Smasher : Enemy
@@ -9,7 +10,7 @@ public class Smasher : Enemy
     [SerializeField] float platformDetectionDistance;
     [SerializeField] float checkDistance;
     [SerializeField] float checkDistanceForJA;
-    float moveSpeed { get; set; }
+    int moveSpeed { get; set; }
     int playerDetectionDistance { get; set; }
     [SerializeField] int facingDirection;
     [SerializeField] Vector2 rayDirection;
@@ -58,36 +59,63 @@ public class Smasher : Enemy
     [SerializeField] bool isJumping;
     [SerializeField] bool isBusy;
 
-    private int _smasherMaxHealth { get; set; }
-    private int _smasherDamageDealAmount { get; set; }
+    private int _smasherDamageGives { get; set; }
+
+    public override void EnemyOnEnable()
+    {
+        base.EnemyOnEnable();
+
+        AssignSmasherAttributes();
+        ResetSmasherState();
+    }
+
+    public override void EnemyOnDisable()
+    {
+        base.EnemyOnDisable();
+
+        StopAllCoroutines();
+    }
 
     public override void EnemyOnStart()
     {
         base.EnemyOnStart();
 
-        AssignSmasherAttributes();
+        spriteRenderer = GetComponent<SpriteRenderer>();
 
         facingDirection = 1;
 
         //Rotation Config
         initialRotation = transform.rotation;
         targetRotation = Quaternion.Euler(0, 0, slamAngle);
+    }
 
-        spriteRenderer = GetComponent<SpriteRenderer>();
+    private void ResetSmasherState()
+    {
+        isSlaming = false;
+        isplayerDetectedBack = false;
+        isPlayerDetected = false;   
+        isBusy = false;
     }
 
     private void AssignSmasherAttributes()
     {
-        if (statsSO.enemyTypeforAttributes != EnemyType.Smasher)
-        {
-            Debug.LogWarning("Assigned SO does not match Smasher type");
-        }
-        //Setting the Smasher Attributes
-        _smasherMaxHealth = statsSO._smasherMaxHealth;
-        _smasherDamageDealAmount = statsSO._smasherDamageDealAmount;
+        GameObject smasherPrefab = GameManager._instance.GetPrefabByEnemyType(EnemyType.Smasher);
 
-        moveSpeed = statsSO._smasher_MoveSpeed;
-        playerDetectionDistance = statsSO._playerDetectionDistance;
+        if (GameManager._instance != null && GameManager._instance.TryGetEnemyData(smasherPrefab, out var data))
+        {
+            _smasherDamageGives = data._damageGives;
+
+            moveSpeed = data._moveSpeed;
+            playerDetectionDistance = data._playerDetectionDistance;
+            Debug.Log($"Assigning the data from GameManager: Smasher Damage Gives{_smasherDamageGives}");
+        }
+        else
+        {
+            Debug.LogError("No GameManager data for Smasher");
+            _smasherDamageGives = 30;
+            moveSpeed = 600;
+            playerDetectionDistance =  10;
+        }
     }
 
     //Cast Rays
@@ -343,7 +371,7 @@ public class Smasher : Enemy
         if (collision.gameObject.TryGetComponent(out IPlayerDamageable damageable))
         {
             Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
-            damageable.Damage(25, hitDirection);
+            damageable.Damage(_smasherDamageGives, hitDirection);
         }
     }
 }

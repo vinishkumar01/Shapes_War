@@ -41,7 +41,7 @@ public class Tracer_Retreat_State : EnemyState
         //Attack the Player
         if (((Tracer)enemy).isPlayerNear)
         {
-            Debug.Log("Player is Near");
+            //Debug.Log("Player is Near");
             if (!((Tracer)enemy).isAttacking && enemy.IsPlayerActive())
             {
                 enemy.StartCoroutine(((Tracer)enemy).AttackPlayer());
@@ -54,14 +54,14 @@ public class Tracer_Retreat_State : EnemyState
             //Retreat State -> Attack State 
             if (!((Tracer)enemy).isPlayerDetected && ((Tracer)enemy).isPlayerNear)
             {
-                Debug.Log("Player is Near and Player is Not Detected");
+                //Debug.Log("Player is Near and Player is Not Detected");
                 enemy.stateMachine.ChangeState(enemy.attackState);
             }
 
             //Retreat State -> Idle State
             if (!((Tracer)enemy).isPlayerDetected && !((Tracer)enemy).isPlayerNear)
             {
-                Debug.Log("Player is not Near and Player is Not Detected");
+                //Debug.Log("Player is not Near and Player is Not Detected");
                 enemy.stateMachine.ChangeState(enemy.IdleState);
             }
         }

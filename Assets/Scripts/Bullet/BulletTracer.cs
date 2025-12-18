@@ -19,8 +19,11 @@ public class BulletTracer : MonoBehaviour
 
     RaycastHit2D storedHit;
 
-    void Start()
+    private void OnEnable()
     {
+        hasHit = false;
+        hasBeenReturnedToPool = false;
+        progress = 0f;
     }
 
     public void initialize(Vector3 startPosition, Vector3 targetPosition, RaycastHit2D hit)
@@ -62,7 +65,7 @@ public class BulletTracer : MonoBehaviour
                 GameObject impact = PoolManager.SpawnObject(Bullet_Collision, _targetposition, Quaternion.identity, PoolManager.PoolType.ParticleSystem);
                 StartCoroutine(ReturnAfterSeconds(impact, 1f));
 
-                if (storedHit.collider.TryGetComponent<IDamageable>(out var damageable))
+                if (storedHit.collider.gameObject.activeInHierarchy && storedHit.collider.TryGetComponent<IDamageable>(out var damageable))
                 {
                     damageable.RecieveHit(storedHit);
                 }
@@ -75,26 +78,23 @@ public class BulletTracer : MonoBehaviour
         }
     }
 
+    private void ReturnToPoolOnce()
+    {
+        if (hasBeenReturnedToPool) return;
+        hasBeenReturnedToPool = true;
+        PoolManager.ReturnObjectToPool(gameObject, PoolManager.PoolType.GameObjects);
+    }
+
     IEnumerator DisableAfterTrail()
     {
         yield return new WaitForSeconds(_trialLife + 1.5f);
-        if(!hasBeenReturnedToPool)
-        {
-            hasBeenReturnedToPool = true;
-            PoolManager.ReturnObjectToPool(gameObject, PoolManager.PoolType.GameObjects);
-        }
-        
+        ReturnToPoolOnce();
     }
 
     public IEnumerator DisableWhenHit()
     {
         yield return new WaitForSeconds(_trialLife + 0.1f);
-        if(!hasBeenReturnedToPool)
-        {
-            hasBeenReturnedToPool = true;
-            PoolManager.ReturnObjectToPool(gameObject, PoolManager.PoolType.GameObjects);
-        }
-        
+        ReturnToPoolOnce();
     }
 
     IEnumerator ReturnAfterSeconds(GameObject obj, float time)
@@ -103,4 +103,8 @@ public class BulletTracer : MonoBehaviour
         PoolManager.ReturnObjectToPool(obj, PoolManager.PoolType.ParticleSystem);
     }
 
+    private void OnDisable()
+    {
+        StopAllCoroutines();
+    }
 }
