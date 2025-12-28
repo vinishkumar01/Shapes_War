@@ -16,6 +16,20 @@ TagManager:
   - Platform
   - Missile
   - MissileExplosion
+  - JumpPowerUp
+  - DashPowerUp
+  - HealthPack
+  - GrappleGunBullet
+  - DJSUI
+  - DJCUI
+  - DSUI
+  - DSCUI
+  - GrappleCount
+  - LivesUI
+  - Ammo
+  - GunPivot
+  - HighScoreUI
+  - ScoreUI
   layers:
   - Default
   - TransparentFX
@@ -35,7 +49,7 @@ TagManager:
   - Gun
   - Missile
   - MissileCameraLayer
-  - 
+  - PowerUps
   - 
   - 
   - 

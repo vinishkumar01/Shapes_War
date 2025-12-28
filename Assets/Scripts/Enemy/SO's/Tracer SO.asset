@@ -20,9 +20,9 @@ MonoBehaviour:
   _tracerMaxHealth: 100
   _tracerDamageDealAmount: 10
   _tracerDamageGives: 20
-  _tracer_MoveSpeed: 10
+  _tracer_MoveSpeed: 7
   _numOfMissileInitiation: 1
-  _intervalBetweenMissiles: 6
+  _intervalBetweenMissiles: 10
   _fireRate: 0.25
   _playerDetectionCheckRadius: 5
   _playerNearCheckRadius: 10

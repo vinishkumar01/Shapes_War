@@ -12,7 +12,7 @@ public class FlashEffect : MonoBehaviour
     private SpriteRenderer _spriteRenderer;
     private Material _material;
 
-    private Coroutine damageFlashCoroutine;
+    public Coroutine damageFlashCoroutine;
     
 
     private void Awake()
@@ -28,9 +28,22 @@ public class FlashEffect : MonoBehaviour
         if(this.isActiveAndEnabled)
         {
             if(damageFlashCoroutine != null)
+            {
                 StopCoroutine(damageFlashCoroutine);
+            }
+
             damageFlashCoroutine = StartCoroutine(DamageFlasher());
         }
+    }
+
+    public void StopFlashEffect()
+    {
+        if(damageFlashCoroutine != null)
+        {
+            StopCoroutine(damageFlashCoroutine);
+            damageFlashCoroutine = null;
+        }
+        ResetFlash();
     }
 
     private IEnumerator DamageFlasher()

@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 76e493f1a9698034785fb59e5044ded0, type: 3}
   m_Name: PlayerData
   m_EditorClassIdentifier: 
-  maxHealth: 200
+  maxHealth: 100
   damageAmount: 20
   groundCheckRadius: 0.5
-  ropeCheckRadius: 2
+  ropeCheckRadius: 2.5
   reattachDelay: 0.5
   fallGravityMult: 1.5
   maxFallSpeed: 25
@@ -31,10 +31,17 @@ MonoBehaviour:
   accelerationTimeGround: 0.1
   ropeSwingForce: 8
   doubleJumpForce: 25
-  doubleJumpSkill: 0
+  doubleJumpCount: 0
   airMovementSpeed: 16
   accelerationTimeAir: 0.15
   ropeSwingForceInJump: 8
   dashTime: 0.2
   dashSpeed: 50
   dashCoolDown: 2.5
+  dashCount: 0
+  _grappleAmmo: 0
+  doubleJumpSkill: 0
+  dashSkill: 0
+  healthPack: 50
+  maxLives: 3
+  lives: 1

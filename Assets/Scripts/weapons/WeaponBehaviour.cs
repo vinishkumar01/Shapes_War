@@ -165,7 +165,7 @@ public class WeaponBehaviour : MonoBehaviour
         yield return new WaitForSeconds(ReloadTime);
         BulletsLeft = MagSize;
         //Debug.Log("Bullets Reloaded: " + BulletsLeft);
-
+        BulletCountText.text = BulletsLeft.ToString();
         isReloading = false;
         ReloadText.text = " ";
     }

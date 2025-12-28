@@ -211,7 +211,7 @@ public class GunAiming : MonoBehaviour , IUpdateObserver
                 }
                 UpdateWeaponUI();
             }
-            else if (Input.GetAxis("Mouse ScrollWheel") < 0f) //Scroll Down
+            else if (Input.GetAxis("Mouse ScrollWheel") < 0f || UserInputs.instance._playerInputs.Player.WeaponSwitch.IsPressed()) //Scroll Down
             {
                 weaponType--;
 
@@ -261,7 +261,7 @@ public class GunAiming : MonoBehaviour , IUpdateObserver
             {
                 weaponBehave.StopFiring();
             }
-            if (Input.GetKeyDown(KeyCode.F))
+            if (UserInputs.instance._playerInputs.Player.ModeSwitch.WasPressedThisFrame())
             {
                 weaponBehave.fireMode++;
                 Debug.Log(weaponBehave.fireMode);

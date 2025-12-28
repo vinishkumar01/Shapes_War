@@ -9,6 +9,7 @@ public class PlayerDashState : PlayerState
     private bool _isDashing;
     private float _dashTimeLeft;
     private float _lastDash = -100f;
+    private float _defaultGravity;
 
     public PlayerDashState(Player player, PlayerStateMachine playerStateMachine, PlayerDataSO playerDataSO) : base(player, playerStateMachine, playerDataSO)
     {
@@ -38,7 +39,20 @@ public class PlayerDashState : PlayerState
         _dashTimeLeft = _playerDataSO.dashTime;
         _lastDash = Time.time;
 
+        
+        _defaultGravity = _player.RB.gravityScale;
+        
+
         _player._animator.SetBool("isDashing", true);
+
+        if(_playerDataSO.dashSkill)
+        {
+            //Setting the gravity to 0 so that when dashing to stay in air
+            _player.RB.gravityScale = 0;
+            _player.RB.velocity = new Vector2(_player.RB.velocity.x, 0f);
+
+            Dash();
+        }
     }
 
     public override void ExitState()
@@ -46,6 +60,7 @@ public class PlayerDashState : PlayerState
         base.ExitState();
 
         _isDashing = false;
+        _player.RB.gravityScale = _defaultGravity;
         _player._dashText.text = " ";
 
         _player._animator.SetBool("isDashing", false);
@@ -60,11 +75,11 @@ public class PlayerDashState : PlayerState
 
         _dashTimeLeft -= Time.deltaTime;
 
-        if (!_player._knockBack.IsBeingKnockedBack)
+        if (_playerDataSO.dashSkill)
         {
-            Dash();
+            var v = _player.RB.velocity;
+            _player.RB.velocity = new Vector2(v.x, 0f);
         }
-
         StateTransitions();
     }
 
@@ -81,7 +96,7 @@ public class PlayerDashState : PlayerState
     private void Dash()
     {
 
-        if (!_isDashing || _player._knockBack.IsBeingKnockedBack)
+        if (_player._knockBack.IsBeingKnockedBack)
             return;
 
         float XMove = _player.MovementInputXDirection;
@@ -92,14 +107,16 @@ public class PlayerDashState : PlayerState
 
         _player.RB.velocity = new Vector2(XMove * _playerDataSO.dashSpeed, 0);
 
-        if (Time.time <= (_lastDash + _playerDataSO.dashCoolDown))
+        _playerDataSO.dashCount--;
+        _player._dashCountUI.text = _playerDataSO.dashCount.ToString();
+
+        if(_playerDataSO.dashCount <= 0)
         {
-            _player._dashText.text = "Dash Recharging";
+            _playerDataSO.dashSkill = false;
+            _player._dashSkill.text = _playerDataSO.dashSkill.ToString();
         }
-        else
-        {
-            _player._dashText.text = " ";
-        }
+
+        _player._dashText.text = "Dash Recharging";
     }
 
     private void StateTransitions()
@@ -107,7 +124,7 @@ public class PlayerDashState : PlayerState
         if (_dashTimeLeft <= 0f)
         {
             //Decide where to transist after dash
-            if (!_player._isGrounded && _player.RB.velocity.y != 0f)
+            if (!_player._isGrounded)
             {
                 _playerStateMachine.ChangeState(_player._playerJumpState);
             }

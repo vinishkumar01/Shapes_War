@@ -33,10 +33,7 @@ public class PlayerMoveState : PlayerState
     {
         base.FrameUpdate();
 
-        if (!_player._knockBack.IsBeingKnockedBack)
-        {
-            MovePlayer();
-        }
+        MovePlayer();
 
         StateTransitions();
     }

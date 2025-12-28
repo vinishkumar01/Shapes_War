@@ -9,6 +9,7 @@ public class PlayerJumpState : PlayerState
 
 
     private bool _jumpWasExecuted = false; // Track if the jump was performed
+    private bool _hasDoubleJumped = false;
 
     private float _groundExitLockTime = 0.1f;
 
@@ -80,15 +81,32 @@ public class PlayerJumpState : PlayerState
             //Debug.Log("Ground jump executed");
         }
 
+        //DoubleJump Configs checking if the player is grounded, if yes then we make the doubleJumped flag to false.
+        if(_player._isGrounded)
+        {
+            _hasDoubleJumped = false;
+        }
+
         //Double Jump - We got to trigger only once in mid air
-        else if (_player._jumpBufferTimeCounter > 0f && !_player._isGrounded && _player._doubleJump && _playerDataSO.doubleJumpSkill)
+        else if (_player._jumpBufferTimeCounter > 0f && !_player._isGrounded && _player._doubleJump && !_hasDoubleJumped && _playerDataSO.doubleJumpSkill)
         {
             _player._isJumping = true;
             _player._jumpTimeCounter = _playerDataSO.jumpTime;
 
             _player.RB.velocity = new Vector2(_player.RB.velocity.x, _playerDataSO.doubleJumpForce);
 
-            _player._doubleJump = false;
+            //Flag hasDoubleJumped
+            _hasDoubleJumped = true;
+
+            _playerDataSO.doubleJumpCount--;
+            _player._doubleJumpCountUI.text = _playerDataSO.doubleJumpCount.ToString();
+
+            if (_playerDataSO.doubleJumpCount <= 0)
+            {
+                _playerDataSO.doubleJumpSkill = false;
+                _player._doubleJump = false;
+                _player._doubleJumpSkill.text = _playerDataSO.doubleJumpSkill.ToString();
+            }
 
             //reset the jump Buffer Counter 
             _player._jumpBufferTimeCounter = 0f;

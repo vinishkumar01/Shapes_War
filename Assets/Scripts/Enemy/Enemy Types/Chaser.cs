@@ -339,43 +339,53 @@ public class Chaser : Enemy
 
         while (true)
         {
-            Node playerNode = GetNearestNode(player.position);
-
-            if (playerNode != null)
+            if(player == null)
             {
-                if (debugLogs) Debug.Log($"PlayerPosition: {player.position} | Nearest node: {playerNode.name} at {playerNode.transform.position}");
+                yield return null;
+                continue;
             }
 
-            //Checking if the player is near the NpC if yes then the nodes in the path is cleared and created a new path to the player 
-            float PlayerDist = Vector2.Distance(transform.position, player.position);
-
-            if (PlayerDist < 2f)
+            if(player != null)
             {
+                Node playerNode = GetNearestNode(player.position);
+
                 if (playerNode != null)
                 {
-                    var newPath = AStarManager.instance.GeneratePath(currentNode, playerNode);
-                    if (newPath != null && newPath.Count > 0)
-                    {
-                        path.Clear();
-                        path.AddRange(newPath);
-                        if (debugLogs) Debug.Log($"PathUpdater: Rebuilt path to predicted node ({path.Count})");
-                    }
+                    if (debugLogs) Debug.Log($"PlayerPosition: {player.position} | Nearest node: {playerNode.name} at {playerNode.transform.position}");
                 }
-            }
-            else
-            {
-                if (currentNode != null && playerNode != null)
+
+                //Checking if the player is near the NpC if yes then the nodes in the path is cleared and created a new path to the player 
+                float PlayerDist = Vector2.Distance(transform.position, player.position);
+
+                if (PlayerDist < 2f)
                 {
-                    // Debug.Log(currentNode+"_-_"+playerNode);
-                    var newPath = AStarManager.instance.GeneratePath(currentNode, playerNode);
-                    if (newPath != null && newPath.Count > 0)
+                    if (playerNode != null)
                     {
-                        path.Clear();
-                        path.AddRange(newPath);
-                        if (debugLogs) Debug.Log($"PathUpdater: Rebuilt path to predicted node ({path.Count})");
+                        var newPath = AStarManager.instance.GeneratePath(currentNode, playerNode);
+                        if (newPath != null && newPath.Count > 0)
+                        {
+                            path.Clear();
+                            path.AddRange(newPath);
+                            if (debugLogs) Debug.Log($"PathUpdater: Rebuilt path to predicted node ({path.Count})");
+                        }
+                    }
+                }
+                else
+                {
+                    if (currentNode != null && playerNode != null)
+                    {
+                        // Debug.Log(currentNode+"_-_"+playerNode);
+                        var newPath = AStarManager.instance.GeneratePath(currentNode, playerNode);
+                        if (newPath != null && newPath.Count > 0)
+                        {
+                            path.Clear();
+                            path.AddRange(newPath);
+                            if (debugLogs) Debug.Log($"PathUpdater: Rebuilt path to predicted node ({path.Count})");
+                        }
                     }
                 }
             }
+            
             yield return wait;
         }
     }

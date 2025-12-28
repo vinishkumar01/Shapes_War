@@ -264,6 +264,9 @@ public class Smasher : Enemy
         isBusy = true;
         isSlaming = true;
 
+        _animator.ResetTrigger("Slam_Attack");
+        
+
         //Calculate bottom right pivot from spriteRenderer bounds
         Bounds bounds = spriteRenderer.bounds; // world space bounds
 

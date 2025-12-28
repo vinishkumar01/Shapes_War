@@ -11,16 +11,15 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
 {
     #region Player Attributes
 
-    [Header("Player Health Attributes")]
-    public int _currentHealth;
-
-    public int MaxHealth { get => _playerDataSO.maxHealth; set => _playerDataSO.maxHealth = Mathf.Max(0, value); }
-    public int CurrentHealth { get; set; }
+    public int MaxHealth { get; set; }
+    [field: SerializeField] public int CurrentHealth { get; set; }
 
     [Header("References")]
     private HealthBar _healthBar;
+    private TextMeshPro _healthText;
     public KnockBack _knockBack;
     private FlashEffect _flashEffect;
+    [SerializeField]private GameObject _gunHolder;
 
     public Animator _animator;
     public Rigidbody2D RB { get; set; }
@@ -73,6 +72,17 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
     [Header("Double Jump")]
     public bool _doubleJump;
 
+    [Header("Power Ups")]
+    [Header("UI")]
+    public TextMeshProUGUI _doubleJumpSkill;
+    public TextMeshProUGUI _doubleJumpCountUI;
+    public TextMeshProUGUI _dashSkill;
+    public TextMeshProUGUI _dashCountUI;
+    public TextMeshProUGUI _grappleAmmoUI;
+
+    //to Store the last Death Position of the player 
+    public Vector3 lastDeathPosition { get; private set; }
+
     #endregion
 
     #region State Machine Variables
@@ -94,10 +104,35 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         UpdateManager.RegisterObserver(this);
         FixedUpdateManager.RegisterObserver(this);
         LateUpdateManager.RegisterObserver(this);
+
+        //Making sure that the player has the weapon when in the scene
+        CheckIfGunisPresentWithPlayer();
+
+        AssignHealthAttributes();
+
+
+        //Player health
+        CurrentHealth = MaxHealth;
+
+        //Lets Reset the health text here 
+        if (_healthText != null)
+        {
+            ResetHealthText(MaxHealth);
+        }
+    }
+
+    private void CheckIfGunisPresentWithPlayer()
+    { 
+        if (!_gunHolder.activeInHierarchy)
+        {
+            _gunHolder.SetActive(true);
+        }
     }
 
     private void Awake()
     {
+        _healthText = GetComponentInChildren<TextMeshPro>();
+
         _playerStateMachine = new PlayerStateMachine();
 
         _playerIdleState = new PlayerIdleState(this, _playerStateMachine, _playerDataSO);
@@ -106,6 +141,15 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         _playerDashState = new PlayerDashState(this, _playerStateMachine, _playerDataSO);
     }
 
+    private void AssignHealthAttributes()
+    {
+        GameObject playerPrefab = GameManager._instance.GetPlayerPrefab();
+
+        if(GameManager._instance != null && GameManager._instance.TryGetPlayerData(playerPrefab, out var data))
+        {
+            MaxHealth = data.playerMaxHealth;
+        }
+    }
 
     private void Start()
     {
@@ -116,6 +160,14 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         _flashEffect = GetComponent<FlashEffect>();
         _knockBack = GetComponent<KnockBack>();
 
+        //UI
+        _doubleJumpSkill = GameObject.FindGameObjectWithTag("DJSUI").GetComponent<TextMeshProUGUI>();
+        _doubleJumpCountUI = GameObject.FindGameObjectWithTag("DJCUI").GetComponent<TextMeshProUGUI>();
+        _dashSkill = GameObject.FindGameObjectWithTag("DSUI").GetComponent<TextMeshProUGUI>();
+        _dashCountUI = GameObject.FindGameObjectWithTag("DSCUI").GetComponent<TextMeshProUGUI>();
+        _grappleAmmoUI = GameObject.FindGameObjectWithTag("GrappleCount").GetComponent<TextMeshProUGUI>();
+
+
         //Player Hinge Joint Configs for Rope Config
         _hingeJoint = GetComponent<HingeJoint2D>();
 
@@ -125,9 +177,6 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         //Player Starting Position
         _startingPos = transform.localScale;
 
-        //Player health
-        _currentHealth = _playerDataSO.maxHealth;
-
         //Initializing the default state for the player
         _playerStateMachine.Initialize(_playerIdleState);
     }
@@ -135,7 +184,12 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
     #region Player Health configs
     public void Damage(int damageAmount, Vector2 hitDirection)
     {
-        _currentHealth -= damageAmount;
+        if (CurrentHealth <= 0) return;
+
+        CurrentHealth -= damageAmount;
+
+        //Update Health Bar
+        UpdateHealth();
 
         //KnockBack
         _knockBack.CallKnockBackCoroutine(hitDirection, Vector2.up, Input.GetAxisRaw("Horizontal"));
@@ -143,19 +197,51 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         //Damage Flash
         _flashEffect.CallDamageFlash();
 
-        //Update Health Bar
-        _healthBar.UpdateHealthBar(_playerDataSO.maxHealth, _currentHealth);
-
-        if (_currentHealth <= 0)
+        if (CurrentHealth <= 0)
         {
             Die();
+            return;
+        }
+    }
+
+    public void UpdateHealth()
+    {
+        if (_healthText != null && _healthBar != null)
+        {
+            _healthBar.UpdateHealthBar(MaxHealth, CurrentHealth);
+            _healthText.text = CurrentHealth.ToString();
+        }
+    }
+
+    private void ResetHealthText(int maxHealth)
+    {
+        if (_healthText != null)
+        {
+            _healthText.text = maxHealth.ToString();
         }
     }
 
     public void Die()
     {
-        //Die
-        gameObject.SetActive(false);
+        //lets Stop the Coroutines for the Knock back and the flash Effect
+        _knockBack.StopKnockBack(); // This method contains the logic for stop coroutine and we are setting isBeingKnockedBack to false so that we dont continue on executing the coroutine
+
+        _flashEffect.ResetFlash(); // This method contains the same logic as the StopKnockBack and also we are resetting the flash amount 0 here.
+
+        lastDeathPosition = transform.position; 
+        _playerDataSO.lives--;
+        Debug.Log($"Player Lives: {_playerDataSO.lives}");
+
+        if(_playerDataSO.lives > 0)
+        {
+            GameManager._instance.OnPlayerDiedButHasLives(this);
+        }
+        else
+        {
+            GameManager._instance.ONPlayerGameOver(this);
+        }
+
+       gameObject.SetActive(false);
     }
 
     #endregion
@@ -175,6 +261,10 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
 
     public void ObservedUpdate()
     {
+        //Check for player Health t upgrade in every wave
+        GameManager._instance.CheckPlayerHealthEveryFrame(this);
+        Debug.Log($" Regular print: Maxhealth: {MaxHealth}, Current Health: {CurrentHealth}");
+
         CheckPlayerAttachedToRope();
         JumpCounters();
         PlayerFacing();
@@ -400,10 +490,58 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         UpdateManager.UnregisterObserver(this);
         FixedUpdateManager.UnregisterObserver(this);
         LateUpdateManager.UnregisterObserver(this); 
+
+        StopAllCoroutines();
     }
 
     private void OnGUI()
     {
         GUI.Label(new Rect(500, 10, 300, 100), $"Current State: {_playerStateMachine._currentPlayerState?.GetType().Name}");
+    }
+
+
+    //PowerUps Interactions
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if(collision.CompareTag("JumpPowerUp"))
+        {
+            _playerDataSO.doubleJumpSkill = true;
+            _doubleJumpSkill.text = _playerDataSO.doubleJumpSkill.ToString();
+
+            _playerDataSO.doubleJumpCount += 5;
+            _doubleJumpCountUI.text = _playerDataSO.doubleJumpCount.ToString();
+
+            PoolManager.ReturnObjectToPool(collision.gameObject, PoolManager.PoolType.GameObjects);
+            
+        }
+
+        if(collision.CompareTag("DashPowerUp"))
+        {
+            _playerDataSO.dashSkill = true;
+            _dashSkill.text = _playerDataSO.dashSkill.ToString();
+
+            _playerDataSO.dashCount += 5;
+            _dashCountUI.text = _playerDataSO.dashCount.ToString();
+
+            PoolManager.ReturnObjectToPool(collision.gameObject, PoolManager.PoolType.GameObjects);
+        }
+
+        if (collision.CompareTag("GrappleGunBullet"))
+        {
+            _playerDataSO._grappleAmmo += 5;
+            _grappleAmmoUI.text = _playerDataSO._grappleAmmo.ToString();
+
+            PoolManager.ReturnObjectToPool(collision.gameObject, PoolManager.PoolType.GameObjects);
+        }
+
+        if(collision.CompareTag("HealthPack"))
+        {
+            GameManager._instance.AddHealthToPlayer(this);
+            UpdateHealth();
+            Debug.Log($"[From Trigger Event]: CurrentHealth: {CurrentHealth}");
+
+            PoolManager.ReturnObjectToPool(collision.gameObject, PoolManager.PoolType.GameObjects);
+
+        }
     }
 }

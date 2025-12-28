@@ -13,7 +13,7 @@ public class KnockBack : MonoBehaviour
 
     public bool IsBeingKnockedBack { get; private set; }
 
-    public Coroutine knockBackCoroutine;
+    private Coroutine knockBackCoroutine;
 
 
     private void Start()
@@ -64,6 +64,21 @@ public class KnockBack : MonoBehaviour
 
     public void CallKnockBackCoroutine(Vector2 hitDirection, Vector2 constantForceDirection, float inputDirection)
     {
+        if (knockBackCoroutine != null)
+        {
+            StopCoroutine(knockBackCoroutine);
+        }
         knockBackCoroutine = StartCoroutine(KnockBackAction(hitDirection, constantForceDirection, inputDirection));
+    }
+
+    public void StopKnockBack()
+    {
+        if(knockBackCoroutine != null)
+        {
+            StopCoroutine(knockBackCoroutine);
+            knockBackCoroutine = null;
+        }
+
+        IsBeingKnockedBack = false;
     }
 }

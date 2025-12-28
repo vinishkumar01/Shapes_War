@@ -247,7 +247,6 @@ MonoBehaviour:
   <MaxHealth>k__BackingField: 0
   <CurrentHealth>k__BackingField: 0
   <DamageAmount>k__BackingField: 0
-  _healthText: {fileID: 0}
   _animator: {fileID: 0}
   _enemyType: 0
   currentNode: {fileID: 0}

@@ -5,7 +5,6 @@ using UnityEngine;
 public class GrapplingGunConfig : MonoBehaviour
 {
     [SerializeField] GunAiming gunAiming;
-    [SerializeField] PlayerController playerController;
     [SerializeField] Player player;
     [SerializeField] GrappleRopeConfigs grappleRope;
 
@@ -29,10 +28,9 @@ public class GrapplingGunConfig : MonoBehaviour
     [Header("Distance Configs")]
     [SerializeField] float maxDistance = 20f;
 
-    [Header("Auto Configure Distance")]
-    //[SerializeField] bool autoConfigureDistance = false;
-    //[SerializeField] float targetDistance = 3;
-    //[SerializeField] float targetFfrequency = 1;
+    [Header("grapple conditions")]
+    private bool grappled = false;
+
 
     [Header("Launch")]
     [SerializeField] float launchSpeed = 1;
@@ -45,7 +43,6 @@ public class GrapplingGunConfig : MonoBehaviour
     private void Awake()
     {
         gunAiming = GetComponentInParent<GunAiming>();
-        playerController = GameObject.FindGameObjectWithTag("Player").GetComponentInParent<PlayerController>();
         player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
         grappleRope = GetComponentInChildren<GrappleRopeConfigs>();
     }
@@ -65,30 +62,44 @@ public class GrapplingGunConfig : MonoBehaviour
 
     void GrappleGunAimAndSomeStuff()
     {
-        if (UserInputs.instance._playerInputs.Player.Fire.WasPressedThisFrame())
-        {
-            SetGrapplingPoint();
-            //Debug.Log("Grapple Shot");
-        }
-        else if (UserInputs.instance._playerInputs.Player.Fire.IsPressed())
-        {
-            if (grappleRope.enabled)
-            {
-                gunAiming.GunAim(grapplePoint, false);
-                //Debug.Log("Grapple Point is enabled");
-            }
-            else
-            {
-                gunAiming.GunAim_with_CursorUI_To_World_Conversion();
-            }
-        }
-        else if (UserInputs.instance._playerInputs.Player.Fire.WasReleasedThisFrame())
-        {
-            grappleRope.enabled = false;
-            _springJoint2D.enabled = false;
-            //playerController.rb.gravityScale = playerController.gravityScale;
-            player.RB.gravityScale = player._gravityScale;
+        gunAiming.GunAim_with_CursorUI_To_World_Conversion();
 
+        if (player._playerDataSO._grappleAmmo > 0)
+        {
+            if (UserInputs.instance._playerInputs.Player.Fire.WasPressedThisFrame())
+            {
+                SetGrapplingPoint();
+                //Debug.Log("Grapple Shot");
+            }
+            else if (UserInputs.instance._playerInputs.Player.Fire.IsPressed())
+            {
+                if (grappleRope.enabled)
+                {
+                    gunAiming.GunAim(grapplePoint, false);
+                    grappled = true;
+                    //Debug.Log("Grapple Point is enabled");
+                }
+                else
+                {
+                    gunAiming.GunAim_with_CursorUI_To_World_Conversion();
+                }
+            }
+            else if (UserInputs.instance._playerInputs.Player.Fire.WasReleasedThisFrame())
+            {
+                grappleRope.enabled = false;
+                _springJoint2D.enabled = false;
+                //playerController.rb.gravityScale = playerController.gravityScale;
+                player.RB.gravityScale = player._gravityScale;
+
+                //the ammo will be depleated when the trigger is released
+                if(grappled)
+                {
+                    player._playerDataSO._grappleAmmo--;
+                    player._grappleAmmoUI.text = player._playerDataSO._grappleAmmo.ToString();
+                }
+
+                grappled = false;
+            }
         }
         else
         {

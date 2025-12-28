@@ -30,4 +30,4 @@ MonoBehaviour:
   _smasherDamageDealAmount: 25
   _smasherDamageGives: 20
   _playerDetectionDistance: 10
-  _smasher_MoveSpeed: 600
+  _smasher_MoveSpeed: 500

@@ -15,7 +15,7 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver,
     public Rigidbody2D RB { get; set; }
     private FlashEffect _flashEffect;
     private HealthBar _healthBar;
-    [SerializeField] private TextMeshPro _healthText;
+    private TextMeshPro _healthText;
     public Animator _animator;
 
     public bool isFacingRight { get; set; } = true;
@@ -204,6 +204,8 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver,
 
     public void Die()
     {
+        GameManager._instance.AddScoreForEnemy(_enemyType);
+
         //Notify Game Manager before pooling/destroying
         GameManager._instance.EnemyDestroyed(gameObject);
 

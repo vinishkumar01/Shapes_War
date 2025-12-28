@@ -494,7 +494,6 @@ MonoBehaviour:
   <MaxHealth>k__BackingField: 100
   <CurrentHealth>k__BackingField: 0
   <DamageAmount>k__BackingField: 20
-  _healthText: {fileID: 0}
   _animator: {fileID: 0}
   _enemyType: 1
   player: {fileID: 0}

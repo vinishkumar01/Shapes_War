@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 [CreateAssetMenu(menuName = "Player/SO's/PlayerDataSO")]
 public class PlayerDataSO : ScriptableObject
@@ -46,7 +47,7 @@ public class PlayerDataSO : ScriptableObject
     [Header("Player Jump State Variables")]
     [Header("Double Jump")]
     public float doubleJumpForce = 25f;
-    public bool doubleJumpSkill = false;
+    public int doubleJumpCount = 0;
 
     [Header("Move in Air")]
     public float airMovementSpeed = 16f;
@@ -57,5 +58,17 @@ public class PlayerDataSO : ScriptableObject
     public float dashTime = 0.2f;
     public float dashSpeed = 50f;
     public float dashCoolDown = 2.5f;
+    public int dashCount = 0;
+
+    [Header("Grapple Gun")]
+    public int _grappleAmmo = 0;
+
+    [Header("Power Up")]
+    public bool doubleJumpSkill = false;
+    public bool dashSkill = false;
+
+    public int healthPack = 50;
+    public int maxLives = 3;
+    public int lives;
 
 }
