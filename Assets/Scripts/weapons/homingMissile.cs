@@ -12,6 +12,7 @@ public class homingMissile : MonoBehaviour, IDamageable, IUpdateObserver, IFixed
     private Rigidbody2D rb;
     [SerializeField] private LayerMask playerLayer;
     private FlashEffect _flashEffect;
+    private GameObject _ownerTracer;
 
     [Header("Missile Configs")]
     [SerializeField] int MissileSpeed = 10;
@@ -48,11 +49,20 @@ public class homingMissile : MonoBehaviour, IDamageable, IUpdateObserver, IFixed
         //Register to FixedUpdate Manager
         FixedUpdateManager.RegisterObserver(this);
 
+        //Registering this Missile in the Indicator manager
+        TargetIndicaotrManager._instance.OnTracerMissileSpawned(_ownerTracer, this.gameObject);
+
         hasReturnedToPool = false;
         if(_flashEffect != null)
         {
             _flashEffect.ResetFlash();
         }
+    }
+
+    public void SetOwnerTracer(GameObject tracer)
+    {
+        //getting the tracer which shot this missile
+        _ownerTracer = tracer;
     }
 
     void Start()
@@ -217,7 +227,8 @@ public class homingMissile : MonoBehaviour, IDamageable, IUpdateObserver, IFixed
                 //Play Explosion Effect
                 ExplosionEffect();
 
-
+                //Delete this specific from the Missile list 
+                GameManager._instance._missilesList.Remove(this.gameObject);
             }
         }
 
@@ -234,5 +245,8 @@ public class homingMissile : MonoBehaviour, IDamageable, IUpdateObserver, IFixed
         UpdateManager.UnregisterObserver(this);
         //Register to FixedUpdate Manager
         FixedUpdateManager.UnregisterObserver(this);
+
+        //Registering this Missile in the Indicator manager
+        TargetIndicaotrManager._instance.OnTracerMissileDestroyed(_ownerTracer, this.gameObject);
     }
 }

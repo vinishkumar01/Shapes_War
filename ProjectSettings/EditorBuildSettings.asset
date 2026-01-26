@@ -21,7 +21,7 @@ EditorBuildSettings:
     path: Assets/Scenes/Loading Screen.unity
     guid: 3045a44d4339e3343903fb7d47578aa3
   - enabled: 1
-    path: Assets/Scenes/Test_Area.unity
+    path: Assets/Scenes/Test Area -Scenes/Test_Area.unity
     guid: 7187aa671ad532a429c835fa95e1bd46
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 967aeff9f7ab66a4dbd18b10aac3dbc0, type: 3}

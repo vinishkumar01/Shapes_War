@@ -250,7 +250,7 @@ public class Tracer : Enemy
 
         if (isPlayerDetected || isPlayerNear)
         {
-            NumOfMissileInitiation = 4;
+            NumOfMissileInitiation = _tracerData._missileAttackInitiation;
             IntervalBetweenMissiles = 2;
         }
         else
@@ -443,7 +443,8 @@ public class Tracer : Enemy
         {
             Vector3 Origin = firePoint.position;
 
-            PoolManager.SpawnObject(Missile, Origin, Quaternion.identity, PoolManager.PoolType.GameObjects);
+            GameObject missile = PoolManager.SpawnObject(Missile, Origin, Quaternion.identity, PoolManager.PoolType.GameObjects);
+            missile.GetComponent<homingMissile>().SetOwnerTracer(this.gameObject);
             MissilesFired++;
 
             yield return new WaitForSeconds(FireRate);

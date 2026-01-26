@@ -36,8 +36,6 @@ public class GrapplingGunConfig : MonoBehaviour
     [SerializeField] float launchSpeed = 1;
 
 
-   
-
     #endregion
 
     private void Awake()

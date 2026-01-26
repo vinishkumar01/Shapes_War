@@ -21,7 +21,8 @@ public class EnemiesSO : ScriptableObject
     public int _tracerDamageGives;
     public int _tracer_MoveSpeed;
 
-    public int _numOfMissileInitiation = 2;
+    public int _numOfMissileInitiation = 1;
+    public int _numOfMissileAttackInitiation = 4;
     public float _intervalBetweenMissiles = 6f;
     public float _fireRate;
 

@@ -15,9 +15,10 @@ MonoBehaviour:
   chaser: {fileID: 851348601292540172, guid: 3e3638f6c81101f4ca599c8eeb04d997, type: 3}
   smasher: {fileID: 3159435265551719321, guid: 6ed38bfff9d038f4dbefdb7ce5aa0775, type: 3}
   tracer: {fileID: 5221922022415348802, guid: 2dce496c543538349a3db059372fae12, type: 3}
-  player: {fileID: 6998942169396220081, guid: 24d52b92ef658d4499c583b48e0f3920, type: 3}
+  player: {fileID: 2036120631765992075, guid: 12c5da593579c084bbb0da7b878f5dac, type: 3}
   doubleJump: {fileID: 949929771046163651, guid: bfbd30fee9bc65a41b34e4fe85e6c71f, type: 3}
   dash: {fileID: 7962199123836151209, guid: 426e0cee5d8f1a041bc603a18969f2be, type: 3}
   grappleAmmo: {fileID: 1698916908704348383, guid: b2e377e52d5545a46974f228dbf3927a, type: 3}
   healthPack: {fileID: 4550705451726301379, guid: 75019ec711c479c44b1330d9e862efed, type: 3}
   ammo: {fileID: 3768207333230808857, guid: e01b628ccf452904ab1d48e7f41fee99, type: 3}
+  highScore: 0

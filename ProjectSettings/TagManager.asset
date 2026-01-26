@@ -30,6 +30,7 @@ TagManager:
   - GunPivot
   - HighScoreUI
   - ScoreUI
+  - BackGround
   layers:
   - Default
   - TransparentFX
@@ -50,7 +51,7 @@ TagManager:
   - Missile
   - MissileCameraLayer
   - PowerUps
-  - 
+  - MiniMapIcon
   - 
   - 
   - 

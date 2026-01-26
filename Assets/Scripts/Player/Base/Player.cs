@@ -107,18 +107,6 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
 
         //Making sure that the player has the weapon when in the scene
         CheckIfGunisPresentWithPlayer();
-
-        AssignHealthAttributes();
-
-
-        //Player health
-        CurrentHealth = MaxHealth;
-
-        //Lets Reset the health text here 
-        if (_healthText != null)
-        {
-            ResetHealthText(MaxHealth);
-        }
     }
 
     private void CheckIfGunisPresentWithPlayer()
@@ -143,6 +131,11 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
 
     private void AssignHealthAttributes()
     {
+        if (GameManager._instance._gameManagerSpawnListSO.player == null)
+        {
+            Debug.LogWarning("---Player is null---");
+        }
+
         GameObject playerPrefab = GameManager._instance.GetPlayerPrefab();
 
         if(GameManager._instance != null && GameManager._instance.TryGetPlayerData(playerPrefab, out var data))
@@ -151,8 +144,33 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         }
     }
 
+    public void ResetPlayerHealth()
+    {
+        //Player health
+        CurrentHealth = MaxHealth;
+
+        UpdateHealth();
+
+        //Lets Reset the health text here 
+        if (_healthText != null)
+        {
+            ResetHealthText(MaxHealth);
+        }
+    }
+
     private void Start()
     {
+        AssignHealthAttributes();
+
+        //Player health
+        CurrentHealth = MaxHealth;
+
+        //Lets Reset the health text here 
+        if (_healthText != null)
+        {
+            ResetHealthText(MaxHealth);
+        }
+
         RB = GetComponent<Rigidbody2D>();
         
         //Player health References
@@ -408,19 +426,16 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
 
     private void PlayerFacing()
     {
-        float gunAngle = _gun.eulerAngles.z;
+        Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(Camera.main, UserInputs.instance._cursorTransform.position);
+        float z = transform.position.z - Camera.main.transform.position.z;
 
-        IsFacingRight = gunAngle <= 90f || gunAngle >= 270f;
+        Vector3 cursorWorldPos = Camera.main.ScreenToWorldPoint(new Vector3(screenPoint.x, screenPoint.y, z));
+        Vector3 playerToCursor = cursorWorldPos - transform.position;
+        IsFacingRight = playerToCursor.x > 0;
 
-        if(IsFacingRight)
-        {
-            transform.localScale = _startingPos;
-        }
-        else
-        {
-            transform.localScale = new Vector2(-_startingPos.x, _startingPos.y);
-        }
-
+        //Apply Flip
+        Vector3 targetScale = IsFacingRight ? _startingPos : new Vector3(-_startingPos.x, _startingPos.y, _startingPos.z);
+        transform.localScale = targetScale;
         _cameraLookController.SetFacing(IsFacingRight);
     }
 

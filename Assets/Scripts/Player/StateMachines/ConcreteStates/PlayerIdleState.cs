@@ -19,6 +19,7 @@ public class PlayerIdleState : PlayerState
         base.EnterState();
         _player.RB.drag = 5f;
         _player._animator.SetBool("isIdle", true);
+
     }
 
     public override void ExitState()

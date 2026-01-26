@@ -26,6 +26,7 @@ public class PlayerJumpState : PlayerState
     public override void EnterState()
     {
         base.EnterState();
+
         _player._animator.SetBool("isJumping", true);
         _jumpWasExecuted = false;
 

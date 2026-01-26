@@ -5,25 +5,25 @@ using UnityEngine;
 public class GrappleRopeConfigs : MonoBehaviour, IUpdateObserver
 {
     [Header("General References:")]
-     [SerializeField]GrapplingGunConfig grapplingGun;
-    [SerializeField] LineRenderer _lineRenderer;
+     [SerializeField]private GrappleGun grapplingGun;
+    [SerializeField]private LineRenderer _lineRenderer;
 
     [Header("General Settings")]
-    [SerializeField] int precision = 40; // precision is nothing but the perfection of the rope, not only for perfection this will be assigned to positionCount of the line Renderer where we will be drawing the line with 40 points so that we can get the curve animation
-    [Range(0, 20)][SerializeField] float straightenLineSpeed = 5;
+    [SerializeField]private int precision = 40; // precision is nothing but the perfection of the rope, not only for perfection this will be assigned to positionCount of the line Renderer where we will be drawing the line with 40 points so that we can get the curve animation
+    [Range(0, 20)][SerializeField]private float straightenLineSpeed = 5;
 
     [Header("Rope Animation Settings")]
     public AnimationCurve ropeAnimationCurve;
-    [Range(0.01f, 4)][SerializeField] float StartWaveSize = 2;
-    float WaveSize = 0;
+    [Range(0.01f, 4)][SerializeField]private float StartWaveSize = 2;
+    private float WaveSize = 0;
 
     [Header("Rope Progression:")]
     public AnimationCurve ropeProgressionCurve;
-    [Range(1, 50)][SerializeField] float ropeProgressionSpeed = 1;
+    [Range(1, 50)][SerializeField]private float ropeProgressionSpeed = 1;
     
-    float moveTime = 0;
+    private float moveTime = 0;
     public bool isgrappling = true;
-    bool StraightLine = true;
+    public bool StraightLine = true;
 
 
     private void OnEnable()
@@ -32,18 +32,18 @@ public class GrappleRopeConfigs : MonoBehaviour, IUpdateObserver
         UpdateManager.RegisterObserver(this);
 
         moveTime = 0;
-        _lineRenderer.positionCount = precision;
         WaveSize = StartWaveSize;
         StraightLine = false;
+        isgrappling = false;
 
+        _lineRenderer.positionCount = precision;
         linePointsToFirePoint();
-
         _lineRenderer.enabled = true;
     }
 
     private void Awake()
     {
-        grapplingGun = GetComponentInParent<GrapplingGunConfig>();
+        grapplingGun = GetComponentInParent<GrappleGun>();
         _lineRenderer.enabled = false;
     }
 
@@ -61,7 +61,7 @@ public class GrappleRopeConfigs : MonoBehaviour, IUpdateObserver
     {
         for(int i = 0; i < precision; i++)
         {
-            _lineRenderer.SetPosition(i, grapplingGun.firePoint.position);
+            _lineRenderer.SetPosition(i, grapplingGun._firePoint.position);
         }
     }
 
@@ -80,32 +80,33 @@ public class GrappleRopeConfigs : MonoBehaviour, IUpdateObserver
         }
             
         Vector2 lineEnd = _lineRenderer.GetPosition(precision - 1);
-        Vector2 targetpoint = grapplingGun.grapplePoint;
+        Vector2 targetpoint = grapplingGun._grapplePoint;
 
         if (!StraightLine)
         {
             //Debug.Log("still not a straight line");
             // We are checking that if the linerenderer(line) has reached to grapple point, if reached then the line becomes straight, until it reaches, the line will be drawn curvy
             
-        if (Vector2.Distance(lineEnd, targetpoint) <= 0.05f)
-        {   
-            //Debug.Log(" straight line");
-            StraightLine = true;
-        }
-        else
-        {
-            DrawRopeWaves();
-        }
+            if (Vector2.Distance(lineEnd, targetpoint) <= 0.05f)
+            {   
+                //Debug.Log(" straight line");
+                StraightLine = true;
+            }
+            else
+            {
+                DrawRopeWaves();
+            }
         }
         else
         {
             if(!isgrappling)
             {
-                //Debug.Log("is not grappling");
                 grapplingGun.GrappleConfigs();
                 isgrappling = true;
             }
-            if(WaveSize > 0)
+
+
+            if (WaveSize > 0)
             {
                 // We are checking if the Wave Size greater than zero if yes then we are making the curvy line to straight line as time passes and multiply with straightlinespeed (how fast the line has to become straight)
                 WaveSize -= Time.deltaTime * straightenLineSpeed;
@@ -129,9 +130,9 @@ public class GrappleRopeConfigs : MonoBehaviour, IUpdateObserver
         {
             //delta varaible determines what part of the distance from firePoint to grapple point at the point should pass 
             float delta = (float)i / ((float)precision - 1f);
-            Vector2 offset = Vector2.Perpendicular(grapplingGun.grappleDistanceVector).normalized * ropeAnimationCurve.Evaluate(delta) * WaveSize;
-            Vector2 targetPosition = Vector2.Lerp(grapplingGun.firePoint.position, grapplingGun.grapplePoint, delta) + offset;
-            Vector2 currentPosition = Vector2.Lerp(grapplingGun.firePoint.position, targetPosition, ropeProgressionCurve.Evaluate(moveTime) * ropeProgressionSpeed);
+            Vector2 offset = Vector2.Perpendicular(grapplingGun._grappleDistanceVector).normalized * ropeAnimationCurve.Evaluate(delta) * WaveSize;
+            Vector2 targetPosition = Vector2.Lerp(grapplingGun._firePoint.position, grapplingGun._grapplePoint, delta) + offset;
+            Vector2 currentPosition = Vector2.Lerp(grapplingGun._firePoint.position, targetPosition, ropeProgressionCurve.Evaluate(moveTime) * ropeProgressionSpeed);
 
             _lineRenderer.SetPosition(i, currentPosition);
         }
@@ -139,8 +140,8 @@ public class GrappleRopeConfigs : MonoBehaviour, IUpdateObserver
 
     void DrawRopeNoWaves()
     {
-        _lineRenderer.SetPosition(0, grapplingGun.firePoint.position);
-        _lineRenderer.SetPosition(1, grapplingGun.grapplePoint);
+        _lineRenderer.SetPosition(0, grapplingGun._firePoint.position);
+        _lineRenderer.SetPosition(1, grapplingGun._grapplePoint);
     }
 
 }
