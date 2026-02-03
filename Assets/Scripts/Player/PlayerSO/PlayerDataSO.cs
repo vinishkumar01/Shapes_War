@@ -40,6 +40,7 @@ public class PlayerDataSO : ScriptableObject
     [Header("Player Move State Variables")]
     [Header("Movement Configs")]
     public float movementSpeed = 16f;
+    public float maxMovementSpeed = 16f;
     public float accelerationTimeAirBorne = 0.2f;
     public float accelerationTimeGround = 0.1f;
     public float ropeSwingForce = 8f;

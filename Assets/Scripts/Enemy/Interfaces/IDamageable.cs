@@ -4,7 +4,7 @@ using UnityEngine;
 
 public interface IDamageable 
 {
-    public void RecieveHit(RaycastHit2D RayHit);
+    public void RecieveHit(RaycastHit2D RayHit, Vector2 hitDirection);
 
     void Die();
 

@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using Cinemachine;
 
-public class ParallexManager : MonoBehaviour, IUpdateObserver
+public class ParallexManager : MonoBehaviour, ILateUpdateObserver
 {
     [SerializeField] private Transform[] _backGroundImages;
     [SerializeField] private float[] _parallaxScale; // The proportion of the player movement to move the background 
-    [SerializeField] private float Smoothing = 1f;
 
     [SerializeField] private float _zoomParallaxStrength = 0.5f; //How much zoom affects the parallax
 
@@ -16,6 +15,9 @@ public class ParallexManager : MonoBehaviour, IUpdateObserver
 
     private Vector3 _previousCamPos;
     private float _previousOrthoSize;
+
+    [Header("Camera Shake Controller")]
+    [SerializeField] private CameraShakeController _cameraShake;
 
     private void Awake()
     {
@@ -36,37 +38,24 @@ public class ParallexManager : MonoBehaviour, IUpdateObserver
 
         for(int i =0; i < _backGroundImages.Length; i++)
         {
-            _parallaxScale[i] = 0.1f * (i + 1);
+            _parallaxScale[i] = 1f / (i + 2f);
         }
 
-        UpdateManager.RegisterObserver(this);
-
-        //GameObject player = GameObject.FindGameObjectWithTag("Player");
-        //_player = player?.GetComponent<Transform>();
-        //if(_player == null)
-        //{
-        //    Debug.LogWarning("Player Not Found");
-        //}
-        //else
-        //{
-        //    _previousPlayerPos = _player.position;
-        //}
-
-        //if(_parallaxScale == null || _parallaxScale.Length != _backGroundImages.Length)
-        //{
-        //    Debug.LogError("ParallaxManager: Parallax Scale array must match backGround images length");
-        //}
+        LateUpdateManager.RegisterObserver(this);
     }
 
-    public void ObservedUpdate()
+    public void ObservedLateUpdate()
     {
 
         if(_cam == null || _brain == null) return;
         if(_brain.ActiveVirtualCamera == null) return;
 
-        Vector3 camPos = _cam.position;
+        Vector3 shakeOffset = _cameraShake != null ? _cameraShake.currentShakeOffset : Vector3.zero;
 
-        float camDeltaX = camPos.x - _previousCamPos.x;
+        //Remove Shake influence from camera position
+        Vector3 stableCameraPos = _cam.position - shakeOffset;
+
+        float camDeltaX = stableCameraPos.x - _previousCamPos.x;
 
         float currentOrthoSize = _brain.ActiveVirtualCamera.State.Lens.OrthographicSize;
 
@@ -84,26 +73,13 @@ public class ParallexManager : MonoBehaviour, IUpdateObserver
 
             Vector3 targetPos = new Vector3(targetX, _backGroundImages[i].position.y, _backGroundImages[i].position.z);
 
-            _backGroundImages[i].position = Vector3.Lerp(_backGroundImages[i].position, targetPos, Smoothing * Time.deltaTime);
+            //_backGroundImages[i].position = Vector3.Lerp(_backGroundImages[i].position, targetPos, Smoothing * Time.deltaTime);
+
+            _backGroundImages[i].position = targetPos;  
         }
 
-        _previousCamPos = camPos;
+        _previousCamPos = stableCameraPos;
         _previousOrthoSize = currentOrthoSize;
-
-        //if (_player == null) return;
-
-        //Vector3 playerDelta = _player.position - _previousPlayerPos;
-
-        //for(int i = 0; i < _backGroundImages.Length; i++)
-        //{
-        //    float targetX = _backGroundImages[i].position.x + playerDelta.x * _parallaxScale[i];
-
-        //    Vector3 targetPos = new Vector3(targetX, _backGroundImages[i].position.y, _backGroundImages[i].position.z);
-
-        //    _backGroundImages[i].position = Vector3.Lerp(_backGroundImages[i].position, targetPos, Smoothing);
-        //}
-
-        //_previousPlayerPos = _player.position;
 
     }
 
@@ -120,6 +96,6 @@ public class ParallexManager : MonoBehaviour, IUpdateObserver
 
     private void OnDisable()
     {
-        UpdateManager.UnregisterObserver(this);
+        LateUpdateManager.UnregisterObserver(this);
     }
 }

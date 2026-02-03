@@ -96,7 +96,7 @@ public class homingMissile : MonoBehaviour, IDamageable, IUpdateObserver, IFixed
         }
     }
 
-    void IDamageable.RecieveHit(RaycastHit2D RayHit)
+    void IDamageable.RecieveHit(RaycastHit2D RayHit, Vector2 hitDirection)
     {
         Debug.Log("Got Hit: by missile");
 

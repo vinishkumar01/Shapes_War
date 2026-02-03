@@ -62,12 +62,20 @@ public class BulletTracer : MonoBehaviour
             hasHit = true;
             if (storedHit.collider != null)
             {
-                GameObject impact = PoolManager.SpawnObject(Bullet_Collision, _targetposition, Quaternion.identity, PoolManager.PoolType.ParticleSystem);
-                StartCoroutine(ReturnAfterSeconds(impact, 1f));
+
+                if(storedHit.collider.CompareTag("Platform"))
+                {
+                    // We spawn the particle slightly outward of the platform so that the collision doesnt affects between particle and platform
+                    Vector3 fxpos = _targetposition + (Vector3)(storedHit.normal * 0.2f);
+
+                    SpawnDustParticle(fxpos, storedHit.normal);
+                    //StartCoroutine(ReturnAfterSeconds(impact, 1f));
+                }
 
                 if (storedHit.collider.gameObject.activeInHierarchy && storedHit.collider.TryGetComponent<IDamageable>(out var damageable))
                 {
-                    damageable.RecieveHit(storedHit);
+                    Vector2 hitDirection = (_targetposition - _startposition).normalized;
+                    damageable.RecieveHit(storedHit, hitDirection);
                 }
                 StartCoroutine(DisableWhenHit());
             }
@@ -78,6 +86,29 @@ public class BulletTracer : MonoBehaviour
         }
     }
 
+
+    private void SpawnDustParticle(Vector2 hitPoint, Vector2 hitNormal)
+    {
+        var dustParticle = PoolManager.SpawnObject(Bullet_Collision, hitPoint, Quaternion.identity, PoolManager.PoolType.ParticleSystem).GetComponent<ParticleSystem>();
+
+        float zRotation;
+
+        //Check the ceiling and floor of the platform
+        if(Mathf.Abs(hitNormal.x) > Mathf.Abs(hitNormal.y))
+        {
+            //wall
+            zRotation = hitNormal.x > 0 ? -90f : 90f;
+        }
+        else
+        {
+            //floor / ceiling
+            zRotation = hitNormal.y > 0 ? 180f : 0f;
+        }
+
+        dustParticle.transform.rotation = Quaternion.Euler(0, 0, zRotation);
+
+        dustParticle.Play();
+    }
     private void ReturnToPoolOnce()
     {
         if (hasBeenReturnedToPool) return;
@@ -95,12 +126,6 @@ public class BulletTracer : MonoBehaviour
     {
         yield return new WaitForSeconds(_trialLife + 0.1f);
         ReturnToPoolOnce();
-    }
-
-    IEnumerator ReturnAfterSeconds(GameObject obj, float time)
-    {
-        yield return new WaitForSeconds(time);
-        PoolManager.ReturnObjectToPool(obj, PoolManager.PoolType.ParticleSystem);
     }
 
     private void OnDisable()

@@ -76,7 +76,7 @@ TrailRenderer:
   m_SortingLayerID: -1165586547
   m_SortingLayer: 3
   m_SortingOrder: 0
-  m_Time: 0.07
+  m_Time: 0.05
   m_PreviewTimeScale: 1
   m_Parameters:
     serializedVersion: 3
@@ -161,8 +161,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ScriptIsBeingCalled: 1
   _speed: 150
-  _trialLife: 0.05
-  Bullet_Collision: {fileID: 1567822461625743984, guid: be24cae37cbe9d045b9e851e4ae1e11b, type: 3}
+  _trialLife: 0.03
+  Bullet_Collision: {fileID: 1383114442019371328, guid: 20b97e31a0c3b7646b3f62dfd9be3a5c, type: 3}
   hasHit: 0
 --- !u!58 &7890664359629403694
 CircleCollider2D:

@@ -30,9 +30,6 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver,
 
     #endregion
 
-    public bool IsWithinStrikingDistance { get; set; }
-
-
     public EnemyType _enemyType;
 
     private void OnEnable()
@@ -169,13 +166,16 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver,
     }
 
     #region Health / Die
-    public void RecieveHit(RaycastHit2D RayHit)
+    public void RecieveHit(RaycastHit2D RayHit, Vector2 hitDirection)
     {
         if (!gameObject.activeInHierarchy && CurrentHealth <= 0) return;
 
         CurrentHealth -= DamageAmount;
 
         _flashEffect.CallDamageFlash();
+
+        //Spawn Blood Effect
+        BloodFXController.instance.PlayBloodFX(RayHit.point, RayHit.normal, hitDirection);
 
         _healthBar.UpdateHealthBar(MaxHealth, CurrentHealth);
         UpdateHealthText(CurrentHealth);

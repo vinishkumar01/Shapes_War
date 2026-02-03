@@ -17,6 +17,18 @@ public class Rifle : MonoBehaviour, IUpdateObserver
     private enum FireMode { FullAuto, Burst}
     private FireMode _fireMode = FireMode.FullAuto;
 
+    [Header("recoil Force")]
+    [SerializeField] private float _recoilForce = 5f;
+    [SerializeField] private Player _player;
+
+    [Header("Camera shake and bumpiness")]
+    [SerializeField] private float _bumpStrength = 0.12f;
+    [SerializeField] private float _punchShakeStrength = 0.08f;
+    [SerializeField] private float _punchShakeStrengthBackGround = 0.08f;
+
+    [Header("Player SO Data")]
+    [SerializeField] private PlayerDataSO _playerData;
+
     private void OnEnable()
     {
         //Getting the gunAimConfigs here
@@ -154,6 +166,18 @@ public class Rifle : MonoBehaviour, IUpdateObserver
         var bulletTrail = PoolManager.SpawnObject(_rifleAttributes.bulletPrefab, origin, Quaternion.identity, PoolManager.PoolType.GameObjects);
         _muzzleFlashAnimator.SetTrigger("Shoot");
 
+        //We apply the recoil Force to Plyer Here
+        Vector2 shootDirection = TargetDirection;
+        shootDirection.y *= _player._isGrounded ? 0.5f : 0.1f; ; //reduce vertical kick
+        shootDirection.Normalize();
+        if (_player._isGrounded)
+        {
+            ApplyRecoilForce(shootDirection);
+        }
+
+        //Apply Camera Shake
+        ApplyCameraShakeAndGamePlayPunch(shootDirection);
+
         var trailScript = bulletTrail.GetComponent<BulletTracer>();
 
         if (RayHit.collider)
@@ -181,6 +205,49 @@ public class Rifle : MonoBehaviour, IUpdateObserver
         _bulletCountText.text = _rifleAttributes.bulletsLeft.ToString();
         _rifleAttributes.isReloading = false;
         _reloadText.text = " ";
+    }
+
+    private void ApplyRecoilForce(Vector2 shootDirection)
+    {
+        if (_player._isDashing)
+        {
+            return;
+        }
+
+        float recoilMultiplier = 0f;
+
+        if (_playerData.movementSpeed > 10f)
+        {
+            //Cutting out recoil as much as possible
+            recoilMultiplier = 0.2f;
+        }
+        else if(_playerData.movementSpeed <= 5f)
+        {
+            recoilMultiplier = 0.5f;
+        }
+
+        _player.RB.AddForce(-shootDirection * _recoilForce * recoilMultiplier, ForceMode2D.Impulse);
+    }
+
+    private void ApplyCameraShakeAndGamePlayPunch(Vector2 shootDirection)
+    {
+
+        //Applying Gamplay Punch
+        if (_player._isGrounded)
+        {
+            //Here we apply the Camera shake and set the bumpiness of the camera
+            CameraShakeController.instance.CameraBump(-shootDirection, _bumpStrength); //camBumpXY
+
+            float movefactor = Mathf.InverseLerp(0, _playerData.maxMovementSpeed, _playerData.movementSpeed);
+
+            //When moving fast punch almost gone
+            float punchStrength = Mathf.Lerp(_punchShakeStrength, _punchShakeStrength * 0.001f, movefactor);
+            float punchStrengthBG = Mathf.Lerp(_punchShakeStrengthBackGround, _punchShakeStrengthBackGround * 0.001f, movefactor);
+
+            GameplayPunch.instance.Punch(-shootDirection, punchStrength);
+            GamePlayPunchForBackGrounds.instance.Punch(-shootDirection, punchStrengthBG);
+        }
+
     }
 
     private void OnDisable()

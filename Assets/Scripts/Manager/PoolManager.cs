@@ -15,7 +15,8 @@ public class PoolManager : MonoBehaviour
     private static GameObject _particleSystemEmpty;
     private static GameObject _gameObjectsEmpty;
     private static GameObject _soundFXEmpty;
-    private static GameObject _NodesEmpty;
+    private static GameObject _nodesEmpty;
+    private static GameObject _bloodstainEmpty;
 
     //Dictonary<Key, Value> -- Just incase 
     private static Dictionary<GameObject, ObjectPool<GameObject>> _objectPools;
@@ -26,7 +27,8 @@ public class PoolManager : MonoBehaviour
         ParticleSystem,
         GameObjects,
         SoundFX,
-        Nodes
+        Nodes,
+        BloodStains
     }
 
     public static PoolType poolingType;
@@ -57,10 +59,13 @@ public class PoolManager : MonoBehaviour
         _soundFXEmpty = new GameObject("Sound Effects");
         _soundFXEmpty.transform.SetParent(_emptyHolder.transform);
 
-        _NodesEmpty = new GameObject("Nodes");
-        _NodesEmpty.transform.SetParent(_emptyHolder.transform);
+        _nodesEmpty = new GameObject("Nodes");
+        _nodesEmpty.transform.SetParent(_emptyHolder.transform);
 
-        if(_addtoDontDestroyOnLoad)
+        _bloodstainEmpty = new GameObject("Blood Stains");
+        _bloodstainEmpty.transform.SetParent(_emptyHolder.transform);
+
+        if (_addtoDontDestroyOnLoad)
         {
             DontDestroyOnLoad(_particleSystemEmpty.transform.root);
         }
@@ -129,7 +134,10 @@ public class PoolManager : MonoBehaviour
                 return _soundFXEmpty;
 
             case PoolType.Nodes:
-                return _NodesEmpty;
+                return _nodesEmpty;
+
+            case PoolType.BloodStains:
+                return _bloodstainEmpty;
 
             default:
                 return null;

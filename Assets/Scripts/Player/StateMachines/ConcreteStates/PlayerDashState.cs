@@ -6,7 +6,6 @@ public class PlayerDashState : PlayerState
 {
 
     [Header("Player Dash")]
-    private bool _isDashing;
     private float _dashTimeLeft;
     private float _lastDash = -100f;
     private float _defaultGravity;
@@ -35,7 +34,7 @@ public class PlayerDashState : PlayerState
             return;
         }
 
-        _isDashing = true;
+        _player._isDashing = true;
         _dashTimeLeft = _playerDataSO.dashTime;
         _lastDash = Time.time;
 
@@ -59,7 +58,7 @@ public class PlayerDashState : PlayerState
     {
         base.ExitState();
 
-        _isDashing = false;
+        _player._isDashing = false;
         _player.RB.gravityScale = _defaultGravity;
         _player._dashText.text = " ";
 
@@ -70,7 +69,7 @@ public class PlayerDashState : PlayerState
     {
         base.FrameUpdate();
 
-        if (!_isDashing)
+        if (!_player._isDashing)
             return;
 
         _dashTimeLeft -= Time.deltaTime;

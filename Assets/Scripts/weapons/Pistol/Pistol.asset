@@ -18,10 +18,10 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 67648
   magSize: 15
-  bulletRange: 20
+  bulletRange: 40
   autoReload: 1
   reloadTime: 1
-  bulletsLeft: 12
+  bulletsLeft: 9
   isReloading: 0
   canShoot: 0
   burstFireRate: 0

@@ -20,6 +20,8 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
     public KnockBack _knockBack;
     private FlashEffect _flashEffect;
     [SerializeField]private GameObject _gunHolder;
+    [SerializeField] private GunAiming _gunAiming;
+    [SerializeField] private FullScreenEffectController _fullScreenEffectController;
 
     public Animator _animator;
     public Rigidbody2D RB { get; set; }
@@ -71,6 +73,9 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
 
     [Header("Double Jump")]
     public bool _doubleJump;
+
+    [Header("Dash Configs")]
+    public bool _isDashing;
 
     [Header("Power Ups")]
     [Header("UI")]
@@ -224,11 +229,8 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
 
     public void UpdateHealth()
     {
-        if (_healthText != null && _healthBar != null)
-        {
-            _healthBar.UpdateHealthBar(MaxHealth, CurrentHealth);
-            _healthText.text = CurrentHealth.ToString();
-        }
+        _healthBar.UpdateHealthBar(MaxHealth, CurrentHealth);
+        _healthText.text = CurrentHealth.ToString();
     }
 
     private void ResetHealthText(int maxHealth)
@@ -286,6 +288,26 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         CheckPlayerAttachedToRope();
         JumpCounters();
         PlayerFacing();
+
+        //Check If the current health is below 30 or 40 we will enable the fullScreen Effect to indicate the player
+        if(CurrentHealth <= 40 && !_fullScreenEffectController._lowHealthEffectActive)
+        {
+            _fullScreenEffectController._lowHealthEffectActive = true;
+
+            _fullScreenEffectController.lowHealthEffectCoroutine = StartCoroutine(_fullScreenEffectController.LowHealthEffect());
+        }
+        else if(CurrentHealth >= 42 && _fullScreenEffectController._lowHealthEffectActive)
+        {
+            _fullScreenEffectController._lowHealthEffectActive = false;
+
+            if(_fullScreenEffectController.lowHealthEffectCoroutine != null)
+            {
+                StopCoroutine(_fullScreenEffectController.LowHealthEffect());
+                _fullScreenEffectController.lowHealthEffectCoroutine = null;
+            }
+
+            _fullScreenEffectController.ResetLowHealthEffect();
+        }
 
         _playerStateMachine._currentPlayerState.FrameUpdate();
     }
@@ -514,6 +536,7 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         GUI.Label(new Rect(500, 10, 300, 100), $"Current State: {_playerStateMachine._currentPlayerState?.GetType().Name}");
     }
 
+    #region PowerUp Interactions
 
     //PowerUps Interactions
     private void OnTriggerEnter2D(Collider2D collision)
@@ -559,4 +582,6 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
 
         }
     }
+
+    #endregion
 }

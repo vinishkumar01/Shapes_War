@@ -96,7 +96,7 @@ public class NPC_Test : MonoBehaviour, IDamageable
         Sprite.transform.rotation = Quaternion.identity;    
     }
 
-    public void RecieveHit(RaycastHit2D RayHit)
+    public void RecieveHit(RaycastHit2D RayHit, Vector2 hitDirection)
     {
         Debug.Log("Got Hit: by Circle");
         NPCCurrentHealth -= NPCDamageAmount;
