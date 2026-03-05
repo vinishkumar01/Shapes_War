@@ -1,10 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
 using TMPro;
-using Unity.VisualScripting;
-using UnityEditor.Experimental.GraphView;
-using UnityEditorInternal;
 using UnityEngine;
 
 public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedUpdateObserver, ILateUpdateObserver
@@ -17,12 +13,18 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
     [Header("References")]
     private HealthBar _healthBar;
     private TextMeshPro _healthText;
-    public KnockBack _knockBack;
-    private FlashEffect _flashEffect;
-    [SerializeField]private GameObject _gunHolder;
-    [SerializeField] private GunAiming _gunAiming;
+    [HideInInspector] public KnockBack _knockBack;
+    [HideInInspector] public PlayerFlashAndDissolveEffect _flashEffect;
+    private PlayerDeadParticlesInitiation _deadParticlesInitiation;
+    [SerializeField] private GameObject _gunHolder;
+    private GunAiming _gunAiming;
     [SerializeField] private FullScreenEffectController _fullScreenEffectController;
-
+    [SerializeField] public GameObject _shockWaveScreen;
+    [SerializeField] private WeaponSO _pistolAttributes;
+    [SerializeField] private WeaponSO _rifleAttributes;
+    [SerializeField] private Pistol _pistol;
+    [SerializeField] private Rifle _rifle;
+    
     public Animator _animator;
     public Rigidbody2D RB { get; set; }
     public bool IsFacingRight = true;
@@ -76,6 +78,9 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
 
     [Header("Dash Configs")]
     public bool _isDashing;
+    public float _lastImageXpos;
+    public float _distancebetweenImages;
+    public GameObject _playerAfterImage;
 
     [Header("Power Ups")]
     [Header("UI")]
@@ -87,6 +92,10 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
 
     //to Store the last Death Position of the player 
     public Vector3 lastDeathPosition { get; private set; }
+
+    [Header("Player Visuals")]
+    [SerializeField] private GameObject _playerVisuals;
+    public SquashAndStretch _playerSquashandStretch;
 
     #endregion
 
@@ -110,8 +119,9 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         FixedUpdateManager.RegisterObserver(this);
         LateUpdateManager.RegisterObserver(this);
 
-        //Making sure that the player has the weapon when in the scene
+        //Making sure that the player has the weapon and the sprite when in the scene
         CheckIfGunisPresentWithPlayer();
+        CheckIfPlayerVisualisPresent();
     }
 
     private void CheckIfGunisPresentWithPlayer()
@@ -119,6 +129,14 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         if (!_gunHolder.activeInHierarchy)
         {
             _gunHolder.SetActive(true);
+        }
+    }
+
+    private void CheckIfPlayerVisualisPresent()
+    {
+        if (!_playerVisuals.activeInHierarchy)
+        {
+            _playerVisuals.SetActive(true);
         }
     }
 
@@ -161,6 +179,9 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         {
             ResetHealthText(MaxHealth);
         }
+
+        //Disable the shockWave when resetting the player health too
+        //_shockWaveScreen.SetActive(false);
     }
 
     private void Start()
@@ -180,8 +201,12 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         
         //Player health References
         _healthBar = GetComponentInChildren<HealthBar>();
-        _flashEffect = GetComponent<FlashEffect>();
+        _flashEffect = GetComponent<PlayerFlashAndDissolveEffect>();
         _knockBack = GetComponent<KnockBack>();
+        _deadParticlesInitiation = GetComponent<PlayerDeadParticlesInitiation>();
+
+        //Player Visual Reference
+        _playerSquashandStretch = _playerVisuals.GetComponent<SquashAndStretch>();
 
         //UI
         _doubleJumpSkill = GameObject.FindGameObjectWithTag("DJSUI").GetComponent<TextMeshProUGUI>();
@@ -194,18 +219,15 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         //Player Hinge Joint Configs for Rope Config
         _hingeJoint = GetComponent<HingeJoint2D>();
 
-        //Player Animator
-        _animator = GetComponent<Animator>();
-
         //Player Starting Position
-        _startingPos = transform.localScale;
+        _startingPos = _playerVisuals.transform.localScale;
 
         //Initializing the default state for the player
         _playerStateMachine.Initialize(_playerIdleState);
     }
 
     #region Player Health configs
-    public void Damage(int damageAmount, Vector2 hitDirection)
+    public void Damage(int damageAmount, Vector2 hitDirection, Vector2 hitPoint, Vector2 hitNormal)
     {
         if (CurrentHealth <= 0) return;
 
@@ -219,6 +241,9 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
 
         //Damage Flash
         _flashEffect.CallDamageFlash();
+
+        //Spawn Blood Effect
+        BloodFXController.instance.PlayBloodFX(hitPoint, hitNormal, hitDirection, BloodStainSpawnManager.CharacterType.Player);
 
         if (CurrentHealth <= 0)
         {
@@ -246,7 +271,11 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         //lets Stop the Coroutines for the Knock back and the flash Effect
         _knockBack.StopKnockBack(); // This method contains the logic for stop coroutine and we are setting isBeingKnockedBack to false so that we dont continue on executing the coroutine
 
-        _flashEffect.ResetFlash(); // This method contains the same logic as the StopKnockBack and also we are resetting the flash amount 0 here.
+        _flashEffect.StopFlashEffect(); // This method contains the same logic as the StopKnockBack and also we are resetting the flash amount 0 here.
+        _flashEffect.StopDashFlashEffect();
+
+        //Call the Body particles
+        _deadParticlesInitiation.CallSpawnBodyParticle();
 
         lastDeathPosition = transform.position; 
         _playerDataSO.lives--;
@@ -288,9 +317,9 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         CheckPlayerAttachedToRope();
         JumpCounters();
         PlayerFacing();
-
+        #region FullScreen Low Health Effect
         //Check If the current health is below 30 or 40 we will enable the fullScreen Effect to indicate the player
-        if(CurrentHealth <= 40 && !_fullScreenEffectController._lowHealthEffectActive)
+        if (CurrentHealth <= 40 && !_fullScreenEffectController._lowHealthEffectActive)
         {
             _fullScreenEffectController._lowHealthEffectActive = true;
 
@@ -308,6 +337,7 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
 
             _fullScreenEffectController.ResetLowHealthEffect();
         }
+        #endregion
 
         _playerStateMachine._currentPlayerState.FrameUpdate();
     }
@@ -457,13 +487,13 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
 
         //Apply Flip
         Vector3 targetScale = IsFacingRight ? _startingPos : new Vector3(-_startingPos.x, _startingPos.y, _startingPos.z);
-        transform.localScale = targetScale;
+        _playerVisuals.transform.localScale = targetScale;
         _cameraLookController.SetFacing(IsFacingRight);
     }
 
     #endregion
 
-    #region Animation triggers
+    #region Animation triggers and Shoot Animation
 
     public void AnimationTriggerEvent(AnimationTriggerType triggerType)
     {
@@ -475,7 +505,7 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         Idle,
         Run,
         Jump,
-        Dash,
+        Dash
     }
 
     #endregion

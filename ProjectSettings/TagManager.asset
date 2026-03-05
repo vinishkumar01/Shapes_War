@@ -31,6 +31,11 @@ TagManager:
   - HighScoreUI
   - ScoreUI
   - BackGround
+  - PlayerVisuals
+  - EnemyVisual
+  - ChaserVisuals
+  - EnemyHolder
+  - PlatformsWithSpikes
   layers:
   - Default
   - TransparentFX
@@ -44,7 +49,7 @@ TagManager:
   - BulletHittableLayer
   - BackGround
   - Enemy
-  - 
+  - Light
   - Bridge
   - Bullet
   - Gun
@@ -52,7 +57,7 @@ TagManager:
   - MissileCameraLayer
   - PowerUps
   - MiniMapIcon
-  - 
+  - Spikes
   - 
   - 
   - 
@@ -74,6 +79,9 @@ TagManager:
   - name: Platform
     uniqueID: 3789097069
     locked: 0
+  - name: Light
+    uniqueID: 410076149
+    locked: 0
   - name: Player
     uniqueID: 3129380749
     locked: 0
@@ -88,4 +96,7 @@ TagManager:
     locked: 0
   - name: UI Elements
     uniqueID: 2409322993
+    locked: 0
+  - name: CameraSortingLayer
+    uniqueID: 953498069
     locked: 0

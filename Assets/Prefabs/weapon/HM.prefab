@@ -71,7 +71,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 681336401
-  m_SortingLayer: 6
+  m_SortingLayer: 7
   m_SortingOrder: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 75f5f34dc1b5347e0b8351032682f224, type: 3}
   m_Color: {r: 0.03773582, g: 0.03773582, b: 0.03773582, a: 1}
@@ -156,7 +156,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 681336401
-  m_SortingLayer: 6
+  m_SortingLayer: 7
   m_SortingOrder: 1
   m_Sprite: {fileID: 7482667652216324306, guid: 75f5f34dc1b5347e0b8351032682f224, type: 3}
   m_Color: {r: 0.990566, g: 0.107467085, b: 0.107467085, a: 1}
@@ -243,7 +243,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 681336401
-  m_SortingLayer: 6
+  m_SortingLayer: 7
   m_SortingOrder: 0
   m_Sprite: {fileID: 399200334, guid: 83e51911f4a6333498779160f2bcd735, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -5019,7 +5019,7 @@ ParticleSystemRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 681336401
-  m_SortingLayer: 6
+  m_SortingLayer: 7
   m_SortingOrder: 0
   m_RenderMode: 0
   m_MeshDistribution: 0
@@ -5087,7 +5087,7 @@ GameObject:
   - component: {fileID: 481364954297917634}
   - component: {fileID: 5297005401148272751}
   - component: {fileID: 840502086591895670}
-  - component: {fileID: -7459697775064362926}
+  - component: {fileID: 4331753084338171443}
   m_Layer: 16
   m_Name: HM
   m_TagString: Missile
@@ -5151,7 +5151,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 1734499553
-  m_SortingLayer: 4
+  m_SortingLayer: 5
   m_SortingOrder: 1
   m_Sprite: {fileID: 7482667652216324306, guid: 75f5f34dc1b5347e0b8351032682f224, type: 3}
   m_Color: {r: 0.69803923, g: 0.69803923, b: 0.69803923, a: 1}
@@ -5273,7 +5273,7 @@ PolygonCollider2D:
       - {x: -0.5, y: -0.28866667}
       - {x: 0.5, y: -0.28866667}
   m_UseDelaunayMesh: 0
---- !u!114 &-7459697775064362926
+--- !u!114 &4331753084338171443
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -5282,14 +5282,51 @@ MonoBehaviour:
   m_GameObject: {fileID: 7348188028007044401}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0cd79b7e261c1da4cb519b7652318168, type: 3}
+  m_Script: {fileID: 11500000, guid: 9a2537b190c52ac49837ceff50aa9c13, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _flashColor: {r: 1, g: 0, b: 0, a: 1}
-  flashTime: 0.35
+  _flashColor: {r: 1, g: 1, b: 1, a: 1}
+  flashTime: 0.25
   _flashSpeedCurve:
     serializedVersion: 2
-    m_Curve: []
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: -20
+      outSlope: -20
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.05
+      value: 0
+      inSlope: -0.1070194
+      outSlope: -0.1070194
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.15428208
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.17136823
+      value: 1.0017475
+      inSlope: -0.44349864
+      outSlope: -0.44349864
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.17605487
+    - serializedVersion: 3
+      time: 0.25
+      value: 0
+      inSlope: -12.739729
+      outSlope: -12.739729
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  _spriteRenderer: {fileID: 5495573069799124211}

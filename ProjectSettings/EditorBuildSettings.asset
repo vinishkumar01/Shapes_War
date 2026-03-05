@@ -5,23 +5,11 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
+  - enabled: 0
+    path: Assets/Scenes/Test Area -Scenes/Test_Area 2.unity
+    guid: a767439d3ea280b4587b7de3e5f37faa
   - enabled: 1
-    path: Assets/Scenes/Main Scene.unity
-    guid: 1a9b777ba7b02394a959f24a2e4b673a
-  - enabled: 1
-    path: Assets/Scenes/Player_Movement_Testing.unity
-    guid: 29d034d70d202f94aa3e30e86bb05c9c
-  - enabled: 1
-    path: Assets/Scenes/Environmental_Testing.unity
-    guid: 3eac548805b99e247b3416f759e0eba2
-  - enabled: 1
-    path: Assets/Scenes/Weapon_Testing.unity
-    guid: 6b3266ca6e94665408fc05df5230a205
-  - enabled: 1
-    path: Assets/Scenes/Loading Screen.unity
-    guid: 3045a44d4339e3343903fb7d47578aa3
-  - enabled: 1
-    path: Assets/Scenes/Test Area -Scenes/Test_Area.unity
-    guid: 7187aa671ad532a429c835fa95e1bd46
+    path: Assets/Scenes/Test Area -Scenes/UnderGround - Area.unity
+    guid: 9bd913208d260054182d0d3f1c874e0a
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 967aeff9f7ab66a4dbd18b10aac3dbc0, type: 3}

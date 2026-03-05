@@ -57,6 +57,8 @@ public class PlayerJumpState : PlayerState
 
     public override void LateFrameUpdate()
     {
+        ApplyingSqaushAndStretch();
+
         base.LateFrameUpdate();
     }
 
@@ -129,12 +131,40 @@ public class PlayerJumpState : PlayerState
         {
             _player._isJumping = false;
         }
+    }
 
-        //If the player is Attached to the Rope 
-        if(_player._attachedToRope && _player.JumpPressed)
-        { 
-            _player.Detach();
+    private void ApplyingSqaushAndStretch()
+    {
+        //Applying Stretch When Jumping
+        if (_jumpWasExecuted)
+        {
+            if (_player.IsFacingRight)
+            {
+                _player._playerSquashandStretch.Squash(-0.08f, 0.03f);
+            }
+            else
+            {
+                _player._playerSquashandStretch.Squash(0.08f, 0.03f);
+            }
         }
+
+        //Landing Squash 
+        if (!_player._isJumping && _jumpWasExecuted)
+        {
+            if (_player._isGrounded)
+            {
+                if(_player.IsFacingRight)
+                {
+                    _player._playerSquashandStretch.Squash(0.9f, -0.9f);
+                }
+                else
+                {
+                    _player._playerSquashandStretch.Squash(-0.9f, -0.9f);
+                }
+                
+            }
+        }
+
     }
 
     private void MovePlayerInAir()
@@ -169,6 +199,12 @@ public class PlayerJumpState : PlayerState
             {
                 _playerStateMachine.ChangeState(_player._playerIdleState);
             }
+        }
+
+        //This might be a problem but i want to implement any way
+        if(_player._attachedToRope)
+        {
+            _playerStateMachine.ChangeState(_player._playerIdleState);
         }
     }
 }

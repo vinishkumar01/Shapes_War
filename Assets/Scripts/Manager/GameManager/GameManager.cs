@@ -1,13 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 using TMPro;
-using UnityEditorInternal;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.Tilemaps;
 using Random = UnityEngine.Random;
 
 public class GameManager : MonoBehaviour, IUpdateObserver
@@ -25,6 +22,7 @@ public class GameManager : MonoBehaviour, IUpdateObserver
     //Player-------
     [SerializeField] private PlayerDataSO _playerSO;
     [SerializeField] public bool _playerGotInDeathZone = false;
+    [SerializeField] public bool _playerGotInSpikesZone = false;
 
     [Header("Enemy Spawn System")]
     [SerializeField] private Dictionary<GameObject, EnemySpawnData> _enemies = new ();
@@ -36,6 +34,8 @@ public class GameManager : MonoBehaviour, IUpdateObserver
 
     [SerializeField] private float _spawnInterval;
     [SerializeField] private float _powerUpSpawnInterval;
+
+    [SerializeField] private List<SmasherSpawnZone> _smasherSpawnZones;
 
     [Header("Wave System Attributes")]
     private int _spawnLimitPerWave = 5;
@@ -85,6 +85,7 @@ public class GameManager : MonoBehaviour, IUpdateObserver
 
         //Smasher
         public int _playerDetectionDistance;
+        public int _smasherWaveAttack;
     }
 
     public struct PlayerSpawnData
@@ -108,12 +109,12 @@ public class GameManager : MonoBehaviour, IUpdateObserver
         if (_currentWave <= 0)
         {
             //Reset the count on Every Enable
-            _playerSO.doubleJumpCount = 0;
-            _playerSO.dashCount = 0;
+            _playerSO.doubleJumpCount = 100;
+            _playerSO.dashCount = 100;
             _playerSO._grappleAmmo = 100;
 
-            _playerSO.dashSkill = false;
-            _playerSO.doubleJumpSkill = false;
+            _playerSO.dashSkill = true;
+            _playerSO.doubleJumpSkill = true;
 
             //Reset the Score on beginning 
             _score = 0;
@@ -179,6 +180,7 @@ public class GameManager : MonoBehaviour, IUpdateObserver
                 _health = _smasherAttributes._smasherMaxHealth,
                 _damageDealAmout = _smasherAttributes._smasherDamageDealAmount,
                 _damageGives = _smasherAttributes._smasherDamageGives,
+                _smasherWaveAttack = _smasherAttributes._smasherWaveAttackDamageGives,
                 _moveSpeed = _smasherAttributes._smasher_MoveSpeed,
 
                 _playerDetectionDistance = _smasherAttributes._playerDetectionDistance
@@ -267,7 +269,13 @@ public class GameManager : MonoBehaviour, IUpdateObserver
                 if (node != null)
                 {
                     GameObject enemy = PoolManager.SpawnObject(enemyPrefab, node.transform.position, Quaternion.identity);
-                    
+
+                    //This isn't legit though but this is a temproary fix (I just ruined the enemies encapsulation i guess)
+                    var enemyScript = enemy.GetComponent<Enemy>();
+
+                    //Calling the Dissolve effect when instantiated
+                    enemyScript._dissolveEffect.CallDissolveEffect();
+
                     //Adding the enemy to general list just to cross verify
                     _enemiesGeneralList.Add(enemy);
                     Debug.Log($"Enemies Added to the General List {enemy}");
@@ -405,38 +413,38 @@ public class GameManager : MonoBehaviour, IUpdateObserver
 
     #region Enemy spawn Configs
 
-    private bool HasEnoughHorizontalNodes(Node centerNode, int requiredPerSide, int maxHorizontalRange)
-    {
-        float centerX = centerNode.transform.position.x;
+    //private bool HasEnoughHorizontalNodes(Node centerNode, int requiredPerSide, int maxHorizontalRange)
+    //{
+    //    float centerX = centerNode.transform.position.x;
 
-        int leftCount = 0;
-        int rightCount = 0;
+    //    int leftCount = 0;
+    //    int rightCount = 0;
 
-        foreach(var node in _allNodesInTheScene)
-        {
-            if(node == centerNode) continue;    
+    //    foreach(var node in _allNodesInTheScene)
+    //    {
+    //        if(node == centerNode) continue;    
 
-            float dx = node.transform.position.x - centerX;
+    //        float dx = node.transform.position.x - centerX;
 
-            if(Mathf.Abs(dx) > maxHorizontalRange)
-                continue;
+    //        if(Mathf.Abs(dx) > maxHorizontalRange)
+    //            continue;
 
-            if(dx < 0f)
-            {
-                leftCount++;
-            }
-            else if(dx > 0f)
-            {
-                rightCount++;
-            }
+    //        if(dx < 0f)
+    //        {
+    //            leftCount++;
+    //        }
+    //        else if(dx > 0f)
+    //        {
+    //            rightCount++;
+    //        }
 
-            if(leftCount >= requiredPerSide && rightCount >= requiredPerSide)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
+    //        if(leftCount >= requiredPerSide && rightCount >= requiredPerSide)
+    //        {
+    //            return true;
+    //        }
+    //    }
+    //    return false;
+    //}
 
     Node GetRandomNode(Vector3 Pos, GameObject enemyPrefab)
     {
@@ -452,13 +460,11 @@ public class GameManager : MonoBehaviour, IUpdateObserver
 
         if (enemyPrefab == _gameManagerSpawnListSO.smasher)
         {
-            var sortedNodes = _allNodesInTheScene.Where(n => n.connectionType == Node.ConnectionType.walkable && Vector2.Distance (n.transform.position, Pos) <= distanceFromPlayer && HasEnoughHorizontalNodes(n, 10, 15)
-            ).OrderBy(n =>(n.transform.position -Pos).sqrMagnitude).ToList();
+            var zoneNodes = GetNodesInsideTheZone(_smasherSpawnZones);
 
-            foreach (var node in sortedNodes)
-            {
-                nodeCandidates.Add(node);
-            }
+            var filtered = zoneNodes.Where(n => n.connectionType == Node.ConnectionType.walkable && Vector2.Distance(n.transform.position, Pos) <= distanceFromPlayer).ToList();
+
+            nodeCandidates.AddRange(filtered);
         }
         else
         {
@@ -480,6 +486,25 @@ public class GameManager : MonoBehaviour, IUpdateObserver
         int index = Random.Range(0, nodeCandidates.Count);
         //Debug.Log($"Random Node {nodeCandidates.Count}");
         return nodeCandidates[index];
+    }
+
+    //Get Nodes from specified area for Smasher to Spawn
+    List<Node> GetNodesInsideTheZone(List<SmasherSpawnZone> spawnZone)
+    {
+        List<Node> validNodes = new List<Node>();
+
+        foreach(var node in _allNodesInTheScene)
+        {
+            foreach(var zone in spawnZone)
+            {
+                if (zone.contains(node.transform.position))
+                {
+                    validNodes.Add(node);
+                    break;
+                }
+            }
+        }
+        return validNodes;
     }
 
     //Get the Enemy prefab and other details
@@ -575,7 +600,7 @@ public class GameManager : MonoBehaviour, IUpdateObserver
             switch (wave)
             {
                 case 1:
-                    SetSpawnChances(100, 0, 0); // Chances for Chaser 100%, Smasher 0%, Tracer 0%
+                    SetSpawnChances(0, 100, 0); // Chances for Chaser 100%, Smasher 0%, Tracer 0%
                     break;
                 case 2:
                 case 3:
@@ -650,8 +675,11 @@ public class GameManager : MonoBehaviour, IUpdateObserver
             data._damageDealAmout = Mathf.Clamp(DDScaled, DDBaseValue, 150);
 
             int DGBaseValue = data._damageGives;
+            int WaveDGBaseValue = data._smasherWaveAttack; // Smasher Wave Attack : Base Value
             int DGScaled = Mathf.RoundToInt(data._damageGives * multiplier);
+            int WaveDGScaled = Mathf.RoundToInt(data._smasherWaveAttack * multiplier); // smasher wave attack, scaling value
             data._damageGives = Mathf.Clamp(DGScaled, DGBaseValue, 100);
+            data._smasherWaveAttack = Mathf.Clamp(WaveDGScaled, WaveDGBaseValue, 100);
 
             data._moveSpeed = Mathf.RoundToInt(data._moveSpeed * multiplier);
 
@@ -884,7 +912,7 @@ public class GameManager : MonoBehaviour, IUpdateObserver
     {
         yield return new WaitForSeconds(1f);
 
-        if (_playerGotInDeathZone)
+        if (_playerGotInDeathZone || _playerGotInSpikesZone)
         {
             Node node = GetNearestNodeFromDeathZone(player);
 
@@ -895,9 +923,18 @@ public class GameManager : MonoBehaviour, IUpdateObserver
             player.transform.position = player.lastDeathPosition;
         }
 
-        player.ResetPlayerHealth();
-
         player.gameObject.SetActive(true);
+
+        // Lets call the Shock Wave here
+        var shockWave = PoolManager.SpawnObject(player._shockWaveScreen, player.transform.position, Quaternion.identity, PoolManager.PoolType.ParticleSystem);
+        //player._shockWaveScreen.SetActive(true);
+        var shockWaveScript = shockWave.GetComponent<ShockWaveBehaviour>();
+        shockWaveScript.CallShockWave();
+
+        //Dissolve Effect will be called here
+        player._flashEffect.CallDissolveEffect();
+
+        player.ResetPlayerHealth();
     }
 
 #endregion

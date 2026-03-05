@@ -33,6 +33,7 @@ public class EnemiesSO : ScriptableObject
     public int _smasherMaxHealth;
     public int _smasherDamageDealAmount;
     public int _smasherDamageGives;
+    public int _smasherWaveAttackDamageGives;
     public int _playerDetectionDistance;
     public int _smasher_MoveSpeed;
 
@@ -67,6 +68,7 @@ public class EnemiesSOEditor : Editor
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_tracer_MoveSpeed"));
 
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_numOfMissileInitiation"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("_numOfMissileAttackInitiation"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_intervalBetweenMissiles"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_fireRate"));
 
@@ -78,6 +80,7 @@ public class EnemiesSOEditor : Editor
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_smasherMaxHealth"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_smasherDamageDealAmount"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_smasherDamageGives"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("_smasherWaveAttackDamageGives"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_playerDetectionDistance"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("_smasher_MoveSpeed"));
                 break;

@@ -4,20 +4,30 @@ using UnityEngine;
 
 public class BloodDroplet : MonoBehaviour
 {
-    Vector2 _velocity;
-    float _lifeTime;
+    private Vector2 _velocity;
+    private float _lifeTime;
 
-    const float _gravity = 8f;
-    const float _drag = 0.98f;
-    const float _rayCast_padding = 0.02f;
+    private const float _gravity = 8f;
+    private const float _drag = 0.98f;
+    private const float _rayCast_padding = 0.02f;
+
+    private bool _isReturning;
 
     [SerializeField] private LayerMask _layerMask;
 
-    public void Init(Vector2 startPos, Vector2 initialVelocity)
+    private BloodStainSpawnManager.CharacterType _characterType;
+
+    private void OnEnable()
+    {
+        _isReturning = false;
+    }
+
+    public void Init(Vector2 startPos, Vector2 initialVelocity, BloodStainSpawnManager.CharacterType characterType)
     {
         transform.position = startPos;
         _velocity = initialVelocity;
         _lifeTime = Random.Range(0.8f, 1.5f);
+        _characterType = characterType;
     }
 
     private void Update()
@@ -26,10 +36,20 @@ public class BloodDroplet : MonoBehaviour
 
         if (_lifeTime <= 0f )
         {
-            Destroy(gameObject);
+            ReturnToPool();
             return;
         }
 
+        Collider2D overlap = Physics2D.OverlapPoint(transform.position, _layerMask);
+
+        if (overlap != null)
+        {
+            Vector2 normal = ((Vector2)transform.position - (Vector2)overlap.bounds.center).normalized;
+
+            SpawnStain(transform.position, normal);
+            ReturnToPool();
+            return;
+        }
 
         Vector2 pos = transform.position;
         Vector2 step = _velocity * Time.deltaTime;
@@ -39,7 +59,8 @@ public class BloodDroplet : MonoBehaviour
         if(hit.collider != null)
         {
             SpawnStain(hit.point, hit.normal);
-            PoolManager.ReturnObjectToPool(gameObject);
+            ReturnToPool();
+            return;
         }
 
         _velocity += Vector2.down * _gravity * Time.deltaTime;
@@ -50,9 +71,17 @@ public class BloodDroplet : MonoBehaviour
 
     private void SpawnStain(Vector2 point, Vector2 normal)
     {
-        if(_velocity.magnitude < 1.5f)
-            return;
+        BloodStainSpawnManager.instance.Spawn(point, normal, _characterType);
+    }
 
-        BloodStainSpawnManager.instance.Spawn(point, normal);
+    private void ReturnToPool()
+    {
+        if(_isReturning)
+        {
+            return;
+        }
+        _isReturning = true;
+        
+        PoolManager.ReturnObjectToPool(gameObject, PoolManager.PoolType.BloodDroplet);
     }
 }

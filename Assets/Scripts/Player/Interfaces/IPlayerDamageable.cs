@@ -4,7 +4,7 @@ using UnityEngine;
 
 public interface IPlayerDamageable
 {
-    void Damage(int damageAmount, Vector2 hitDirection);
+    void Damage(int damageAmount, Vector2 hitDirection, Vector2 hitPoint, Vector2 hitNormal);
 
     void Die();
 

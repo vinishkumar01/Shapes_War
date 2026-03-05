@@ -22,6 +22,7 @@ MonoBehaviour:
   _tracerDamageGives: 0
   _tracer_MoveSpeed: 0
   _numOfMissileInitiation: 2
+  _numOfMissileAttackInitiation: 4
   _intervalBetweenMissiles: 6
   _fireRate: 0
   _playerDetectionCheckRadius: 20
@@ -29,5 +30,6 @@ MonoBehaviour:
   _smasherMaxHealth: 300
   _smasherDamageDealAmount: 25
   _smasherDamageGives: 20
+  _smasherWaveAttackDamageGives: 50
   _playerDetectionDistance: 10
   _smasher_MoveSpeed: 500

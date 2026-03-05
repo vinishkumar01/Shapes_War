@@ -8,7 +8,7 @@ public class MiniMapCameraFollow_Player : MonoBehaviour, ILateUpdateObserver
     [SerializeField] private Transform _player;
 
     [Header("MiniMap camera Transform")]
-    [SerializeField] private float _height = -5f;
+    [SerializeField] private float _distance = -5f;
 
     private void OnEnable()
     {
@@ -19,7 +19,7 @@ public class MiniMapCameraFollow_Player : MonoBehaviour, ILateUpdateObserver
     {
         Vector3 pos = _player.position;
 
-        pos.z = _height;
+        pos.z = _distance;
 
         transform.position = pos;
     }

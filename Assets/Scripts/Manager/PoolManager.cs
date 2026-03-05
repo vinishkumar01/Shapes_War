@@ -17,6 +17,8 @@ public class PoolManager : MonoBehaviour
     private static GameObject _soundFXEmpty;
     private static GameObject _nodesEmpty;
     private static GameObject _bloodstainEmpty;
+    private static GameObject _bloodDropletEmpty;
+    private static GameObject _playerAfterimageEmpty;
 
     //Dictonary<Key, Value> -- Just incase 
     private static Dictionary<GameObject, ObjectPool<GameObject>> _objectPools;
@@ -28,7 +30,9 @@ public class PoolManager : MonoBehaviour
         GameObjects,
         SoundFX,
         Nodes,
-        BloodStains
+        BloodStains,
+        BloodDroplet,
+        PlayerAfterimage
     }
 
     public static PoolType poolingType;
@@ -64,6 +68,12 @@ public class PoolManager : MonoBehaviour
 
         _bloodstainEmpty = new GameObject("Blood Stains");
         _bloodstainEmpty.transform.SetParent(_emptyHolder.transform);
+
+        _bloodDropletEmpty = new GameObject("Blood Droplets");
+        _bloodDropletEmpty.transform.SetParent(_emptyHolder.transform);
+
+        _playerAfterimageEmpty = new GameObject("Player After Image");
+        _playerAfterimageEmpty.transform.SetParent(_emptyHolder.transform);
 
         if (_addtoDontDestroyOnLoad)
         {
@@ -138,6 +148,12 @@ public class PoolManager : MonoBehaviour
 
             case PoolType.BloodStains:
                 return _bloodstainEmpty;
+
+            case PoolType.BloodDroplet:
+                return _bloodDropletEmpty;
+
+            case PoolType.PlayerAfterimage:
+                return _playerAfterimageEmpty;
 
             default:
                 return null;

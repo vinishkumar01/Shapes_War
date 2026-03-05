@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32687a51154232744b41020b8fa83c48, type: 3}
+  m_Name: Enemy and Player Bloods
+  m_EditorClassIdentifier: 
+  enemyImpactBurst: {fileID: 7132742683793734668, guid: 51090d505a3fe834f87ab6d60c369313, type: 3}
+  enemySecondImpactBurst: {fileID: 3580639753557595595, guid: a44e965c9cb44e64181cf5d5b5f61497, type: 3}
+  enemyFloatingBlood: {fileID: 167560942451413721, guid: 4fdaf0695862bfa47be718ca368afced, type: 3}
+  enemyDropletPrefabs: {fileID: 3433708138441797500, guid: 188877b5337ce024ebe67ab683cb29d8, type: 3}
+  enemyStainPrefab: {fileID: 1509539419533601749, guid: aad39706528d1bd458a5f650d1eb424b, type: 3}
+  playerImpactBurst: {fileID: 7132742683793734668, guid: 8854e9d8ccb9ba346b7d475bff58bb8d, type: 3}
+  playerSecondImpactBurst: {fileID: 3580639753557595595, guid: 89fe21cc5118da748bad13f0c8f5f83e, type: 3}
+  playerFloatingBlood: {fileID: 167560942451413721, guid: dafcfbae2ccca2147a8630ebf050c1fc, type: 3}
+  playerDropletPrefabs: {fileID: 3433708138441797500, guid: bb8279b3701b02d44a3c20d862a36b74, type: 3}
+  playerStainPrefab: {fileID: 1509539419533601749, guid: 74879440a81eddb43b802001a889b7bb, type: 3}

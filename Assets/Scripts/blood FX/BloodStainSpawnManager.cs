@@ -7,9 +7,19 @@ public class BloodStainSpawnManager : MonoBehaviour
     private int _stainCount = 0;
     private const int _maxStains = 10000;
 
-    [SerializeField] private GameObject _bloodStainPrefab;
+    private GameObject _BloodStainPrefab;
 
     public static BloodStainSpawnManager instance;
+
+    public CharacterType _characterType;
+
+    [SerializeField] private BloodsSO _bloodSO;
+
+    public enum CharacterType
+    {
+        Player,
+        Enemy
+    }
 
     private void Awake()
     {
@@ -22,11 +32,21 @@ public class BloodStainSpawnManager : MonoBehaviour
         instance = this;
     }
 
-    public void Spawn(Vector2 point, Vector2 normal)
+    public void Spawn(Vector2 point, Vector2 normal, CharacterType characterType)
     {
         if(_stainCount >= _maxStains)
         {
             return;
+        }
+
+        //Assign the blood Stain prefab
+        if(characterType == BloodStainSpawnManager.CharacterType.Enemy)
+        {
+            _BloodStainPrefab = _bloodSO.enemyStainPrefab;
+        }
+        else if(characterType == BloodStainSpawnManager.CharacterType.Player)
+        {
+            _BloodStainPrefab = _bloodSO.playerStainPrefab;
         }
 
         //tangent direction along the surface
@@ -47,7 +67,7 @@ public class BloodStainSpawnManager : MonoBehaviour
                 return ;
             }
 
-            Vector2 offset = tangent * Random.Range(-0.2f, 0.2f) + normal * Random.Range(-0.2f, -0.9f);
+            Vector2 offset = tangent * Random.Range(-0.2f, 0.2f) + normal * Random.Range(-0.2f, -1.9f);
 
             //Directional Streaking
             Vector2 streak = -normal * Random.Range(0.01f, 0.03f);
@@ -70,14 +90,14 @@ public class BloodStainSpawnManager : MonoBehaviour
 
             Vector2 pos = point + clusterScatter +offset;
 
-            SpawnDot(pos, normal);
+            SpawnStain(_BloodStainPrefab, pos, normal, characterType);
             _stainCount++;
         }
     }
 
-    private void SpawnDot(Vector2 pos, Vector2 normal)
+    private void SpawnStain(GameObject BloodStain,Vector2 pos, Vector2 normal, CharacterType characterType)
     {
-        var dot = PoolManager.SpawnObject(_bloodStainPrefab, pos, Quaternion.identity, PoolManager.PoolType.BloodStains);
+        var dot = PoolManager.SpawnObject(BloodStain, pos, Quaternion.identity, PoolManager.PoolType.BloodStains);
 
         dot.transform.position = pos;
 
@@ -88,18 +108,35 @@ public class BloodStainSpawnManager : MonoBehaviour
 
         if(isFloor)
         {
-            XScale = Random.Range(0.25f, 0.5f);
+            //Width of the stain prefab is greater than the height as the blood is on the floor
+            XScale = Random.Range(0.25f, 0.4f);
             YScale = Random.Range(0.05f, 0.14f);
         }
         else
         {
+            //Height of the stain prefab is greater than the Width as the blood is on the Wall
             XScale = Random.Range(0.1f, 0.2f);
-            YScale = Random.Range(0.8f, 0.15f);
+            YScale = Random.Range(0.3f, 0.55f);
         }
-        
+
         dot.transform.localScale = new Vector3(XScale, YScale, dot.transform.localScale.z);
 
         var spriteRenderer = dot.GetComponent<SpriteRenderer>();
-        spriteRenderer.color = new Color(Random.Range(0.5f, 0.7f), 0f, 0f, Random.Range(0.6f, 0.9f));
+
+        switch(characterType)
+        {
+            case CharacterType.Player:
+                spriteRenderer.color = new Color(Random.Range(0.5f, 0.7f), 0f, 0f, Random.Range(0.6f, 0.9f));
+                break;
+
+            case CharacterType.Enemy:
+                spriteRenderer.color = new Color(0f, 0f, Random.Range(0.5f, 0.7f), Random.Range(0.6f, 0.9f));
+                break;
+        }
+    }
+
+    public void OnStainReturned()
+    {
+        _stainCount = Mathf.Max(0, _stainCount - 1);
     }
 }

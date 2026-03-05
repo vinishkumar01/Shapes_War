@@ -234,8 +234,12 @@ public class homingMissile : MonoBehaviour, IDamageable, IUpdateObserver, IFixed
 
         if (collision.gameObject.TryGetComponent(out IPlayerDamageable damageable))
         {
+            ContactPoint2D contact = collision.GetContact(0);
+            Vector2 hitPoint = contact.point;
+            Vector2 hitNormal = contact.normal;
+
             Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
-            damageable.Damage(10, hitDirection);
+            damageable.Damage(10, hitDirection, hitPoint, hitNormal);
         }
     }
 

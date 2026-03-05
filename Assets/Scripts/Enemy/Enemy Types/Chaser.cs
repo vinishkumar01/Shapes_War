@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 // This is a derived class from Enemy 
@@ -11,8 +10,7 @@ public class Chaser : Enemy
     //Lets Store the initialize currentNode and create a list for path
     [SerializeField] private Node currentNode;
     [SerializeField] private Transform player;
-    [SerializeField] private Transform Sprite;
-    [SerializeField] private Collider2D NPCcollider;
+    private Collider2D NPCcollider;
     [SerializeField] private List<Node> AllNodesinTheScene = new List<Node>();
     [SerializeField] private List<Node> AllEdgeNodesinTheScene = new List<Node>();
     [SerializeField] private ParticleSystem Dust;
@@ -25,8 +23,8 @@ public class Chaser : Enemy
     private int Movespeed { get; set; }
 
     [Header("Debug")]
-    [SerializeField]private bool debugLogs = false;
-    [SerializeField] private bool isGrounded;
+    [SerializeField] private bool debugLogs = false;
+    public bool isGrounded;
     private bool noPlatformxMax;
     private bool noPlatformxMin;
 
@@ -37,6 +35,9 @@ public class Chaser : Enemy
     private int _chaserMaxHealth { get; set; }
     private int _chaserDamageDealAmount { get; set; }
     private int _chaserDamageGives { get; set; }
+
+    [Header("Chaser Visuals")]
+    private SquashAndStretch _chaserSquashAndStretch;
 
     public override void EnemyOnEnable()
     {
@@ -74,8 +75,10 @@ public class Chaser : Enemy
         base.EnemyOnStart();
 
         //Getting all the required Components
-        NPCcollider = GetComponent<Collider2D>();
-        Sprite = GetComponent<Transform>();
+        NPCcollider = GetComponent<CircleCollider2D>();
+
+        //Visual
+        _chaserSquashAndStretch = _enemyVisuals.GetComponent<SquashAndStretch>();
 
         //Debug.Log("All Nodes" + AllNodesinTheScene.Count);
         //Debug.Log("All Edge Nodes" + AllEdgeNodesinTheScene.Count);
@@ -98,11 +101,6 @@ public class Chaser : Enemy
     public void pathUpdating()
     {
         PathUpdaterHandler = StartCoroutine(PathUpdater());
-    }
-
-    public void FreezeSprite()
-    {
-        Sprite.transform.rotation = Quaternion.identity;
     }
 
     public void FollowPlayer()
@@ -156,12 +154,11 @@ public class Chaser : Enemy
             else
             {
                 RB.AddForce(new Vector2(direction * Movespeed * speedMultiplier, 0));
-                Debug.Log("Dust particle has to play");
 
-                //Particle Effect for Dust when the NPC moves
+               
             }
-
-            if(Mathf.Abs(RB.velocity.x) > 2)
+            //Particle Effect for Dust when the NPC moves
+            if (Mathf.Abs(RB.velocity.x) > 2)
             {
                 Dust.Play();
             }
@@ -243,6 +240,17 @@ public class Chaser : Enemy
                 // Reset velocity to avoid old momentum interfering
                 RB.velocity = Vector2.zero;
 
+                //Apply stretch while Jump
+
+                if (direction > 0)
+                {
+                    _chaserSquashAndStretch.Squash(-0.1f, 0.06f);
+                }
+                else if (direction < 0)
+                {
+                    _chaserSquashAndStretch.Squash(0.1f, 0.06f);
+                }
+
                 //Jump Animation:
                 _animator.SetTrigger("Jump");
 
@@ -323,9 +331,19 @@ public class Chaser : Enemy
         {
             _animator.SetTrigger("InAir");
         }
-        if(isGrounded && !wasGroundedLastFrame && Mathf.Abs(RB.velocity.y) > 3f)
+        if(isGrounded && !wasGroundedLastFrame && RB.velocity.y < -1f)
         {
             _animator.SetTrigger("Landed");
+
+            //Landing Stretch
+            if (direction > 0)
+            {
+                _chaserSquashAndStretch.Squash(0.15f, -0.15f);
+            }
+            else if (direction < 0)
+            {
+                _chaserSquashAndStretch.Squash(-0.15f, -0.15f);
+            }
         }
 
         //Updating the bool for GroundCheck in last frame
@@ -484,8 +502,12 @@ public class Chaser : Enemy
     {
         if (collision.gameObject.TryGetComponent(out IPlayerDamageable damageable))
         {
+            ContactPoint2D contact = collision.GetContact(0);
+            Vector2 hitPoint = contact.point;
+            Vector2 hitNormal = contact.normal;
+
             Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
-            damageable.Damage(_chaserDamageGives, hitDirection);
+            damageable.Damage(_chaserDamageGives, hitDirection, hitPoint, hitNormal);
         }
     }
 }

@@ -1,6 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
-using UnityEditor.Build.Content;
 using UnityEngine;
 
 public class Smasher : Enemy
@@ -18,16 +16,19 @@ public class Smasher : Enemy
     [Header("Reference")]
     [SerializeField] GameObject GroundCheck;
     [SerializeField] GameObject platformSBCheck;
+    [SerializeField] GameObject platformSBCheckHead;
     [SerializeField] GameObject playerCheck;
     [SerializeField] GameObject distanceToPlayerCheck;
     [SerializeField] GameObject distancetoPlayerCheck_Jp;
+    [SerializeField] private ParticleSystem Dust;
 
     [SerializeField] LayerMask platformLayer;
     [SerializeField] LayerMask playerLayer;
 
     [Header("Conditions")]
-    [SerializeField] bool isGrounded;
+    public bool isGrounded;
     [SerializeField] bool platformBelow;
+    [SerializeField] bool platformBelowToSlam;
     [SerializeField] bool platformside;
     [SerializeField] bool isPlayerDetected;
     [SerializeField] bool isplayerDetectedBack;
@@ -61,6 +62,9 @@ public class Smasher : Enemy
 
     private int _smasherDamageGives { get; set; }
 
+    [Header("Chaser Visuals")]
+    private SquashAndStretch _smasherSquashAndStretch;
+
     public override void EnemyOnEnable()
     {
         base.EnemyOnEnable();
@@ -80,7 +84,10 @@ public class Smasher : Enemy
     {
         base.EnemyOnStart();
 
-        spriteRenderer = GetComponent<SpriteRenderer>();
+        spriteRenderer = _enemyVisuals.GetComponent<SpriteRenderer>();
+
+        //Visual
+        _smasherSquashAndStretch = _enemyVisuals.GetComponent<SquashAndStretch>();
 
         facingDirection = 1;
 
@@ -129,6 +136,9 @@ public class Smasher : Enemy
         //PLtform Check
         platformBelow = Physics2D.Raycast(platformSBCheck.transform.position, Vector2.down, platformDetectionDistance, platformLayer);
         platformside = Physics2D.Raycast(platformSBCheck.transform.position, rayDirection, platformDetectionDistance, platformLayer);
+        //Checking Platform walls this is located in the head of the smasher and also this will be used when slam attack to check that it has collided with the Ground, So basically to functionality
+        platformside = Physics2D.Raycast(platformSBCheckHead.transform.position, rayDirection, platformDetectionDistance, platformLayer);
+        platformBelowToSlam = Physics2D.Raycast(platformSBCheckHead.transform.position, Vector2.down, platformDetectionDistance, platformLayer);
 
         //PlayerCheck
         isPlayerDetected = Physics2D.Raycast(playerCheck.transform.position, transform.right, playerDetectionDistance, playerLayer);
@@ -159,6 +169,20 @@ public class Smasher : Enemy
         {
             Vector2 velocity = new Vector2(facingDirection * Time.deltaTime * moveSpeed, RB.velocity.y);
             MoveEnemy(velocity);
+
+            //Play the dust particle when the smasher moves (as its a heavy character its expected to see some dust effect when it moves)
+            if(Mathf.Abs(RB.velocity.x) > 1)
+            {
+                Dust.Play();
+            }
+            else
+            {
+                Dust.Stop();
+            }
+        }
+        else
+        {
+            Dust.Stop();
         }
 
         if (isPlayerNearToPorformSlam && !isJumping)
@@ -196,6 +220,20 @@ public class Smasher : Enemy
         }
     }
 
+    private void FlipPlatformCheckPositionManually()
+    {
+        //Flipping the platformSBCheck manually as we are flipping the visuals only in the base class (Enemy.cs) 
+        Vector2 SBCheckscale = platformSBCheck.transform.localPosition;
+        SBCheckscale.x = Mathf.Abs(SBCheckscale.x) * facingDirection;
+        platformSBCheck.transform.localPosition = SBCheckscale;
+
+        //platformCheck from Head
+        Vector2 SBCheckHeadscale = platformSBCheckHead.transform.localPosition;
+        SBCheckHeadscale.x = Mathf.Abs(SBCheckHeadscale.x) * facingDirection;
+        platformSBCheckHead.transform.localPosition = SBCheckHeadscale;
+    }
+
+
     public void FlipToAvoidEdges()
     {
         if ((isBusy || isJumping || isSlaming)) return;
@@ -203,7 +241,10 @@ public class Smasher : Enemy
         if (!platformBelow || platformside)
         {
             facingDirection = -facingDirection;
-            Vector2 velocity = RB.velocity;
+
+            FlipPlatformCheckPositionManually();
+
+             Vector2 velocity = RB.velocity;
             velocity.x = facingDirection * Mathf.Abs(moveSpeed * Time.deltaTime);
             MoveEnemy(new Vector2(velocity.x, velocity.y));
         }
@@ -216,6 +257,9 @@ public class Smasher : Enemy
         if (isPlayerDetected && facingDirection == -1)
         {
             facingDirection = 1;
+
+            FlipPlatformCheckPositionManually();
+
             Vector2 velocity = RB.velocity;
             velocity.x = Mathf.Abs(velocity.x);
             MoveEnemy(new Vector2(velocity.x, velocity.y));
@@ -224,6 +268,9 @@ public class Smasher : Enemy
         if (isplayerDetectedBack && facingDirection == 1)
         {
             facingDirection = -1;
+
+            FlipPlatformCheckPositionManually();
+
             Vector2 velocity = RB.velocity;
             velocity.x = -Mathf.Abs(velocity.x);
             MoveEnemy(new Vector2(velocity.x, velocity.y));
@@ -235,8 +282,21 @@ public class Smasher : Enemy
         isBusy = true;
         isJumping = true;
 
+        //Applying Jump Stretch
+        if (facingDirection > 0)
+        {
+            _smasherSquashAndStretch.Squash(-0.08f, 0.06f);
+        }
+        else
+        {
+            _smasherSquashAndStretch.Squash(0.08f, 0.06f);
+        }
+
         RB.gravityScale = acentGravity;
         RB.velocity = new Vector2(RB.velocity.x, jumpVelocity);
+
+        //Play the dust particle when the smasher jumps
+        Dust.Play();
 
         yield return new WaitForSeconds(SecondsToReachApex);
 
@@ -247,6 +307,19 @@ public class Smasher : Enemy
 
         while (!isGrounded)
             yield return null;
+
+        //Applying Landing Squash
+        if (facingDirection > 0)
+        {
+            _smasherSquashAndStretch.Squash(0.18f, -0.22f);
+        }
+        else
+        {
+            _smasherSquashAndStretch.Squash(-0.18f, -0.22f);
+        }
+
+        //Play the dust particle when the smasher lands
+        Dust.Play();
 
         //Animation Triggered here
         _animator.SetTrigger("Jump_Attack");
@@ -263,6 +336,9 @@ public class Smasher : Enemy
     {
         isBusy = true;
         isSlaming = true;
+
+        //Stop the dust particle when the smasher slams
+        Dust.Stop();
 
         _animator.ResetTrigger("Slam_Attack");
         
@@ -295,10 +371,31 @@ public class Smasher : Enemy
 
             //Rotate around bottom right pivot point on Z axis
             transform.RotateAround(bottomPivot, Vector3.forward, slamAngle > 0 ? step : -step);
-            _animator.SetTrigger("Slam_Attack");
+            
+            if(platformBelowToSlam)
+            {
+                _animator.SetTrigger("Slam_Attack");
+            }
+
             rotatedAngle += step;
 
             yield return null;
+        }
+
+        //Applying Squash and Stretch
+        if (facingDirection > 0 && platformBelowToSlam)
+        {
+            _smasherSquashAndStretch.Squash(
+               0.16f,   // widen
+              -0.20f   // compress
+           );
+        }
+        else if (facingDirection < 0 && platformBelowToSlam)
+        {
+            _smasherSquashAndStretch.Squash(
+               -0.16f,   // widen
+              -0.20f   // compress
+           );
         }
 
         //pause briefly at the bottom
@@ -349,22 +446,39 @@ public class Smasher : Enemy
         {
             Gizmos.color = Color.red;
             Gizmos.DrawLine(platformSBCheck.transform.position, platformSBCheck.transform.position + (Vector3)(rayDirection * platformDetectionDistance));
+            Gizmos.DrawLine(platformSBCheckHead.transform.position, platformSBCheckHead.transform.position + (Vector3)(rayDirection * platformDetectionDistance));
         }
         else
         {
             Gizmos.color = Color.white;
             Gizmos.DrawLine(platformSBCheck.transform.position, platformSBCheck.transform.position + (Vector3)(rayDirection * platformDetectionDistance));
+            Gizmos.DrawLine(platformSBCheckHead.transform.position, platformSBCheckHead.transform.position + (Vector3)(rayDirection * platformDetectionDistance));
         }
 
         if (platformBelow)
         {
             Gizmos.color = Color.red;
             Debug.DrawLine(platformSBCheck.transform.position, (Vector2)platformSBCheck.transform.position + Vector2.down * platformDetectionDistance);
+            Debug.DrawLine(platformSBCheckHead.transform.position, (Vector2)platformSBCheckHead.transform.position + Vector2.down * platformDetectionDistance);
+
         }
         else
         {
             Gizmos.color = Color.white;
             Debug.DrawLine(platformSBCheck.transform.position, (Vector2)platformSBCheck.transform.position + Vector2.down * platformDetectionDistance);
+            Debug.DrawLine(platformSBCheckHead.transform.position, (Vector2)platformSBCheckHead.transform.position + Vector2.down * platformDetectionDistance);
+        }
+
+        if (platformBelowToSlam)
+        {
+            Gizmos.color = Color.red;
+            Debug.DrawLine(platformSBCheckHead.transform.position, (Vector2)platformSBCheckHead.transform.position + Vector2.down * platformDetectionDistance);
+
+        }
+        else
+        {
+            Gizmos.color = Color.white;
+            Debug.DrawLine(platformSBCheckHead.transform.position, (Vector2)platformSBCheckHead.transform.position + Vector2.down * platformDetectionDistance);
         }
 
     }
@@ -373,8 +487,12 @@ public class Smasher : Enemy
     {
         if (collision.gameObject.TryGetComponent(out IPlayerDamageable damageable))
         {
+            ContactPoint2D contact = collision.GetContact(0);
+            Vector2 hitPoint = contact.point;
+            Vector2 hitNormal = contact.normal;
+
             Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
-            damageable.Damage(_smasherDamageGives, hitDirection);
+            damageable.Damage(_smasherDamageGives, hitDirection, hitPoint, hitNormal);
         }
     }
 }

@@ -46,11 +46,6 @@ public class GenerateNodes : MonoBehaviour
         
     }
 
-    private void Start()
-    {
-        
-    }
-
     void generatingNodes()
     {
         BoundsInt bounds = platformTM.cellBounds;

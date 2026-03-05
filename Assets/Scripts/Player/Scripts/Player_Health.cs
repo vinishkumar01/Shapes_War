@@ -8,7 +8,7 @@ public class Player_Health : MonoBehaviour, IPlayerDamageable
     [SerializeField] int maxhealth;
 
     private KnockBack knockBack;
-    private FlashEffect flashEffect;
+    private PlayerFlashAndDissolveEffect flashEffect;
     private HealthBar _healthBar;
 
     public int MaxHealth
@@ -23,13 +23,13 @@ public class Player_Health : MonoBehaviour, IPlayerDamageable
     void Start()
     {
         knockBack = GetComponent<KnockBack>();
-        flashEffect = GetComponent<FlashEffect>();
+        flashEffect = GetComponent<PlayerFlashAndDissolveEffect>();
         _healthBar = GetComponentInChildren<HealthBar>();
 
         currentHealth = maxhealth;
     }
 
-   public void Damage(int damageAmount, Vector2 hitDirection)
+   public void Damage(int damageAmount, Vector2 hitDirection, Vector2 hitPoint, Vector2 hitNormal)
     {
         currentHealth -= damageAmount;
 

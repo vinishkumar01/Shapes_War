@@ -4,14 +4,16 @@ using UnityEngine;
 
 public class BloodFXController : MonoBehaviour
 {
-    [Header("Partcile Systems")]
-    [SerializeField] private ParticleSystem _impactBurst;
-    [SerializeField] private ParticleSystem _impactBurst2;
-    [SerializeField] private ParticleSystem _floatingBlood;
+    //[Header("Partcile Systems")]
+    [SerializeField] private ParticleSystem _impactBurst { get; set; }
+    [SerializeField] private ParticleSystem _impactSecondBurst { get; set; }
+    [SerializeField] private ParticleSystem _floatingBlood { get; set; }
 
-    [Header("Droplets")]
-    [SerializeField] private GameObject _bloodDropletPrefab;
+    //[Header("Droplets")]
+    [SerializeField] private GameObject _bloodDropletPrefab { get; set; }
 
+    [Header("Blood SO")]
+    [SerializeField] private BloodsSO _bloodSO;
 
     public static BloodFXController instance;
 
@@ -24,10 +26,27 @@ public class BloodFXController : MonoBehaviour
         }
 
         instance = this;
+
     }
 
-    public void PlayBloodFX(Vector2 hitPoint, Vector2 hitNormal, Vector2 attackDirection)
+    public void PlayBloodFX(Vector2 hitPoint, Vector2 hitNormal, Vector2 attackDirection, BloodStainSpawnManager.CharacterType characterType)
     {
+
+        //Accessing the enum from stainSpawnManager we are assigning the blood particles according to it
+        if (characterType == BloodStainSpawnManager.CharacterType.Enemy)
+        {
+            _impactBurst = _bloodSO.enemyImpactBurst;
+            _impactSecondBurst = _bloodSO.enemySecondImpactBurst;
+            _floatingBlood = _bloodSO.enemyFloatingBlood;
+            _bloodDropletPrefab = _bloodSO.enemyDropletPrefabs;
+        }
+        else if (characterType == BloodStainSpawnManager.CharacterType.Player)
+        {
+            _impactBurst = _bloodSO.playerImpactBurst;
+            _impactSecondBurst = _bloodSO.playerSecondImpactBurst;
+            _floatingBlood = _bloodSO.playerFloatingBlood;
+            _bloodDropletPrefab = _bloodSO.playerDropletPrefabs;
+        }
 
         //Impact Burst
         SpawnImpactBurstParticle(hitPoint, hitNormal);
@@ -36,7 +55,7 @@ public class BloodFXController : MonoBehaviour
         SpawnParticles(_floatingBlood, hitPoint, hitNormal);
 
         //Blood Droplets
-        SpawnDroplets(hitPoint, attackDirection);
+        SpawnDroplets(hitPoint, attackDirection, characterType);
     }
 
     private void SpawnParticles(ParticleSystem ps, Vector2 pos, Vector2 normal)
@@ -50,7 +69,7 @@ public class BloodFXController : MonoBehaviour
     private void SpawnImpactBurstParticle(Vector2 hitPoint, Vector2 normal)
     {
         var impactBurst = PoolManager.SpawnObject(_impactBurst, hitPoint, Quaternion.identity, PoolManager.PoolType.ParticleSystem);
-        var impactBurst2 = PoolManager.SpawnObject(_impactBurst2, hitPoint, Quaternion.identity, PoolManager.PoolType.ParticleSystem);
+        var impactBurst2 = PoolManager.SpawnObject(_impactSecondBurst, hitPoint, Quaternion.identity, PoolManager.PoolType.ParticleSystem);
 
         float zRotation;
 
@@ -71,18 +90,18 @@ public class BloodFXController : MonoBehaviour
     }
 
 
-    private void SpawnDroplets(Vector2 hitPoint, Vector2 attackDirection)
+    private void SpawnDroplets(Vector2 hitPoint, Vector2 attackDirection, BloodStainSpawnManager.CharacterType characterType)
     {
         int dropLetCount = Random.Range(4, 7);
 
         for (int i = 0; i < dropLetCount; i++)
         {
-            Vector2 dir = -attackDirection + Random.insideUnitCircle * 0.4f;
+            Vector2 dir = -attackDirection + Random.insideUnitCircle * 5f;
 
-            Vector2 velocity = dir.normalized * Random.Range(9f, 15f);
+            Vector2 velocity = dir.normalized * Random.Range(6f, 9f);
 
-            var droplet = PoolManager.SpawnObject(_bloodDropletPrefab, hitPoint, Quaternion.identity);
-            droplet.GetComponent<BloodDroplet>().Init(hitPoint, velocity);
+            var droplet = PoolManager.SpawnObject(_bloodDropletPrefab, hitPoint, Quaternion.identity, PoolManager.PoolType.BloodDroplet);
+            droplet.GetComponent<BloodDroplet>().Init(hitPoint, velocity, characterType);
         }
     }
 }

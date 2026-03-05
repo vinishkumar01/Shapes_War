@@ -57,6 +57,5 @@ public class Chaser_Idle_State : EnemyState
     public override void LateFrameUpdate()
     {
         base.LateFrameUpdate();
-        ((Chaser)enemy).FreezeSprite();
     }
 }

@@ -34,6 +34,8 @@ public class Chaser_Chase_State : EnemyState
     public override void ExitState()
     {
         base.ExitState();
+
+        enemy._animator.SetBool("IsStartedMoving", false);
     }
 
     public override void FrameUpdate()
@@ -58,8 +60,6 @@ public class Chaser_Chase_State : EnemyState
     public override void LateFrameUpdate()
     {
         base.LateFrameUpdate();
-
-        ((Chaser)enemy).FreezeSprite();
     }
 
 }

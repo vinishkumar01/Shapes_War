@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1288098540843921599}
   - component: {fileID: 6445249018787767917}
+  - component: {fileID: -8727942040062628101}
   m_Layer: 0
   m_Name: Blood Stain
   m_TagString: Untagged
@@ -74,7 +75,7 @@ SpriteRenderer:
   m_SortingLayer: 2
   m_SortingOrder: 2
   m_Sprite: {fileID: 7482667652216324306, guid: c2640a17f94b16a46a702900d9ab9a94, type: 3}
-  m_Color: {r: 0.46226418, g: 0.0021804967, b: 0.0021804967, a: 1}
+  m_Color: {r: 0.03137255, g: 0.14509805, b: 0.57254905, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -84,3 +85,15 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &-8727942040062628101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1509539419533601749}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9177e4e8a890724aaae7b63146aae83, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

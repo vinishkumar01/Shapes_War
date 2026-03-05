@@ -32,7 +32,7 @@ public class Tracer : Enemy
     float FireRate { get; set; }
 
     [Header("Conditions")]
-    [SerializeField] bool isGrounded;
+    public bool isGrounded;
     [SerializeField] bool wasGrounded;
     [SerializeField] public bool isPlayerDetected;
     [SerializeField] public bool isPlayerNear;
@@ -48,6 +48,9 @@ public class Tracer : Enemy
     private int _tracerMaxHealth { get; set; }
     private int _tracerDamageDealAmount { get; set; }
     private int _tracerDamageGives { get; set; }
+
+    [Header("Chaser Visuals")]
+    private SquashAndStretch _tracerSquashAndStretch;
 
     public override void EnemyOnEnable()
     {
@@ -89,6 +92,9 @@ public class Tracer : Enemy
         base.EnemyOnStart();
 
         NPCcollider = RB.GetComponent<Collider2D>();
+
+        //Visual
+        _tracerSquashAndStretch = _enemyVisuals.GetComponent<SquashAndStretch>();
     }
 
     private void AssignTracerAttributes()
@@ -367,6 +373,7 @@ public class Tracer : Enemy
 
             if (dy > 1.5f && isGrounded)
             {
+
                 float JumpHeight = Mathf.Clamp(dy + minJumpHeight, minJumpHeight, maxJumpHeight);
 
                 //Calculate minimum vertical velocity needed to reach by 
@@ -381,12 +388,25 @@ public class Tracer : Enemy
                 //Reset velocity to avoid old momentum to interfere
                 RB.velocity = Vector2.zero;
 
+                //Applying Squash and Stretch when jumping
+                _tracerSquashAndStretch.Squash( -0.06f,0.12f);
+
                 //Apply one precise jump impulse
                 RB.AddForce(new Vector2(requiredVX, requiredVY) * RB.mass, ForceMode2D.Impulse);
 
             }
         }
 
+
+        bool justLanded = isGrounded && !wasGrounded;
+
+        if (justLanded)
+        {
+            // Landing squash (impact)
+            _tracerSquashAndStretch.Squash(0.16f, -0.20f);
+        }
+
+        wasGrounded = isGrounded;
 
         //Near Node Check
         bool closeEnoughX = Mathf.Abs(transform.position.x - targetPos.x) <= horizThreshold;
@@ -441,6 +461,9 @@ public class Tracer : Enemy
 
         while (MissilesFired < NumOfMissileInitiation)
         {
+            //Applying squash and Stretch when it shoots
+            _tracerSquashAndStretch.Squash(-0.05f,0.10f);
+
             Vector3 Origin = firePoint.position;
 
             GameObject missile = PoolManager.SpawnObject(Missile, Origin, Quaternion.identity, PoolManager.PoolType.GameObjects);
@@ -523,8 +546,12 @@ public class Tracer : Enemy
     {
         if (collision.gameObject.TryGetComponent(out IPlayerDamageable damageable))
         {
+           ContactPoint2D contact = collision.GetContact(0);
+            Vector2 hitPoint = contact.point;
+            Vector2 hitNormal = contact.normal;
+
             Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
-            damageable.Damage(_tracerDamageGives, hitDirection);
+            damageable.Damage(_tracerDamageGives, hitDirection, hitPoint, hitNormal);
         }
     }
 }

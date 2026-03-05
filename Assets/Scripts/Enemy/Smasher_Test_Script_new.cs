@@ -1,10 +1,6 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEditor.Tilemaps;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public class Smasher_Test_Script_new : MonoBehaviour, IHittable
 {
@@ -25,7 +21,7 @@ public class Smasher_Test_Script_new : MonoBehaviour, IHittable
     [SerializeField] GameObject distanceToPlayerCheck;
     [SerializeField] GameObject distancetoPlayerCheck_Jp;
     private HealthBar _healthBar;
-    [SerializeField] private FlashEffect _flashEffect;
+    [SerializeField] private EnemyFlashEffect _flashEffect;
 
     [SerializeField] LayerMask platformLayer;
     [SerializeField] LayerMask playerLayer;
@@ -78,7 +74,7 @@ public class Smasher_Test_Script_new : MonoBehaviour, IHittable
     {
         rb = GetComponent<Rigidbody2D>();
         NPCanimator = GetComponent<Animator>();
-        _flashEffect = GetComponent<FlashEffect>();
+        _flashEffect = GetComponent<EnemyFlashEffect>();
         _healthBar = GetComponentInChildren<HealthBar>();
         facingDirection = 1;
         
@@ -360,8 +356,12 @@ public class Smasher_Test_Script_new : MonoBehaviour, IHittable
     {
         if (collision.gameObject.TryGetComponent(out IPlayerDamageable damageable))
         {
+            ContactPoint2D contact = collision.GetContact(0);
+            Vector2 hitPoint = contact.point;
+            Vector2 hitNormal = contact.normal;
+
             Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
-            damageable.Damage(25, hitDirection);
+            damageable.Damage(25, hitDirection, hitPoint, hitNormal);
         }
     }
 }

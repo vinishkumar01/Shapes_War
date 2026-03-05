@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -29,6 +30,9 @@ public class Rifle : MonoBehaviour, IUpdateObserver
     [Header("Player SO Data")]
     [SerializeField] private PlayerDataSO _playerData;
 
+    [Header("Gun Recoil Config")]
+    [SerializeField] private GunRecoil _gunRecoil;
+
     private void OnEnable()
     {
         //Getting the gunAimConfigs here
@@ -41,7 +45,7 @@ public class Rifle : MonoBehaviour, IUpdateObserver
         _rifleAttributes.bulletsLeft = _rifleAttributes.magSize;
         _bulletCountText.text = _rifleAttributes.bulletsLeft.ToString();
         _rifleAttributes.autoReload = true;
-        _rifleAttributes.canShoot = true;
+        _rifleAttributes.isRifleCanShoot = true;
     }
 
     public void ObservedUpdate()
@@ -54,7 +58,7 @@ public class Rifle : MonoBehaviour, IUpdateObserver
         }
         else if(UserInputs.instance._playerInputs.Player.Fire.WasReleasedThisFrame())
         {
-            _rifleAttributes.canShoot = false;
+            _rifleAttributes.isRifleCanShoot = false;
         }
 
         //Input For switching Mode
@@ -81,8 +85,8 @@ public class Rifle : MonoBehaviour, IUpdateObserver
     private void StartFiring()
     {
         //Break the method execution if the condition satisfies
-        if (_rifleAttributes.canShoot || _rifleAttributes.isReloading) return;
-        _rifleAttributes.canShoot = true;
+        if (_rifleAttributes.isRifleCanShoot || _rifleAttributes.isReloading) return;
+        _rifleAttributes.isRifleCanShoot = true;
 
         switch(_fireMode)
         {
@@ -102,7 +106,7 @@ public class Rifle : MonoBehaviour, IUpdateObserver
 
     private IEnumerator FireAuto()
     {
-        while(_rifleAttributes.canShoot && _rifleAttributes.bulletsLeft > 0)
+        while(_rifleAttributes.isRifleCanShoot && _rifleAttributes.bulletsLeft > 0)
         {
             Shoot();
             yield return new WaitForSeconds(_rifleAttributes.fullAutoFireRate);
@@ -130,12 +134,12 @@ public class Rifle : MonoBehaviour, IUpdateObserver
             yield return Reload();
         }
 
-        _rifleAttributes.canShoot = false;
+        _rifleAttributes.isRifleCanShoot = false;
     }
 
     private void Shoot()
     {
-        
+
         if (_rifleAttributes.bulletsLeft <= 0 || _rifleAttributes.isReloading)
         {
             if (_rifleAttributes.bulletsLeft == 0 && _rifleAttributes.autoReload && !_rifleAttributes.isReloading)
@@ -177,6 +181,26 @@ public class Rifle : MonoBehaviour, IUpdateObserver
 
         //Apply Camera Shake
         ApplyCameraShakeAndGamePlayPunch(shootDirection);
+
+        //Applying Spuash effect to player
+        if (_player.IsFacingRight)
+        {
+            _player._playerSquashandStretch.Squash(0.17f, -0.09f);
+        }
+        else
+        {
+            _player._playerSquashandStretch.Squash(-0.17f, -0.09f);
+        }
+
+
+        //Applying Gun Recoil
+        _gunRecoil.RecoilKick(shootDirection);
+
+        //Micro Jitter 
+        if (UnityEngine.Random.value > 0.5f)
+        {
+            _player._playerSquashandStretch.MicroJitter();
+        }
 
         var trailScript = bulletTrail.GetComponent<BulletTracer>();
 
@@ -252,7 +276,7 @@ public class Rifle : MonoBehaviour, IUpdateObserver
 
     private void OnDisable()
     {
-        _rifleAttributes.canShoot = false;
+        _rifleAttributes.isRifleCanShoot = false;
         _rifleAttributes.isReloading = false;
         StopAllCoroutines();
 

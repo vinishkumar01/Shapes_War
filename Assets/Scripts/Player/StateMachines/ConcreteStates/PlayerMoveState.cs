@@ -7,6 +7,14 @@ public class PlayerMoveState : PlayerState
     [Header("Movement Configs")]
     private float VelocityXSmoothing;
 
+    [Header("Player Movement Squash Config")]
+    private float _prevVelocity;
+    private Vector2 _applyMoveSquash;
+    private bool _wasMoving;
+    //Landing Squash
+    private bool _wasGrounded;
+    private Vector2 _applyLandingSquash;
+
     public PlayerMoveState(Player player, PlayerStateMachine playerStateMachine, PlayerDataSO playerDataSO) : base(player, playerStateMachine, playerDataSO)
     {
     }
@@ -35,11 +43,16 @@ public class PlayerMoveState : PlayerState
 
         MovePlayer();
 
+        DetectMoveAndLandingSquash();
+
         StateTransitions();
     }
 
     public override void LateFrameUpdate()
     {
+        ApplyMoveSquashAndStretch();
+        ApplyLandingSquashAndStretch();
+
         base.LateFrameUpdate();
     }
 
@@ -58,6 +71,73 @@ public class PlayerMoveState : PlayerState
         if (_player._attachedToRope)
         {
             _player.RB.AddRelativeForce(new Vector2(_player.MovementInputXDirection * _playerDataSO.ropeSwingForce, _player.RB.velocity.y));
+
+            //If the player is Attached to the Rope and pressed jump
+            if (_player.JumpPressed)
+            {
+                _player.Detach();
+                //also we are transitioning to the jump state
+                _playerStateMachine.ChangeState(_player._playerJumpState);
+            }
+        }
+    }
+
+    private void DetectMoveAndLandingSquash()
+    {
+        float moveStartThreshold = 0.05f;
+        float vx = _player.RB.velocity.x;
+
+        bool isMoving  = Mathf.Abs(_prevVelocity) > moveStartThreshold;
+
+        //Applying squash when the player starts moving
+        if(isMoving && !_wasMoving)
+        {
+            _applyMoveSquash += new Vector2(0.09f, -0.04f);
+        }
+
+        //Applying and squash and stretch when changing direction
+        if(Mathf.Sign(_prevVelocity) != Mathf.Sign(vx) && isMoving)
+        {
+            _applyMoveSquash += new Vector2(0.1f, -0.05f);
+        }
+
+        //Checking for Landing
+        if(_player._isGrounded && !_wasGrounded)
+        {
+            float impactSpeed = Mathf.Abs(_player.RB.velocity.y);
+            float t = Mathf.InverseLerp(3f, 12f, impactSpeed);
+
+            float x = Mathf.Lerp(0.10f, 0.25f, t);
+            float y = Mathf.Lerp(-0.15f, -0.35f, t);
+
+            _applyLandingSquash += new Vector2(x, y);
+        }
+
+
+        _wasMoving = isMoving;
+        _prevVelocity = vx;
+
+        //Landing
+        _wasGrounded = _player._isGrounded;
+    }
+
+    private void ApplyMoveSquashAndStretch()
+    {
+        if (_applyMoveSquash != Vector2.zero)
+        {
+            _player._playerSquashandStretch.Squash(_applyMoveSquash.x, _applyMoveSquash.y);
+
+            _applyMoveSquash = Vector2.zero;
+        }
+    }
+
+    private void ApplyLandingSquashAndStretch()
+    {
+        if (_applyLandingSquash != Vector2.zero)
+        {
+            _player._playerSquashandStretch.Squash(_applyLandingSquash.x, _applyLandingSquash.y);
+
+            _applyLandingSquash = Vector2.zero;
         }
     }
 

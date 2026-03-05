@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -28,6 +29,10 @@ public class Pistol : MonoBehaviour, IUpdateObserver
     [Header("Player SO Data")]
     [SerializeField] private PlayerDataSO _playerData;
 
+    [Header("Gun Recoil Config")]
+    [SerializeField] private GunRecoil _gunRecoil;
+
+
     private void OnEnable()
     {
         //Getting the gunAimConfigs here
@@ -40,7 +45,7 @@ public class Pistol : MonoBehaviour, IUpdateObserver
         _pistolAttributes.bulletsLeft = _pistolAttributes.magSize;
         _bulletCountText.text = _pistolAttributes.bulletsLeft.ToString();
         _pistolAttributes.autoReload = true;
-        _pistolAttributes.canShoot = true;
+        _pistolAttributes.isPistolCanShoot = true;
         _modeText.text = "SEMI - AUTO";
     }
 
@@ -55,7 +60,7 @@ public class Pistol : MonoBehaviour, IUpdateObserver
         }
         else if(UserInputs.instance._playerInputs.Player.Fire.WasReleasedThisFrame())
         {
-            _pistolAttributes.canShoot = false;
+            _pistolAttributes.isPistolCanShoot = false;
         }
 
         if(UserInputs.instance._playerInputs.Player.Reload.WasPressedThisFrame())
@@ -69,9 +74,14 @@ public class Pistol : MonoBehaviour, IUpdateObserver
 
     private void Shoot()
     {
+
         //Break the method execution if the condition satisfies
-        if (_pistolAttributes.canShoot || _pistolAttributes.isReloading) return;
-        _pistolAttributes.canShoot = true;
+        if (_pistolAttributes.isPistolCanShoot || _pistolAttributes.isReloading)
+        {
+            return;
+        } 
+
+        _pistolAttributes.isPistolCanShoot = true;
 
         if(_pistolAttributes.bulletsLeft <= 0 || _pistolAttributes.isReloading)
         {
@@ -114,6 +124,26 @@ public class Pistol : MonoBehaviour, IUpdateObserver
         
         //Apply Camera Shake
         ApplyCameraShakeAndGamePlayPunch(shootDirection);
+
+        //Applying Spuash effect to player
+        if(_player.IsFacingRight)
+        {
+            _player._playerSquashandStretch.Squash(0.13f, -0.09f);
+        }
+        else
+        {
+            _player._playerSquashandStretch.Squash(-0.13f, -0.09f);
+        }
+        
+
+        //Applying Gun Recoil
+        _gunRecoil.RecoilKick(shootDirection);
+
+        //Micro Jitter 
+        if (UnityEngine.Random.value > 0.5f)
+        {
+            _player._playerSquashandStretch.MicroJitter();
+        }
 
         var trailScript = bulletTrail.GetComponent<BulletTracer>();
 
@@ -189,7 +219,7 @@ public class Pistol : MonoBehaviour, IUpdateObserver
 
     private void OnDisable()
     {
-        _pistolAttributes.canShoot = false;
+        _pistolAttributes.isPistolCanShoot = false;
         _pistolAttributes.isReloading = false;
         StopAllCoroutines();
 

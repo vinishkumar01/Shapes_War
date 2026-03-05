@@ -22,12 +22,13 @@ public class WeaponSO : ScriptableObject
 
     public int bulletsLeft;
     public bool isReloading;
-    public bool canShoot;
+    public bool isPistolCanShoot;
 
     [Header("Rifle Attributes")]
     public float burstFireRate;
     public int burstCount;
     public float fullAutoFireRate;
+    public bool isRifleCanShoot;    
     public bool isAutomatic;
 
     [Header("Grapple Gun")]
@@ -56,7 +57,7 @@ public class WeaponSOEditor : Editor
         EditorGUILayout.PropertyField(serializedObject.FindProperty("reloadTime"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("bulletsLeft"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("isReloading"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("canShoot"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("isPistolCanShoot"));
 
 
         //We will select the weapon type here according to that the attributes will be displayed
@@ -68,6 +69,7 @@ public class WeaponSOEditor : Editor
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("burstFireRate"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("burstCount"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("fullAutoFireRate"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("isRifleCanShoot"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("isAutomatic"));
                 break;
 

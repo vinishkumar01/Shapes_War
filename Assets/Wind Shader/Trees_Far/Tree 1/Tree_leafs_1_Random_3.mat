@@ -60,7 +60,7 @@ Material:
     - _PhaseAmount: 4
     - _Strength: 0.01
     - _TopFade: 0.9
-    - _WindPhase: 1.9
+    - _WindPhase: 2.8
     - _WindSpeed: 1
     m_Colors: []
   m_BuildTextureStacks: []

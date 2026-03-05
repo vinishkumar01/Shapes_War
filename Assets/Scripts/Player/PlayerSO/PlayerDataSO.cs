@@ -71,5 +71,4 @@ public class PlayerDataSO : ScriptableObject
     public int healthPack = 50;
     public int maxLives = 3;
     public int lives;
-
 }

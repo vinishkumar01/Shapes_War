@@ -16,7 +16,7 @@ public class Tracer_NPC_Test : MonoBehaviour, IHittable
     [SerializeField] GameObject Missile;
     [SerializeField] List<Node> AllNodesInTheScene = new List<Node>();
     [SerializeField] List<Node> AllEdgeNodeInTheScene = new List<Node>();
-    private FlashEffect _flashEffect;
+    private EnemyFlashEffect _flashEffect;
     private HealthBar _healthBar;
 
     [Header("Nodes Config")]
@@ -56,7 +56,7 @@ public class Tracer_NPC_Test : MonoBehaviour, IHittable
     {
         rb = GetComponent<Rigidbody2D>();
         NPCcollider = rb.GetComponent<Collider2D>(); 
-        _flashEffect = GetComponent<FlashEffect>();
+        _flashEffect = GetComponent<EnemyFlashEffect>();
         _healthBar = GetComponentInChildren<HealthBar>();
 
         if(player == null)
@@ -513,8 +513,12 @@ public class Tracer_NPC_Test : MonoBehaviour, IHittable
     {
         if (collision.gameObject.TryGetComponent(out IPlayerDamageable damageable))
         {
+            ContactPoint2D contact = collision.GetContact(0);
+            Vector2 hitPoint = contact.point;
+            Vector2 hitNormal = contact.normal;
+
             Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
-            damageable.Damage(25, hitDirection);
+            damageable.Damage(25, hitDirection, hitPoint, hitNormal);
         }
     }
 

@@ -33,6 +33,14 @@ public class PlayerIdleState : PlayerState
     {
         base.FrameUpdate();
 
+        //If the player is Attached to the Rope 
+        if (_player._attachedToRope && _player.JumpPressed)
+        {
+            _player.Detach();
+            //also we are transitioning to the jump state
+            _playerStateMachine.ChangeState(_player._playerJumpState);
+        }
+
         StateTransitions();
     }
 

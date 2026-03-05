@@ -46,7 +46,7 @@ public class Smasher_Attack_State : EnemyState
             enemy.stateMachine.ChangeState(enemy.IdleState);
         }
 
-        //Switch to attack state when the player gets near the NPC
+        //Switch to chase state when the player gets near the NPC
         if (!((Smasher)enemy).isPlayerNearToPorformSlam || !((Smasher)enemy).isPlayerNearToPerformJumpAttack)
         {
             enemy.stateMachine.ChangeState(enemy.chaseState);

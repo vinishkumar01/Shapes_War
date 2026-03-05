@@ -38,7 +38,9 @@ public class PlayerDashState : PlayerState
         _dashTimeLeft = _playerDataSO.dashTime;
         _lastDash = Time.time;
 
-        
+        //setting the current frame x coordinates of the player transform to the lastImageXPos
+        _player._lastImageXpos = _player.transform.position.x;
+
         _defaultGravity = _player.RB.gravityScale;
         
 
@@ -79,21 +81,43 @@ public class PlayerDashState : PlayerState
             var v = _player.RB.velocity;
             _player.RB.velocity = new Vector2(v.x, 0f);
         }
+
+        //Instantiating After Images to give the dash Effects
+        if (Mathf.Abs(_player.transform.position.x - _player._lastImageXpos) > _player._distancebetweenImages)
+        {
+            PoolManager.SpawnObject(_player._playerAfterImage, _player.transform.position, Quaternion.identity, PoolManager.PoolType.PlayerAfterimage);
+            _player._lastImageXpos = _player.transform.position.x;
+        }
+
         StateTransitions();
     }
 
     public override void LateFrameUpdate()
     {
+        //Applying Squash and stretch while dashing
+        if (_player.IsFacingRight)
+        {
+            _player._playerSquashandStretch.Squash(-0.12f, 0.08f);
+        }
+        else
+        {
+            _player._playerSquashandStretch.Squash(0.12f, 0.08f);
+        }
+
         base.LateFrameUpdate();
     }
 
     public override void PhysicsUpdate()
     {
         base.PhysicsUpdate();
+
+
     }
 
     private void Dash()
     {
+        //Damage Flash
+        _player._flashEffect.CallDashFlash();
 
         if (_player._knockBack.IsBeingKnockedBack)
             return;
@@ -106,6 +130,7 @@ public class PlayerDashState : PlayerState
 
         _player.RB.velocity = new Vector2(XMove * _playerDataSO.dashSpeed, 0);
 
+        #region Dash UI
         _playerDataSO.dashCount--;
         _player._dashCountUI.text = _playerDataSO.dashCount.ToString();
 
@@ -116,6 +141,7 @@ public class PlayerDashState : PlayerState
         }
 
         _player._dashText.text = "Dash Recharging";
+        #endregion
     }
 
     private void StateTransitions()

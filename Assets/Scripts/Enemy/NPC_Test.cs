@@ -16,7 +16,7 @@ public class NPC_Test : MonoBehaviour, IDamageable
     [SerializeField] List<Node> AllNodesinTheScene = new List<Node>();
     [SerializeField] List<Node> AllEdgeNodesinTheScene = new List<Node>();
     [SerializeField] ParticleSystem Dust;
-    private FlashEffect _flashEffect;
+    private EnemyFlashEffect _flashEffect;
     private HealthBar _healthBar;
 
     [SerializeField] Vector3 FacingDirection;
@@ -55,7 +55,7 @@ public class NPC_Test : MonoBehaviour, IDamageable
         NPCcollider = GetComponent<Collider2D>();
         Sprite = GetComponent<Transform>();
         ///Chaser_Animator = GetComponent<Animator>();
-        _flashEffect = GetComponent<FlashEffect>();
+        _flashEffect = GetComponent<EnemyFlashEffect>();
         _healthBar = GetComponentInChildren<HealthBar>();
 
         // Adding all the Nodes in the Scene to the list
@@ -506,8 +506,12 @@ public class NPC_Test : MonoBehaviour, IDamageable
     {
         if(collision.gameObject.TryGetComponent(out IPlayerDamageable damageable))
         {
+            ContactPoint2D contact = collision.GetContact(0);
+            Vector2 hitPoint = contact.point;
+            Vector2 hitNormal = contact.normal;
+
             Vector2 hitDirection = (collision.transform.position - transform.position).normalized;
-            damageable.Damage(25, hitDirection);
+            damageable.Damage(25, hitDirection, hitPoint, hitNormal);
         }
     }
 

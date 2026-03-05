@@ -27,21 +27,22 @@ MonoBehaviour:
   coyoteTime: 0.5
   jumpBufferTime: 0.5
   movementSpeed: 16
+  maxMovementSpeed: 16
   accelerationTimeAirBorne: 0.2
   accelerationTimeGround: 0.1
   ropeSwingForce: 8
   doubleJumpForce: 25
-  doubleJumpCount: 0
+  doubleJumpCount: 117
   airMovementSpeed: 16
   accelerationTimeAir: 0.15
   ropeSwingForceInJump: 8
   dashTime: 0.2
   dashSpeed: 50
   dashCoolDown: 2.5
-  dashCount: 0
-  _grappleAmmo: 0
-  doubleJumpSkill: 0
-  dashSkill: 0
+  dashCount: 106
+  _grappleAmmo: 105
+  doubleJumpSkill: 1
+  dashSkill: 1
   healthPack: 50
-  maxLives: 3
-  lives: 1
+  maxLives: 100
+  lives: 86

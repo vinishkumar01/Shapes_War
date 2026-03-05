@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 //This is the base class for all the Enemy, and this inherits from two interfaces and all the stats and configs will be modified here
 
@@ -13,10 +14,17 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver,
     [field: SerializeField] public int DamageAmount { get; set; }
 
     public Rigidbody2D RB { get; set; }
-    private FlashEffect _flashEffect;
+    private EnemyFlashEffect _flashEffect;
+    public EnemyDissolveEffect _dissolveEffect;
     private HealthBar _healthBar;
     private TextMeshPro _healthText;
     public Animator _animator;
+    private Vector3 _startingPos;
+
+    [Header("Enemy Visuals")]
+    public GameObject _enemyVisuals;
+    public SpriteRenderer _enemyVisualSpriteRenderer;
+    public Material _enemyVisualMaterial;
 
     public bool isFacingRight { get; set; } = true;
 
@@ -37,26 +45,35 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver,
         EnemyOnEnable();
     }
 
-
+    
     public virtual void EnemyOnEnable()
     {
+
         UpdateManager.RegisterObserver(this);
         FixedUpdateManager.RegisterObserver(this);
         LateUpdateManager.RegisterObserver(this);
 
         AssignHealthAttributes();
 
+        //Get the SpriteRenderer From the EnemyVisual
+        _enemyVisualSpriteRenderer = _enemyVisuals.GetComponent<SpriteRenderer>();
+        _enemyVisualMaterial = _enemyVisualSpriteRenderer.material;
+
+        _dissolveEffect = _enemyVisuals.GetComponent<EnemyDissolveEffect>();
+
+
         if (_healthBar != null)
         {
             _healthBar.UpdateHealthBar(MaxHealth, CurrentHealth);
         }
-
-        if(_flashEffect != null)
+        
+        if (_flashEffect != null)
         {
             _flashEffect.ResetFlash();
         }
 
-        if(_animator != null)
+
+        if (_animator != null)
         {
             _animator.Rebind(); // reset statemachine & parameters
             _animator.Update(0f); //apply immediatly
@@ -79,6 +96,8 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver,
         stateMachine = new EnemyStateMachine();
 
         _healthText = GetComponentInChildren<TextMeshPro>();
+
+        RB = GetComponent<Rigidbody2D>();
 
         switch (_enemyType)
         {
@@ -136,10 +155,16 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver,
 
     public virtual void EnemyOnStart() 
     {
-        RB = GetComponent<Rigidbody2D>();
-        _flashEffect = GetComponent<FlashEffect>();
+        //RB = GetComponent<Rigidbody2D>();
         _healthBar = GetComponentInChildren<HealthBar>();
-        _animator = GetComponent<Animator>();
+
+        _animator = _enemyVisuals.GetComponent<Animator>();
+        _flashEffect = _enemyVisuals.GetComponent<EnemyFlashEffect>();
+
+        //Enemy Starting Position
+        _startingPos = _enemyVisuals.transform.localScale;
+
+
     }
 
     private void Start()
@@ -169,13 +194,22 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver,
     public void RecieveHit(RaycastHit2D RayHit, Vector2 hitDirection)
     {
         if (!gameObject.activeInHierarchy && CurrentHealth <= 0) return;
-
+        
         CurrentHealth -= DamageAmount;
 
-        _flashEffect.CallDamageFlash();
+        if (_flashEffect != null)
+        {
+           
+            _flashEffect.CallDamageFlash();
+        }
+        else
+        {
+            Debug.LogError($"[{_enemyType}] NO FLASH EFFECT! _flashAndDissolveEffect is NULL");
+        }
+
 
         //Spawn Blood Effect
-        BloodFXController.instance.PlayBloodFX(RayHit.point, RayHit.normal, hitDirection);
+        BloodFXController.instance.PlayBloodFX(RayHit.point, RayHit.normal, hitDirection, BloodStainSpawnManager.CharacterType.Enemy);
 
         _healthBar.UpdateHealthBar(MaxHealth, CurrentHealth);
         UpdateHealthText(CurrentHealth);
@@ -225,20 +259,20 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver,
     {
         if(direction.x > 0 && !isFacingRight)
         {
-            Flip();
+            isFacingRight = true;
         }
         else if(direction.x < 0 && isFacingRight)
         {
-            Flip();
+           isFacingRight= false;
         }
+
+        Flip();
     }
 
     private void Flip()
     {
-        isFacingRight = !isFacingRight;
-        Vector3 localScale = transform.localScale;
-        localScale.x *= -1;
-        transform.localScale = localScale;
+        Vector3 targetScale = isFacingRight ? _startingPos : new Vector3(-_startingPos.x, _startingPos.y, _startingPos.z);
+        _enemyVisuals.transform.localScale = targetScale;
     }
 
     #endregion
