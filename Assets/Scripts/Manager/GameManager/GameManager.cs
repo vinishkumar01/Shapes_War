@@ -413,39 +413,6 @@ public class GameManager : MonoBehaviour, IUpdateObserver
 
     #region Enemy spawn Configs
 
-    //private bool HasEnoughHorizontalNodes(Node centerNode, int requiredPerSide, int maxHorizontalRange)
-    //{
-    //    float centerX = centerNode.transform.position.x;
-
-    //    int leftCount = 0;
-    //    int rightCount = 0;
-
-    //    foreach(var node in _allNodesInTheScene)
-    //    {
-    //        if(node == centerNode) continue;    
-
-    //        float dx = node.transform.position.x - centerX;
-
-    //        if(Mathf.Abs(dx) > maxHorizontalRange)
-    //            continue;
-
-    //        if(dx < 0f)
-    //        {
-    //            leftCount++;
-    //        }
-    //        else if(dx > 0f)
-    //        {
-    //            rightCount++;
-    //        }
-
-    //        if(leftCount >= requiredPerSide && rightCount >= requiredPerSide)
-    //        {
-    //            return true;
-    //        }
-    //    }
-    //    return false;
-    //}
-
     Node GetRandomNode(Vector3 Pos, GameObject enemyPrefab)
     {
         if (!_enemies.TryGetValue(enemyPrefab, out EnemySpawnData data))
@@ -460,11 +427,11 @@ public class GameManager : MonoBehaviour, IUpdateObserver
 
         if (enemyPrefab == _gameManagerSpawnListSO.smasher)
         {
-            var zoneNodes = GetNodesInsideTheZone(_smasherSpawnZones);
+            //Debug.Log($"Zones Count: {_smasherSpawnZones.Count}");
 
-            var filtered = zoneNodes.Where(n => n.connectionType == Node.ConnectionType.walkable && Vector2.Distance(n.transform.position, Pos) <= distanceFromPlayer).ToList();
+            Node zoneNodes = GetNodesInsideTheZone(_smasherSpawnZones, Pos, distanceFromPlayer);
 
-            nodeCandidates.AddRange(filtered);
+            nodeCandidates.Add(zoneNodes);
         }
         else
         {
@@ -489,7 +456,7 @@ public class GameManager : MonoBehaviour, IUpdateObserver
     }
 
     //Get Nodes from specified area for Smasher to Spawn
-    List<Node> GetNodesInsideTheZone(List<SmasherSpawnZone> spawnZone)
+    Node GetNodesInsideTheZone(List<SmasherSpawnZone> spawnZone, Vector3 playerPosition, float distanceFromPlayer)
     {
         List<Node> validNodes = new List<Node>();
 
@@ -497,14 +464,25 @@ public class GameManager : MonoBehaviour, IUpdateObserver
         {
             foreach(var zone in spawnZone)
             {
-                if (zone.contains(node.transform.position))
+                if (zone.containsNode(node.transform.position))
                 {
-                    validNodes.Add(node);
+                    float distance = Vector2.Distance(node.transform.position, playerPosition);
+
+                    if(distance <= distanceFromPlayer && node.connectionType == Node.ConnectionType.walkable)
+                    {
+                        validNodes.Add(node);
+                    }
                     break;
                 }
             }
         }
-        return validNodes;
+
+        if (validNodes.Count == 0)
+            return null;
+
+        int index = Random.Range(0, validNodes.Count);
+
+        return validNodes[index];
     }
 
     //Get the Enemy prefab and other details
@@ -600,7 +578,7 @@ public class GameManager : MonoBehaviour, IUpdateObserver
             switch (wave)
             {
                 case 1:
-                    SetSpawnChances(0, 100, 0); // Chances for Chaser 100%, Smasher 0%, Tracer 0%
+                    SetSpawnChances(100, 0, 0); // Chances for Chaser 100%, Smasher 0%, Tracer 0%
                     break;
                 case 2:
                 case 3:

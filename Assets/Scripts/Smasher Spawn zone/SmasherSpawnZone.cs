@@ -11,8 +11,9 @@ public class SmasherSpawnZone : MonoBehaviour
         _boxCollider = GetComponent<BoxCollider2D>();
     }
 
-    public bool contains(Vector2 position)
+    public bool containsNode(Vector2 position)
     {
+        Debug.Log("Bounds Information"+_boxCollider.bounds);
         return _boxCollider.bounds.Contains(position);
     }
 }
