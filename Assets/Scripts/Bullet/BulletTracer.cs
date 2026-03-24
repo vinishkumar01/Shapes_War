@@ -16,6 +16,9 @@ public class BulletTracer : MonoBehaviour
     [SerializeField] bool hasHit = false;
     bool hasBeenReturnedToPool = false;
 
+    [Header("SFX")]
+    [SerializeField] private AudioClip _collisionEffect;
+
     RaycastHit2D storedHit;
 
     private void OnEnable()
@@ -62,13 +65,16 @@ public class BulletTracer : MonoBehaviour
             if (storedHit.collider != null)
             {
 
-                if(storedHit.collider.CompareTag("Platform"))
+                if(storedHit.collider.CompareTag("Platform") || storedHit.collider.CompareTag("PlatformwithNoNodes"))
                 {
                     // We spawn the particle slightly outward of the platform so that the collision doesnt affects between particle and platform
                     Vector3 fxpos = _targetposition + (Vector3)(storedHit.normal * 0.2f);
 
                     SpawnDustParticle(fxpos, storedHit.normal);
                     //StartCoroutine(ReturnAfterSeconds(impact, 1f));
+
+                    //Play Collision Sound Effect
+                    SFXManager._instance.playSFX(_collisionEffect, fxpos, 1f, true, false);
                 }
 
                 if (storedHit.collider.gameObject.activeInHierarchy && storedHit.collider.TryGetComponent<IDamageable>(out var damageable))

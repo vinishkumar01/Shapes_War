@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Grapple Gun SFX – 3 Stages</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:#05080f;
+  min-height:100vh;
+  font-family:'Courier New',monospace;
+  color:#ccc;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:22px 14px 60px;
+}
+h1 {
+  font-size:11px;
+  letter-spacing:6px;
+  text-transform:uppercase;
+  color:#44aaff;
+  margin-bottom:3px;
+  text-shadow:0 0 16px #44aaff44;
+}
+.sub {
+  font-size:8px;
+  letter-spacing:4px;
+  color:#1a1e2a;
+  margin-bottom:20px;
+}
+#grid {
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:9px;
+  width:100%;
+  max-width:640px;
+  margin-bottom:20px;
+}
+.card {
+  background:#080c14;
+  border:1px solid #10182a;
+  padding:13px 13px 10px;
+  transition:border-color 0.12s;
+}
+.card:hover { border-color:#1e3050; }
+.card-num  { font-size:8px; color:#161e2e; letter-spacing:2px; margin-bottom:4px; }
+.card-name { font-size:10px; letter-spacing:3px; text-transform:uppercase; margin-bottom:2px; }
+.card-desc { font-size:8px; color:#1a2030; letter-spacing:1px; line-height:1.7; margin-bottom:10px; }
+.stage-row { display:flex; flex-direction:column; gap:5px; }
+
+.stage {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  background:#060a12;
+  border:1px solid #0e1828;
+  padding:5px 7px;
+  transition:border-color 0.1s, background 0.1s;
+  position:relative;
+  overflow:hidden;
+}
+.stage.active { border-color:#44aaff; background:#080f1e; }
+.stage.active .stage-name { color:#44aaff; }
+
+/* progress bar */
+.prog-bar {
+  position:absolute;
+  bottom:0; left:0;
+  height:2px;
+  background:#44aaff;
+  width:0%;
+  transition:none;
+}
+
+.stage-icon { font-size:10px; flex:0 0 16px; text-align:center; }
+.stage-name { font-size:8px; letter-spacing:2px; text-transform:uppercase; color:#334455; flex:1; }
+.stage-tag  { font-size:7px; letter-spacing:1px; color:#1a2535; flex:0 0 auto; }
+.stage.active .stage-tag { color:#2a5070; }
+
+.stage-btns { display:flex; gap:3px; flex:0 0 auto; }
+.sbtn {
+  font-family:'Courier New',monospace;
+  font-size:7px; letter-spacing:1px; text-transform:uppercase;
+  border:none; cursor:pointer; padding:3px 6px; transition:all 0.08s;
+}
+.sbtn-play { background:#0d1825; color:#445566; border:1px solid #162030; }
+.sbtn-play:hover { color:#44aaff; border-color:#44aaff55; }
+.sbtn-play.active { color:#44aaff; border-color:#44aaff; background:#0a1828; }
+.sbtn-play:disabled { opacity:0.35; cursor:not-allowed; }
+.sbtn-dl { background:#080f08; color:#2a5a2a; border:1px solid #102010; }
+.sbtn-dl:hover { color:#5aaa5a; border-color:#3a7a3a; }
+
+.wave {
+  display:flex; gap:2px; align-items:flex-end;
+  height:12px; margin:4px 0 2px;
+}
+.wb { width:2px; background:#0a1020; border-radius:1px; min-height:2px; }
+
+#bottombar {
+  width:100%; max-width:640px;
+  border-top:1px solid #0d1525; padding-top:14px;
+  display:flex; justify-content:space-between; align-items:center;
+  flex-wrap:wrap; gap:8px;
+}
+.dl-all-btn {
+  font-family:'Courier New',monospace; font-size:8px; letter-spacing:3px;
+  text-transform:uppercase; background:#030a03; color:#4aaa4a;
+  border:1px solid #183018; padding:8px 14px; cursor:pointer; transition:all 0.1s;
+}
+.dl-all-btn:hover { border-color:#4aaa4a; }
+.tip { font-size:7px; color:#111820; letter-spacing:2px; }
+</style>
+</head>
+<body>
+
+<h1>🪝 GRAPPLE GUN SFX</h1>
+<div class="sub">6 VARIATIONS · DEPLOY · TRAVEL · HOOK · WAV EXPORT</div>
+<div id="grid"></div>
+<div id="bottombar">
+  <button class="dl-all-btn" onclick="downloadAllStages()">⬇ DOWNLOAD ALL 18 STAGES .WAV</button>
+  <span class="tip">44100Hz · 16-BIT PCM · MONO</span>
+</div>
+
+<script>
+const AC = window.AudioContext || window.webkitAudioContext;
+let liveCtx = null;
+function getLive() {
+  if (!liveCtx) liveCtx = new AC();
+  if (liveCtx.state === 'suspended') liveCtx.resume();
+  return liveCtx;
+}
+function mkNoise(ctx, dur) {
+  const len = Math.ceil(ctx.sampleRate * dur);
+  const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  const s = ctx.createBufferSource(); s.buffer = buf; return s;
+}
+function mkOsc(ctx, type, freq) {
+  const o = ctx.createOscillator(); o.type = type; o.frequency.value = freq; return o;
+}
+function gn(ctx, v) { const g = ctx.createGain(); g.gain.value = v; return g; }
+function fl(ctx, type, freq, q=1) {
+  const f = ctx.createBiquadFilter(); f.type=type; f.frequency.value=freq; f.Q.value=q; return f;
+}
+function ch(...nodes) { for (let i=0; i<nodes.length-1; i++) nodes[i].connect(nodes[i+1]); }
+
+// ════════════════════════════════════════════════════
+//  GRAPPLE DEFINITIONS
+//  6 variations × 3 stages (DEPLOY, TRAVEL, HOOK)
+//  Each stage: { name, icon, tag, dur, build(ctx,dest,t) }
+// ════════════════════════════════════════════════════
+const GRAPPLES = [
+
+// ── 01 TACTICAL ─────────────────────────────────────
+{
+  name:'TACTICAL', color:'#44aaff',
+  desc:'Military pneumatic · steel wire whiz · hard clank',
+  stages:[
+    { icon:'💥', name:'DEPLOY', tag:'0.32s',
+      dur: 0.32,
+      build(ctx, dest, t) {
+        // Pneumatic thump
+        const o1 = mkOsc(ctx,'sine',115);
+        o1.frequency.exponentialRampToValueAtTime(36, t+0.18);
+        const g1 = gn(ctx,1.3); g1.gain.setValueAtTime(1.3,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.18);
+        ch(o1,g1,dest); o1.start(t); o1.stop(t+0.19);
+        // Sharp crack
+        const n1 = mkNoise(ctx,0.06); const bp = fl(ctx,'bandpass',2000,0.5);
+        const g2 = gn(ctx,1.8); g2.gain.setValueAtTime(1.8,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.05);
+        ch(n1,bp,g2,dest); n1.start(t); n1.stop(t+0.07);
+        // Short noise tail
+        const n2 = mkNoise(ctx,0.28); const lp = fl(ctx,'lowpass',1000);
+        const g3 = gn(ctx,0.3); g3.gain.setValueAtTime(0.3,t+0.06); g3.gain.exponentialRampToValueAtTime(0.001,t+0.28);
+        ch(n2,lp,g3,dest); n2.start(t); n2.stop(t+0.29);
+      }
+    },
+    { icon:'〰️', name:'TRAVEL', tag:'0.65s',
+      dur: 0.65,
+      build(ctx, dest, t) {
+        // Rising wire whiz over time
+        const n1 = mkNoise(ctx,0.65); const bp = fl(ctx,'bandpass',1600,1.0);
+        const g1 = gn(ctx,0); g1.gain.setValueAtTime(0,t); g1.gain.linearRampToValueAtTime(0.24,t+0.15); g1.gain.linearRampToValueAtTime(0.2,t+0.55); g1.gain.exponentialRampToValueAtTime(0.001,t+0.64);
+        ch(n1,bp,g1,dest); n1.start(t); n1.stop(t+0.66);
+        // Rising tonal sweep
+        const o1 = mkOsc(ctx,'sawtooth',300);
+        o1.frequency.exponentialRampToValueAtTime(2200, t+0.65);
+        const g2 = gn(ctx,0); g2.gain.setValueAtTime(0,t); g2.gain.linearRampToValueAtTime(0.09,t+0.15); g2.gain.linearRampToValueAtTime(0.07,t+0.5); g2.gain.exponentialRampToValueAtTime(0.001,t+0.63);
+        const lp = fl(ctx,'lowpass',2400); ch(o1,lp,g2,dest); o1.start(t); o1.stop(t+0.66);
+      }
+    },
+    { icon:'🔒', name:'HOOK', tag:'0.45s',
+      dur: 0.45,
+      build(ctx, dest, t) {
+        // Hard metal impact
+        const n1 = mkNoise(ctx,0.05); const hp = fl(ctx,'highpass',2400);
+        const g1 = gn(ctx,2.0); g1.gain.setValueAtTime(2.0,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.045);
+        ch(n1,hp,g1,dest); n1.start(t); n1.stop(t+0.06);
+        // Ring decay
+        const o1 = mkOsc(ctx,'sine',700);
+        o1.frequency.exponentialRampToValueAtTime(200, t+0.4);
+        const g2 = gn(ctx,0.35); g2.gain.setValueAtTime(0.35,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.4);
+        ch(o1,g2,dest); o1.start(t); o1.stop(t+0.41);
+        // Sub thud
+        const o2 = mkOsc(ctx,'sine',90);
+        o2.frequency.exponentialRampToValueAtTime(28, t+0.14);
+        const g3 = gn(ctx,1.0); g3.gain.setValueAtTime(1.0,t); g3.gain.exponentialRampToValueAtTime(0.001,t+0.14);
+        ch(o2,g3,dest); o2.start(t); o2.stop(t+0.15);
+        // Scrape tail
+        const n2 = mkNoise(ctx,0.38); const lp = fl(ctx,'lowpass',600);
+        const g4 = gn(ctx,0.18); g4.gain.setValueAtTime(0.18,t+0.02); g4.gain.exponentialRampToValueAtTime(0.001,t+0.38);
+        ch(n2,lp,g4,dest); n2.start(t+0.02); n2.stop(t+0.39);
+      }
+    },
+  ]
+},
+
+// ── 02 CABLE SHOT ────────────────────────────────────
+{
+  name:'CABLE SHOT', color:'#8866ff',
+  desc:'Compressed crack · thin wire zip · sharp snap lock',
+  stages:[
+    { icon:'💥', name:'DEPLOY', tag:'0.25s',
+      dur: 0.25,
+      build(ctx, dest, t) {
+        const n1 = mkNoise(ctx,0.05); const bp = fl(ctx,'bandpass',2900,0.6);
+        const g1 = gn(ctx,2.1); g1.gain.setValueAtTime(2.1,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.04);
+        ch(n1,bp,g1,dest); n1.start(t); n1.stop(t+0.06);
+        const o1 = mkOsc(ctx,'sine',210);
+        o1.frequency.exponentialRampToValueAtTime(48, t+0.14);
+        const g2 = gn(ctx,0.9); g2.gain.setValueAtTime(0.9,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.14);
+        ch(o1,g2,dest); o1.start(t); o1.stop(t+0.15);
+        const n2 = mkNoise(ctx,0.22); const lp = fl(ctx,'lowpass',700);
+        const g3 = gn(ctx,0.22); g3.gain.setValueAtTime(0.22,t+0.05); g3.gain.exponentialRampToValueAtTime(0.001,t+0.22);
+        ch(n2,lp,g3,dest); n2.start(t); n2.stop(t+0.23);
+      }
+    },
+    { icon:'〰️', name:'TRAVEL', tag:'0.55s',
+      dur: 0.55,
+      build(ctx, dest, t) {
+        // High-pitch zip
+        const n1 = mkNoise(ctx,0.55); const hp = fl(ctx,'highpass',2200);
+        const g1 = gn(ctx,0); g1.gain.setValueAtTime(0,t); g1.gain.linearRampToValueAtTime(0.18,t+0.12); g1.gain.linearRampToValueAtTime(0.14,t+0.45); g1.gain.exponentialRampToValueAtTime(0.001,t+0.54);
+        ch(n1,hp,g1,dest); n1.start(t); n1.stop(t+0.56);
+        // Ascending tone
+        const o1 = mkOsc(ctx,'sine',500);
+        o1.frequency.exponentialRampToValueAtTime(3800, t+0.55);
+        const g2 = gn(ctx,0); g2.gain.setValueAtTime(0,t); g2.gain.linearRampToValueAtTime(0.08,t+0.12); g2.gain.linearRampToValueAtTime(0,t+0.54);
+        ch(o1,g2,dest); o1.start(t); o1.stop(t+0.56);
+      }
+    },
+    { icon:'🔒', name:'HOOK', tag:'0.35s',
+      dur: 0.35,
+      build(ctx, dest, t) {
+        const n1 = mkNoise(ctx,0.04); const hp = fl(ctx,'highpass',3200);
+        const g1 = gn(ctx,1.8); g1.gain.setValueAtTime(1.8,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.035);
+        ch(n1,hp,g1,dest); n1.start(t); n1.stop(t+0.05);
+        const o1 = mkOsc(ctx,'square',900);
+        o1.frequency.exponentialRampToValueAtTime(180, t+0.28);
+        const g2 = gn(ctx,0.15); g2.gain.setValueAtTime(0.15,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.28);
+        ch(o1,g2,dest); o1.start(t); o1.stop(t+0.29);
+        const o2 = mkOsc(ctx,'sine',160);
+        o2.frequency.exponentialRampToValueAtTime(42, t+0.12);
+        const g3 = gn(ctx,0.85); g3.gain.setValueAtTime(0.85,t); g3.gain.exponentialRampToValueAtTime(0.001,t+0.12);
+        ch(o2,g3,dest); o2.start(t); o2.stop(t+0.13);
+      }
+    },
+  ]
+},
+
+// ── 03 ENERGY TETHER ─────────────────────────────────
+{
+  name:'ENERGY TETHER', color:'#44ffcc',
+  desc:'Plasma charge burst · energy beam · magnetic clamp',
+  stages:[
+    { icon:'⚡', name:'DEPLOY', tag:'0.35s',
+      dur: 0.35,
+      build(ctx, dest, t) {
+        // Ascending plasma charge
+        const o1 = mkOsc(ctx,'sawtooth',100);
+        o1.frequency.exponentialRampToValueAtTime(1800, t+0.28);
+        const lp = fl(ctx,'lowpass',1800);
+        const g1 = gn(ctx,0); g1.gain.setValueAtTime(0,t); g1.gain.linearRampToValueAtTime(0.22,t+0.22); g1.gain.exponentialRampToValueAtTime(0.001,t+0.32);
+        ch(o1,lp,g1,dest); o1.start(t); o1.stop(t+0.33);
+        // Crackle
+        const n1 = mkNoise(ctx,0.35); const bp = fl(ctx,'bandpass',3200,1.2);
+        const g2 = gn(ctx,0); g2.gain.setValueAtTime(0,t); g2.gain.linearRampToValueAtTime(0.25,t+0.25); g2.gain.exponentialRampToValueAtTime(0.001,t+0.33);
+        ch(n1,bp,g2,dest); n1.start(t); n1.stop(t+0.34);
+        // Sub pulse
+        const o2 = mkOsc(ctx,'sine',55);
+        const g3 = gn(ctx,0); g3.gain.setValueAtTime(0,t); g3.gain.linearRampToValueAtTime(0.4,t+0.1); g3.gain.exponentialRampToValueAtTime(0.001,t+0.32);
+        ch(o2,g3,dest); o2.start(t); o2.stop(t+0.33);
+      }
+    },
+    { icon:'〰️', name:'TRAVEL', tag:'0.7s',
+      dur: 0.7,
+      build(ctx, dest, t) {
+        // Sustained energy hum
+        const o1 = mkOsc(ctx,'sine',220);
+        const g1 = gn(ctx,0); g1.gain.setValueAtTime(0,t); g1.gain.linearRampToValueAtTime(0.22,t+0.1); g1.gain.setValueAtTime(0.22,t+0.58); g1.gain.exponentialRampToValueAtTime(0.001,t+0.68);
+        ch(o1,g1,dest); o1.start(t); o1.stop(t+0.69);
+        // Harmonic
+        const o2 = mkOsc(ctx,'sine',440);
+        const g2 = gn(ctx,0); g2.gain.setValueAtTime(0,t); g2.gain.linearRampToValueAtTime(0.07,t+0.1); g2.gain.setValueAtTime(0.07,t+0.58); g2.gain.exponentialRampToValueAtTime(0.001,t+0.68);
+        ch(o2,g2,dest); o2.start(t); o2.stop(t+0.69);
+        // Crackle noise
+        const n1 = mkNoise(ctx,0.7); const bp = fl(ctx,'bandpass',2500,2.0);
+        const g3 = gn(ctx,0); g3.gain.setValueAtTime(0,t); g3.gain.linearRampToValueAtTime(0.07,t+0.1); g3.gain.setValueAtTime(0.07,t+0.58); g3.gain.exponentialRampToValueAtTime(0.001,t+0.68);
+        ch(n1,bp,g3,dest); n1.start(t); n1.stop(t+0.7);
+      }
+    },
+    { icon:'🔒', name:'HOOK', tag:'0.45s',
+      dur: 0.45,
+      build(ctx, dest, t) {
+        // Electric clamp
+        const n1 = mkNoise(ctx,0.05); const bp = fl(ctx,'bandpass',1900,1.4);
+        const g1 = gn(ctx,1.7); g1.gain.setValueAtTime(1.7,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.045);
+        ch(n1,bp,g1,dest); n1.start(t); n1.stop(t+0.06);
+        // Descending ring
+        const o1 = mkOsc(ctx,'sine',560);
+        o1.frequency.exponentialRampToValueAtTime(120, t+0.4);
+        const g2 = gn(ctx,0.5); g2.gain.setValueAtTime(0.5,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.4);
+        ch(o1,g2,dest); o1.start(t); o1.stop(t+0.41);
+        // Harmonic ring
+        const o2 = mkOsc(ctx,'sine',1120);
+        o2.frequency.exponentialRampToValueAtTime(260, t+0.22);
+        const g3 = gn(ctx,0.12); g3.gain.setValueAtTime(0.12,t); g3.gain.exponentialRampToValueAtTime(0.001,t+0.22);
+        ch(o2,g3,dest); o2.start(t); o2.stop(t+0.23);
+      }
+    },
+  ]
+},
+
+// ── 04 STEAM HOOK ────────────────────────────────────
+{
+  name:'STEAM HOOK', color:'#ffaa33',
+  desc:'Steam hiss launch · chain rattle travel · iron clang',
+  stages:[
+    { icon:'💥', name:'DEPLOY', tag:'0.38s',
+      dur: 0.38,
+      build(ctx, dest, t) {
+        // Steam burst
+        const n1 = mkNoise(ctx,0.38); const lp = fl(ctx,'lowpass',2400);
+        const g1 = gn(ctx,0); g1.gain.setValueAtTime(0,t); g1.gain.linearRampToValueAtTime(0.75,t+0.07); g1.gain.exponentialRampToValueAtTime(0.001,t+0.36);
+        ch(n1,lp,g1,dest); n1.start(t); n1.stop(t+0.39);
+        // Launch thump
+        const o1 = mkOsc(ctx,'sine',105);
+        o1.frequency.exponentialRampToValueAtTime(30, t+0.18);
+        const g2 = gn(ctx,0); g2.gain.setValueAtTime(0,t+0.05); g2.gain.linearRampToValueAtTime(1.1,t+0.08); g2.gain.exponentialRampToValueAtTime(0.001,t+0.22);
+        ch(o1,g2,dest); o1.start(t+0.05); o1.stop(t+0.23);
+      }
+    },
+    { icon:'〰️', name:'TRAVEL', tag:'0.7s',
+      dur: 0.7,
+      build(ctx, dest, t) {
+        // Chain rattle - individual links
+        const count = 14, spacing = 0.048;
+        for (let i=0; i<count; i++) {
+          const d = t + i * spacing;
+          const nn = mkNoise(ctx,0.04); const bpn = fl(ctx,'bandpass',1700+i*25,1.8);
+          const vol = 0.55 * (1 - i/count * 0.4);
+          const gnl = gn(ctx,vol); gnl.gain.setValueAtTime(vol,d); gnl.gain.exponentialRampToValueAtTime(0.001,d+0.036);
+          ch(nn,bpn,gnl,dest); nn.start(d); nn.stop(d+0.05);
+        }
+        // Whoosh underneath
+        const n2 = mkNoise(ctx,0.7); const bp2 = fl(ctx,'bandpass',900,0.8);
+        const g1 = gn(ctx,0); g1.gain.setValueAtTime(0,t); g1.gain.linearRampToValueAtTime(0.14,t+0.1); g1.gain.linearRampToValueAtTime(0.1,t+0.6); g1.gain.exponentialRampToValueAtTime(0.001,t+0.69);
+        ch(n2,bp2,g1,dest); n2.start(t); n2.stop(t+0.7);
+      }
+    },
+    { icon:'🔒', name:'HOOK', tag:'0.55s',
+      dur: 0.55,
+      build(ctx, dest, t) {
+        // Iron clang impact
+        const n1 = mkNoise(ctx,0.07); const hp = fl(ctx,'highpass',2000);
+        const g1 = gn(ctx,2.2); g1.gain.setValueAtTime(2.2,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.06);
+        ch(n1,hp,g1,dest); n1.start(t); n1.stop(t+0.08);
+        // Long ring
+        const o1 = mkOsc(ctx,'sine',460);
+        o1.frequency.exponentialRampToValueAtTime(100, t+0.5);
+        const g2 = gn(ctx,0.5); g2.gain.setValueAtTime(0.5,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.5);
+        ch(o1,g2,dest); o1.start(t); o1.stop(t+0.51);
+        // Second harmonic
+        const o2 = mkOsc(ctx,'sine',920);
+        o2.frequency.exponentialRampToValueAtTime(240, t+0.28);
+        const g3 = gn(ctx,0.14); g3.gain.setValueAtTime(0.14,t); g3.gain.exponentialRampToValueAtTime(0.001,t+0.28);
+        ch(o2,g3,dest); o2.start(t); o2.stop(t+0.29);
+        // Sub clang body
+        const o3 = mkOsc(ctx,'sine',80);
+        o3.frequency.exponentialRampToValueAtTime(30, t+0.16);
+        const g4 = gn(ctx,1.0); g4.gain.setValueAtTime(1.0,t); g4.gain.exponentialRampToValueAtTime(0.001,t+0.16);
+        ch(o3,g4,dest); o3.start(t); o3.stop(t+0.17);
+      }
+    },
+  ]
+},
+
+// ── 05 WEB SHOT ──────────────────────────────────────
+{
+  name:'WEB SHOT', color:'#aaddff',
+  desc:'Organic squirt · silk thwip travel · sticky thwack',
+  stages:[
+    { icon:'💥', name:'DEPLOY', tag:'0.28s',
+      dur: 0.28,
+      build(ctx, dest, t) {
+        // Wet pop
+        const o1 = mkOsc(ctx,'sine',290);
+        o1.frequency.exponentialRampToValueAtTime(55, t+0.12);
+        const g1 = gn(ctx,0.85); g1.gain.setValueAtTime(0.85,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.12);
+        ch(o1,g1,dest); o1.start(t); o1.stop(t+0.13);
+        // Liquid slap
+        const n1 = mkNoise(ctx,0.07); const lp = fl(ctx,'lowpass',850,2.5);
+        const g2 = gn(ctx,0.95); g2.gain.setValueAtTime(0.95,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.07);
+        ch(n1,lp,g2,dest); n1.start(t); n1.stop(t+0.08);
+        // Air burst
+        const n2 = mkNoise(ctx,0.1); const bp = fl(ctx,'bandpass',2700,1.0);
+        const g3 = gn(ctx,0.6); g3.gain.setValueAtTime(0.6,t+0.04); g3.gain.exponentialRampToValueAtTime(0.001,t+0.14);
+        ch(n2,bp,g3,dest); n2.start(t+0.04); n2.stop(t+0.15);
+      }
+    },
+    { icon:'〰️', name:'TRAVEL', tag:'0.6s',
+      dur: 0.6,
+      build(ctx, dest, t) {
+        // Silk zip rising
+        const o1 = mkOsc(ctx,'sawtooth',320);
+        o1.frequency.exponentialRampToValueAtTime(2800, t+0.6);
+        const lp = fl(ctx,'lowpass',2200);
+        const g1 = gn(ctx,0); g1.gain.setValueAtTime(0,t); g1.gain.linearRampToValueAtTime(0.12,t+0.1); g1.gain.linearRampToValueAtTime(0.09,t+0.5); g1.gain.exponentialRampToValueAtTime(0.001,t+0.58);
+        ch(o1,lp,g1,dest); o1.start(t); o1.stop(t+0.61);
+        // Silk noise
+        const n1 = mkNoise(ctx,0.6); const bp = fl(ctx,'bandpass',2000,1.4);
+        const g2 = gn(ctx,0); g2.gain.setValueAtTime(0,t); g2.gain.linearRampToValueAtTime(0.11,t+0.1); g2.gain.linearRampToValueAtTime(0.08,t+0.5); g2.gain.exponentialRampToValueAtTime(0.001,t+0.58);
+        ch(n1,bp,g2,dest); n1.start(t); n1.stop(t+0.61);
+      }
+    },
+    { icon:'🔒', name:'HOOK', tag:'0.42s',
+      dur: 0.42,
+      build(ctx, dest, t) {
+        // Wet sticky thwack
+        const n1 = mkNoise(ctx,0.07); const lp = fl(ctx,'lowpass',620,2.2);
+        const g1 = gn(ctx,1.4); g1.gain.setValueAtTime(1.4,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.07);
+        ch(n1,lp,g1,dest); n1.start(t); n1.stop(t+0.08);
+        // Dull body thud
+        const o1 = mkOsc(ctx,'sine',155);
+        o1.frequency.exponentialRampToValueAtTime(48, t+0.2);
+        const g2 = gn(ctx,0.6); g2.gain.setValueAtTime(0.6,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.2);
+        ch(o1,g2,dest); o1.start(t); o1.stop(t+0.21);
+        // Sticky stretch tail
+        const o2 = mkOsc(ctx,'sine',320);
+        o2.frequency.linearRampToValueAtTime(110, t+0.38);
+        const g3 = gn(ctx,0); g3.gain.setValueAtTime(0,t+0.06); g3.gain.linearRampToValueAtTime(0.1,t+0.12); g3.gain.exponentialRampToValueAtTime(0.001,t+0.38);
+        ch(o2,g3,dest); o2.start(t+0.06); o2.stop(t+0.39);
+      }
+    },
+  ]
+},
+
+// ── 06 QUANTUM ANCHOR ────────────────────────────────
+{
+  name:'QUANTUM ANCHOR', color:'#ff66ff',
+  desc:'Phase stutter burst · warp hum beam · reality lock',
+  stages:[
+    { icon:'⚡', name:'DEPLOY', tag:'0.38s',
+      dur: 0.38,
+      build(ctx, dest, t) {
+        // Stutter phase pops
+        [0,0.06,0.13,0.22,0.32].forEach((d,i) => {
+          const nn = mkNoise(ctx,0.04); const bpn = fl(ctx,'bandpass',1400+i*280,1.5);
+          const vol = 0.85 - i*0.1;
+          const gnl = gn(ctx,vol); gnl.gain.setValueAtTime(vol,t+d); gnl.gain.exponentialRampToValueAtTime(0.001,t+d+0.034);
+          ch(nn,bpn,gnl,dest); nn.start(t+d); nn.stop(t+d+0.045);
+        });
+        // Rising square swoosh
+        const o1 = mkOsc(ctx,'square',80);
+        o1.frequency.exponentialRampToValueAtTime(500, t+0.35);
+        const lp = fl(ctx,'lowpass',1200);
+        const g1 = gn(ctx,0); g1.gain.setValueAtTime(0.04,t); g1.gain.linearRampToValueAtTime(0.28,t+0.28); g1.gain.exponentialRampToValueAtTime(0.001,t+0.36);
+        ch(o1,lp,g1,dest); o1.start(t); o1.stop(t+0.37);
+      }
+    },
+    { icon:'〰️', name:'TRAVEL', tag:'0.75s',
+      dur: 0.75,
+      build(ctx, dest, t) {
+        // Warbling twin-osc hum (beating)
+        const o1 = mkOsc(ctx,'sine',180);
+        const o2 = mkOsc(ctx,'sine',186);
+        const g1 = gn(ctx,0); g1.gain.setValueAtTime(0,t); g1.gain.linearRampToValueAtTime(0.22,t+0.12); g1.gain.setValueAtTime(0.22,t+0.62); g1.gain.exponentialRampToValueAtTime(0.001,t+0.73);
+        const g2 = gn(ctx,0); g2.gain.setValueAtTime(0,t); g2.gain.linearRampToValueAtTime(0.09,t+0.12); g2.gain.setValueAtTime(0.09,t+0.62); g2.gain.exponentialRampToValueAtTime(0.001,t+0.73);
+        ch(o1,g1,dest); ch(o2,g2,dest);
+        o1.start(t); o1.stop(t+0.74); o2.start(t); o2.stop(t+0.74);
+        // Sub throb
+        const o3 = mkOsc(ctx,'sine',48);
+        const g3 = gn(ctx,0); g3.gain.setValueAtTime(0,t); g3.gain.linearRampToValueAtTime(0.42,t+0.12); g3.gain.setValueAtTime(0.42,t+0.62); g3.gain.exponentialRampToValueAtTime(0.001,t+0.73);
+        ch(o3,g3,dest); o3.start(t); o3.stop(t+0.74);
+        // Glitch pops along the beam
+        [0.14,0.28,0.42,0.56].forEach(d => {
+          const ng = mkNoise(ctx,0.025); const bpg = fl(ctx,'bandpass',2000,2.5);
+          const gnl = gn(ctx,0.32); gnl.gain.setValueAtTime(0.32,t+d); gnl.gain.exponentialRampToValueAtTime(0.001,t+d+0.022);
+          ch(ng,bpg,gnl,dest); ng.start(t+d); ng.stop(t+d+0.03);
+        });
+      }
+    },
+    { icon:'🔒', name:'HOOK', tag:'0.5s',
+      dur: 0.5,
+      build(ctx, dest, t) {
+        // Reality crack sequence
+        [0,0.055,0.12,0.19,0.26].forEach((d,i) => {
+          const nc = mkNoise(ctx,0.03); const bpc = fl(ctx,'bandpass',1100+i*200,2.0);
+          const vol = 0.55 - i*0.08;
+          const gc = gn(ctx,vol); gc.gain.setValueAtTime(vol,t+d); gc.gain.exponentialRampToValueAtTime(0.001,t+d+0.025);
+          ch(nc,bpc,gc,dest); nc.start(t+d); nc.stop(t+d+0.032);
+        });
+        // Teleport snap
+        const n1 = mkNoise(ctx,0.055); const hp = fl(ctx,'highpass',2900);
+        const g1 = gn(ctx,2.0); g1.gain.setValueAtTime(2.0,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.05);
+        ch(n1,hp,g1,dest); n1.start(t); n1.stop(t+0.06);
+        // Pitch sweep down
+        const o1 = mkOsc(ctx,'sine',1400);
+        o1.frequency.exponentialRampToValueAtTime(45, t+0.46);
+        const g2 = gn(ctx,0.42); g2.gain.setValueAtTime(0.42,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.46);
+        ch(o1,g2,dest); o1.start(t); o1.stop(t+0.47);
+      }
+    },
+  ]
+},
+
+]; // end GRAPPLES
+
+// ════════════════════════════════════════════════════
+//  LIVE PLAYBACK — one-shot, no looping
+// ════════════════════════════════════════════════════
+const visTimers = {};
+
+function playStage(gi, si) {
+  const ctx = getLive();
+  const stage = GRAPPLES[gi].stages[si];
+  const btn = document.getElementById(`pb_${gi}_${si}`);
+  const stageEl = document.getElementById(`stage_${gi}_${si}`);
+  const bar = document.getElementById(`prog_${gi}_${si}`);
+
+  // Disable button while playing
+  btn.disabled = true;
+  btn.classList.add('active');
+  stageEl.classList.add('active');
+
+  // Play the sound once
+  stage.build(ctx, ctx.destination, ctx.currentTime);
+
+  // Animated progress bar
+  const startMs = performance.now();
+  const totalMs = stage.dur * 1000;
+  function animBar() {
+    const pct = Math.min(100, (performance.now() - startMs) / totalMs * 100);
+    if (bar) bar.style.width = pct + '%';
+    if (pct < 100) requestAnimationFrame(animBar);
+    else if (bar) bar.style.width = '0%';
+  }
+  requestAnimationFrame(animBar);
+
+  // Waveform vis
+  animWave(gi, si, stage.dur);
+
+  // Re-enable after sound finishes
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.classList.remove('active');
+    stageEl.classList.remove('active');
+  }, totalMs + 80);
+}
+
+function animWave(gi, si, dur) {
+  const key = `${gi}_${si}`;
+  clearTimeout(visTimers[key]);
+  const col = GRAPPLES[gi].color;
+  const profile = si===0
+    ? [14,20,16,12,8,6,4,3,2,2,1,1,1,1,1,1]
+    : si===1
+    ? [3,6,10,14,18,16,14,18,16,12,18,14,10,7,4,2]
+    : [16,22,18,14,10,12,16,12,8,6,4,3,2,1,1,1];
+
+  let f = 0;
+  const totalFrames = Math.ceil(dur / 0.04);
+
+  function tick() {
+    const decay = Math.max(0, 1 - f / totalFrames);
+    for (let i=0; i<16; i++) {
+      const bar = document.getElementById(`wb_${gi}_${si}_${i}`);
+      if (!bar) continue;
+      const j = decay > 0.05 ? 0.65 + Math.random()*0.35 : 0;
+      const h = Math.max(2, Math.round(profile[i] * decay * j));
+      bar.style.height = h + 'px';
+      bar.style.background = decay > 0.06 ? col : '#0a1020';
+    }
+    f++;
+    if (f <= totalFrames + 3) visTimers[key] = setTimeout(tick, 40);
+    else {
+      for (let i=0; i<16; i++) {
+        const b = document.getElementById(`wb_${gi}_${si}_${i}`);
+        if (b) { b.style.height='2px'; b.style.background='#0a1020'; }
+      }
+    }
+  }
+  tick();
+}
+
+// ════════════════════════════════════════════════════
+//  BUILD UI
+// ════════════════════════════════════════════════════
+const grid = document.getElementById('grid');
+
+GRAPPLES.forEach((grap, gi) => {
+  const card = document.createElement('div');
+  card.className = 'card';
+
+  const stagesHtml = grap.stages.map((stage, si) => `
+    <div class="stage" id="stage_${gi}_${si}">
+      <div class="prog-bar" id="prog_${gi}_${si}"></div>
+      <span class="stage-icon">${stage.icon}</span>
+      <span class="stage-name">${stage.name}</span>
+      <span class="stage-tag">${stage.tag}</span>
+      <div class="stage-btns">
+        <button class="sbtn sbtn-play" id="pb_${gi}_${si}" onclick="playStage(${gi},${si})">▶ PLAY</button>
+        <button class="sbtn sbtn-dl" id="dlbtn_${gi}_${si}" onclick="downloadStageWav(${gi},${si},event)">⬇ WAV</button>
+      </div>
+    </div>
+    <div class="wave">
+      ${Array.from({length:16}, (_,i) => `<div class="wb" id="wb_${gi}_${si}_${i}"></div>`).join('')}
+    </div>
+  `).join('');
+
+  card.innerHTML = `
+    <div class="card-num">0${gi+1}</div>
+    <div class="card-name" style="color:${grap.color}99">${grap.name}</div>
+    <div class="card-desc">${grap.desc}</div>
+    <div class="stage-row">${stagesHtml}</div>
+  `;
+  grid.appendChild(card);
+});
+
+// ════════════════════════════════════════════════════
+//  WAV EXPORT — renders one clean single shot
+// ════════════════════════════════════════════════════
+async function renderStageWav(gi, si) {
+  const stage = GRAPPLES[gi].stages[si];
+  const sr = 44100;
+  const len = Math.ceil(sr * (stage.dur + 0.08)); // tiny tail silence
+  const off = new OfflineAudioContext(1, len, sr);
+  stage.build(off, off.destination, 0);
+  return off.startRendering();
+}
+
+function toWav(buffer) {
+  const sr = buffer.sampleRate, s = buffer.getChannelData(0);
+  const db = s.length * 2, ab = new ArrayBuffer(44 + db), v = new DataView(ab);
+  const ws = (o, str) => { for (let i=0; i<str.length; i++) v.setUint8(o+i, str.charCodeAt(i)); };
+  ws(0,'RIFF'); v.setUint32(4, 36+db, true); ws(8,'WAVE');
+  ws(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true);
+  v.setUint16(22,1,true); v.setUint32(24,sr,true); v.setUint32(28,sr*2,true);
+  v.setUint16(32,2,true); v.setUint16(34,16,true);
+  ws(36,'data'); v.setUint32(40,db,true);
+  let off = 44;
+  for (let i=0; i<s.length; i++) {
+    const x = Math.max(-1, Math.min(1, s[i]));
+    v.setInt16(off, x<0 ? x*0x8000 : x*0x7FFF, true); off += 2;
+  }
+  return ab;
+}
+
+async function downloadStageWav(gi, si, e) {
+  if (e) e.stopPropagation();
+  const btn = document.getElementById(`dlbtn_${gi}_${si}`);
+  const orig = btn.textContent;
+  btn.textContent = '⏳'; btn.style.color = '#666';
+  try {
+    const buf = await renderStageWav(gi, si);
+    const blob = new Blob([toWav(buf)], { type:'audio/wav' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const gName = GRAPPLES[gi].name.toLowerCase().replace(/\s+/g,'_');
+    const sName = GRAPPLES[gi].stages[si].name.toLowerCase();
+    a.href = url; a.download = `grapple_${gName}_${sName}.wav`;
+    a.click(); URL.revokeObjectURL(url);
+    btn.textContent = '✓'; btn.style.color = '#4aaa4a';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 2000);
+  } catch(err) {
+    btn.textContent = '✗'; btn.style.color = '#ff4444';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 2000);
+  }
+}
+
+async function downloadAllStages() {
+  const btn = document.querySelector('.dl-all-btn');
+  const orig = btn.textContent;
+  btn.textContent = '⏳ RENDERING...'; btn.style.color = '#888';
+  for (let gi=0; gi<GRAPPLES.length; gi++) {
+    for (let si=0; si<3; si++) {
+      await downloadStageWav(gi, si);
+      await new Promise(r => setTimeout(r, 260));
+    }
+  }
+  btn.textContent = '✓ ALL 18 DONE!'; btn.style.color = '#4aaa4a';
+  setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 3500);
+}
+</script>
+</body>
+</html>

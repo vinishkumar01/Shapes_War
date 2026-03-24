@@ -33,6 +33,9 @@ public class Pistol : MonoBehaviour, IUpdateObserver
     [SerializeField] private GunRecoil _gunRecoil;
 
 
+    [Header("SFX")]
+    [SerializeField]private AudioClip _pistolSoundClip;
+
     private void OnEnable()
     {
         //Getting the gunAimConfigs here
@@ -74,6 +77,12 @@ public class Pistol : MonoBehaviour, IUpdateObserver
 
     private void Shoot()
     {
+
+        if (UserInputs.instance == null || UserInputs.instance._cursorTransform == null)
+            return;
+
+        if (Camera.main == null)
+            return;
 
         //Break the method execution if the condition satisfies
         if (_pistolAttributes.isPistolCanShoot || _pistolAttributes.isReloading)
@@ -138,6 +147,9 @@ public class Pistol : MonoBehaviour, IUpdateObserver
 
         //Applying Gun Recoil
         _gunRecoil.RecoilKick(shootDirection);
+
+        //Applying the pistol SFX:
+        SFXManager._instance.playSFX(_pistolSoundClip, _gunBarrel.transform.position, 1f,false, false);
 
         //Micro Jitter 
         if (UnityEngine.Random.value > 0.5f)

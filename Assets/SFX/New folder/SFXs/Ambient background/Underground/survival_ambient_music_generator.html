@@ -1,0 +1,574 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: transparent; }
+  #root {
+    font-family: 'Rajdhani', sans-serif;
+    background: #0a0c0f;
+    color: #8a9bb0;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #1e2a38;
+    min-height: 400px;
+  }
+  .header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+    border-bottom: 1px solid #1a2233; padding-bottom: 16px;
+  }
+  .skull-icon { font-size: 20px; }
+  .header-title { font-size: 18px; font-weight: 600; color: #c5d4e0; letter-spacing: 2px; text-transform: uppercase; }
+  .header-sub { font-size: 11px; color: #4a5a6a; letter-spacing: 3px; text-transform: uppercase; font-family: 'Share Tech Mono', monospace; }
+  .tracks-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .track-card {
+    background: #0d1017; border: 1px solid #1a2535; border-radius: 8px;
+    padding: 12px 14px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+  }
+  .track-card:hover { border-color: #2a4060; background: #111620; }
+  .track-card.active { border-color: #3a7abd; background: #0f1a2a; }
+  .track-card.active::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #3a7abd;
+  }
+  .track-card.playing { border-color: #4a9a6d; }
+  .track-card.playing::before { background: #4a9a6d; }
+  .track-name { font-size: 13px; font-weight: 600; color: #a8bcd0; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+  .track-desc { font-size: 11px; color: #4a5a70; line-height: 1.4; }
+  .track-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+  .tag { font-size: 9px; font-family: 'Share Tech Mono', monospace; color: #3a6a8a; background: #0f1e2e; padding: 2px 6px; border-radius: 3px; letter-spacing: 1px; }
+  .controls { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .btn {
+    background: #111820; border: 1px solid #1e3048; color: #7a9bb5; padding: 8px 18px;
+    border-radius: 6px; cursor: pointer; font-family: 'Rajdhani', sans-serif; font-size: 13px;
+    font-weight: 600; letter-spacing: 1px; text-transform: uppercase; transition: all 0.15s;
+  }
+  .btn:hover { background: #172030; border-color: #2a4a6a; color: #a0c0d8; }
+  .btn.btn-play { background: #0f2035; border-color: #2a5a8a; color: #5a9fd4; }
+  .btn.btn-play:hover { background: #1a3050; }
+  .btn.btn-stop { background: #1f0f10; border-color: #5a2020; color: #c05050; }
+  .btn.btn-stop:hover { background: #2a1515; }
+  .btn.btn-dl { background: #0f1f18; border-color: #1a5a38; color: #3a9a68; }
+  .btn.btn-dl:hover { background: #152a20; }
+  .vol-row { display: flex; align-items: center; gap: 10px; }
+  .vol-label { font-size: 11px; color: #4a6a7a; letter-spacing: 1px; font-family: 'Share Tech Mono', monospace; }
+  input[type=range] { flex: 1; accent-color: #3a7abd; }
+  .status-bar {
+    background: #080c10; border: 1px solid #1a2535; border-radius: 6px; padding: 8px 12px;
+    font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #4a7a5a;
+    display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+  }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #2a5a3a; }
+  .status-dot.active { background: #4a9a6a; box-shadow: 0 0 6px #4a9a6a; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .viz-bar {
+    height: 32px; background: #080c10; border-radius: 4px; border: 1px solid #1a2535;
+    display: flex; align-items: flex-end; gap: 2px; padding: 4px 6px; overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .bar { width: 4px; background: #1a4a6a; border-radius: 2px 2px 0 0; transition: height 0.08s; min-height: 2px; }
+  .bar.active-bar { background: #3a7abd; }
+  .dl-section { border-top: 1px solid #1a2535; padding-top: 12px; }
+  .dl-title { font-size: 11px; color: #3a5a6a; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; font-family: 'Share Tech Mono', monospace; }
+  .dl-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .dl-btn {
+    background: #0a1015; border: 1px solid #1a2535; border-radius: 5px; padding: 7px 4px;
+    cursor: pointer; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #3a6a5a;
+    text-align: center; transition: all 0.15s; letter-spacing: 0.5px;
+  }
+  .dl-btn:hover { background: #0f1820; border-color: #2a4a3a; color: #5a9a7a; }
+  .dl-btn.dl-active { border-color: #2a8a5a; color: #5ab87a; }
+  .progress-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .progress-label { font-size: 10px; font-family: 'Share Tech Mono', monospace; color: #3a5a6a; min-width: 60px; }
+  .progress-wrap { flex: 1; height: 3px; background: #1a2535; border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: #3a7abd; border-radius: 2px; width: 0%; transition: width 0.1s; }
+</style>
+
+<div id="root">
+  <div class="header">
+    <span class="skull-icon">☠</span>
+    <div>
+      <div class="header-title">Section 8 — Ambient Engine</div>
+      <div class="header-sub">Survival Loop Generator · 6 Variations</div>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">Select a track and press PLAY</span>
+  </div>
+
+  <div class="viz-bar" id="vizBar"></div>
+
+  <div class="tracks-grid" id="tracksGrid">
+    <div class="track-card" data-track="0" onclick="selectTrack(0)">
+      <div class="track-name">I. Dead District</div>
+      <div class="track-desc">Low drone, distant metallic clangs, cold wind sweeps through hollow ruins.</div>
+      <div class="track-tags"><span class="tag">DRONE</span><span class="tag">COLD</span><span class="tag">MINIMAL</span></div>
+    </div>
+    <div class="track-card" data-track="1" onclick="selectTrack(1)">
+      <div class="track-name">II. Enemy Horizon</div>
+      <div class="track-desc">Rising tension pulse, irregular heartbeat LFO, ominous low strings.</div>
+      <div class="track-tags"><span class="tag">TENSION</span><span class="tag">PULSE</span><span class="tag">DARK</span></div>
+    </div>
+    <div class="track-card" data-track="2" onclick="selectTrack(2)">
+      <div class="track-name">III. Last Light</div>
+      <div class="track-desc">Sparse piano drops, reverb-drenched pads, fading beacon signal tone.</div>
+      <div class="track-tags"><span class="tag">PIANO</span><span class="tag">REVERB</span><span class="tag">SPARSE</span></div>
+    </div>
+    <div class="track-card" data-track="3" onclick="selectTrack(3)">
+      <div class="track-name">IV. Sector Collapse</div>
+      <div class="track-desc">Heavy subsonic rumble, glitched industrial percussion, unstable static bursts.</div>
+      <div class="track-tags"><span class="tag">INDUSTRIAL</span><span class="tag">GLITCH</span><span class="tag">HEAVY</span></div>
+    </div>
+    <div class="track-card" data-track="4" onclick="selectTrack(4)">
+      <div class="track-name">V. Ghost Protocol</div>
+      <div class="track-desc">Ethereal choir ghosts, slow filter sweep, spectral movement in the dark.</div>
+      <div class="track-tags"><span class="tag">SPECTRAL</span><span class="tag">CHOIR</span><span class="tag">EERIE</span></div>
+    </div>
+    <div class="track-card" data-track="5" onclick="selectTrack(5)">
+      <div class="track-name">VI. Final Wave</div>
+      <div class="track-desc">Escalating alarm drones, chaos layers building, survival at breaking point.</div>
+      <div class="track-tags"><span class="tag">ESCALATING</span><span class="tag">ALARM</span><span class="tag">INTENSE</span></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-play" onclick="playTrack()">▶ PLAY</button>
+    <button class="btn btn-stop" onclick="stopTrack()">■ STOP</button>
+    <div class="vol-row" style="flex:1">
+      <span class="vol-label">VOL</span>
+      <input type="range" min="0" max="100" value="70" id="volSlider" oninput="setVol(this.value)">
+      <span class="vol-label" id="volVal" style="min-width:28px">70</span>
+    </div>
+  </div>
+
+  <div class="progress-row">
+    <span class="progress-label" id="loopLabel">LOOP 0:00</span>
+    <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="progress-label" style="text-align:right" id="loopDur">0:00</span>
+  </div>
+
+  <div class="dl-section">
+    <div class="dl-title">Export — Download Track (WAV)</div>
+    <div class="dl-grid" id="dlGrid">
+      <div class="dl-btn" onclick="downloadTrack(0)">I. Dead District</div>
+      <div class="dl-btn" onclick="downloadTrack(1)">II. Enemy Horizon</div>
+      <div class="dl-btn" onclick="downloadTrack(2)">III. Last Light</div>
+      <div class="dl-btn" onclick="downloadTrack(3)">IV. Sector Collapse</div>
+      <div class="dl-btn" onclick="downloadTrack(4)">V. Ghost Protocol</div>
+      <div class="dl-btn" onclick="downloadTrack(5)">VI. Final Wave</div>
+    </div>
+  </div>
+</div>
+
+<script>
+let ctx, masterGain, nodes = [], selectedTrack = 0, isPlaying = false;
+let vizBars = [], vizAnim, loopStart, loopDuration = 32;
+const SAMPLE_RATE = 44100;
+
+function initAudio() {
+  if (!ctx) {
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = ctx.createGain();
+    masterGain.gain.value = 0.7;
+    masterGain.connect(ctx.destination);
+  }
+  if (ctx.state === 'suspended') ctx.resume();
+}
+
+function buildViz() {
+  const bar = document.getElementById('vizBar');
+  bar.innerHTML = '';
+  vizBars = [];
+  for (let i = 0; i < 60; i++) {
+    const b = document.createElement('div');
+    b.className = 'bar';
+    bar.appendChild(b);
+    vizBars.push(b);
+  }
+}
+
+function animateViz() {
+  if (!isPlaying) { vizBars.forEach(b => { b.style.height = '2px'; b.className = 'bar'; }); return; }
+  const t = ctx.currentTime;
+  vizBars.forEach((b, i) => {
+    const freq = 30 + i * 40;
+    const v = Math.abs(Math.sin(t * (0.5 + i * 0.13) + i) * Math.cos(t * (0.3 + i * 0.07)));
+    const h = 3 + v * 22;
+    b.style.height = h + 'px';
+    b.className = v > 0.5 ? 'bar active-bar' : 'bar';
+  });
+  const elapsed = (Date.now() - loopStart) / 1000;
+  const pct = ((elapsed % loopDuration) / loopDuration) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  const sec = Math.floor(elapsed % loopDuration);
+  document.getElementById('loopLabel').textContent = 'LOOP ' + Math.floor(sec/60) + ':' + String(sec%60).padStart(2,'0');
+  vizAnim = requestAnimationFrame(animateViz);
+}
+
+function selectTrack(i) {
+  selectedTrack = i;
+  document.querySelectorAll('.track-card').forEach((c, j) => {
+    c.className = 'track-card' + (j === i ? ' active' : '');
+  });
+}
+
+function stopNodes() {
+  nodes.forEach(n => { try { n.stop(); } catch(e){} });
+  nodes = [];
+}
+
+function setVol(v) {
+  document.getElementById('volVal').textContent = v;
+  if (masterGain) masterGain.gain.value = v / 100;
+}
+
+function createOsc(freq, type, gain, startT, dur) {
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  g.gain.value = gain;
+  osc.connect(g);
+  g.connect(masterGain);
+  osc.start(startT);
+  if (dur) osc.stop(startT + dur);
+  else { osc.loop = true; }
+  nodes.push(osc);
+  return { osc, g };
+}
+
+function createNoise(gain, startT, dur, filterFreq) {
+  const buf = ctx.createBuffer(1, SAMPLE_RATE * Math.min(dur || 8, 8), SAMPLE_RATE);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * 0.5;
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.loop = true;
+  const filt = ctx.createBiquadFilter();
+  filt.type = 'lowpass';
+  filt.frequency.value = filterFreq || 300;
+  const g = ctx.createGain();
+  g.gain.value = gain;
+  src.connect(filt);
+  filt.connect(g);
+  g.connect(masterGain);
+  src.start(startT);
+  if (dur) src.stop(startT + dur);
+  nodes.push(src);
+  return { src, g };
+}
+
+function addReverb(srcNode, amount) {
+  const conv = ctx.createConvolver();
+  const len = SAMPLE_RATE * 3;
+  const buf = ctx.createBuffer(2, len, SAMPLE_RATE);
+  for (let c = 0; c < 2; c++) {
+    const d = buf.getChannelData(c);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i/len, 2);
+  }
+  conv.buffer = buf;
+  const wet = ctx.createGain(); wet.gain.value = amount;
+  const dry = ctx.createGain(); dry.gain.value = 1 - amount * 0.5;
+  srcNode.connect(dry); dry.connect(masterGain);
+  srcNode.connect(conv); conv.connect(wet); wet.connect(masterGain);
+  return conv;
+}
+
+function scheduleMetallic(t, baseFreq) {
+  for (let i = 0; i < 6; i++) {
+    const hitTime = t + i * 4.7 + Math.random() * 2;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(baseFreq * (1 + Math.random()), hitTime);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.1, hitTime + 1.5);
+    g.gain.setValueAtTime(0.08, hitTime);
+    g.gain.exponentialRampToValueAtTime(0.001, hitTime + 1.5);
+    osc.connect(g); g.connect(masterGain);
+    osc.start(hitTime); osc.stop(hitTime + 2);
+    nodes.push(osc);
+  }
+}
+
+function scheduleBeep(t, freq, interval) {
+  for (let i = 0; i < 20; i++) {
+    const hitTime = t + i * interval;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    g.gain.setValueAtTime(0, hitTime);
+    g.gain.linearRampToValueAtTime(0.06, hitTime + 0.05);
+    g.gain.linearRampToValueAtTime(0, hitTime + 0.3);
+    osc.connect(g); g.connect(masterGain);
+    osc.start(hitTime); osc.stop(hitTime + 0.4);
+    nodes.push(osc);
+  }
+}
+
+const TRACKS = [
+  function track0(t) { // Dead District
+    loopDuration = 32;
+    createOsc(40, 'sine', 0.18, t); // sub drone
+    createOsc(41.2, 'sine', 0.10, t); // beating
+    createOsc(80, 'sawtooth', 0.03, t);
+    createNoise(0.04, t, null, 200); // cold wind
+    scheduleMetallic(t, 180);
+    const lfo = ctx.createOscillator();
+    const lfoGain = ctx.createGain(); lfoGain.gain.value = 15;
+    lfo.frequency.value = 0.08; lfo.type = 'sine';
+    const carrier = ctx.createOscillator();
+    const cGain = ctx.createGain(); cGain.gain.value = 0.04;
+    carrier.type = 'sine'; carrier.frequency.value = 55;
+    lfo.connect(lfoGain); lfoGain.connect(carrier.frequency);
+    carrier.connect(cGain); cGain.connect(masterGain);
+    lfo.start(t); carrier.start(t);
+    nodes.push(lfo, carrier);
+  },
+  function track1(t) { // Enemy Horizon
+    loopDuration = 28;
+    createOsc(35, 'sine', 0.20, t);
+    createOsc(70, 'square', 0.025, t);
+    for (let i = 0; i < 12; i++) {
+      const beat = t + i * 2.3;
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.type = 'sine'; o.frequency.value = 38 + (i % 3) * 5;
+      g.gain.setValueAtTime(0, beat);
+      g.gain.linearRampToValueAtTime(0.15, beat + 0.05);
+      g.gain.exponentialRampToValueAtTime(0.001, beat + 1.8);
+      o.connect(g); g.connect(masterGain);
+      o.start(beat); o.stop(beat + 2);
+      nodes.push(o);
+    }
+    createNoise(0.03, t, null, 500);
+    createOsc(110, 'sawtooth', 0.015, t);
+    createOsc(220, 'sawtooth', 0.008, t);
+  },
+  function track2(t) { // Last Light
+    loopDuration = 36;
+    createOsc(55, 'sine', 0.12, t);
+    const notes = [261.63, 293.66, 329.63, 392.00, 261.63, 246.94, 220.00, 329.63];
+    notes.forEach((freq, i) => {
+      const nt = t + i * 4.2 + 0.5;
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.type = 'triangle'; o.frequency.value = freq;
+      g.gain.setValueAtTime(0, nt);
+      g.gain.linearRampToValueAtTime(0.07, nt + 0.15);
+      g.gain.exponentialRampToValueAtTime(0.001, nt + 3.5);
+      o.connect(g); g.connect(masterGain);
+      o.start(nt); o.stop(nt + 4);
+      nodes.push(o);
+    });
+    scheduleBeep(t + 8, 880, 12.5);
+    createNoise(0.02, t, null, 150);
+  },
+  function track3(t) { // Sector Collapse
+    loopDuration = 24;
+    createOsc(28, 'sawtooth', 0.15, t);
+    createOsc(56, 'sawtooth', 0.08, t);
+    createNoise(0.08, t, null, 800);
+    for (let i = 0; i < 16; i++) {
+      const ht = t + i * 1.5 + (i % 3 === 0 ? 0 : Math.random() * 0.3);
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.type = 'square'; o.frequency.value = 60 + (i % 4) * 20;
+      g.gain.setValueAtTime(0.12, ht);
+      g.gain.exponentialRampToValueAtTime(0.001, ht + 0.25);
+      o.connect(g); g.connect(masterGain);
+      o.start(ht); o.stop(ht + 0.3);
+      nodes.push(o);
+    }
+    createOsc(33, 'sine', 0.20, t);
+    scheduleMetallic(t, 280);
+  },
+  function track4(t) { // Ghost Protocol
+    loopDuration = 40;
+    const vowelFreqs = [220, 247, 261, 294, 220];
+    vowelFreqs.forEach((f, i) => {
+      const nt = t + i * 7.5;
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(f, nt);
+      o.frequency.linearRampToValueAtTime(f * 1.03, nt + 6);
+      g.gain.setValueAtTime(0, nt);
+      g.gain.linearRampToValueAtTime(0.055, nt + 2);
+      g.gain.linearRampToValueAtTime(0, nt + 7);
+      o.connect(g); g.connect(masterGain);
+      o.start(nt); o.stop(nt + 8);
+      nodes.push(o);
+      const o2 = ctx.createOscillator(); const g2 = ctx.createGain();
+      o2.type = 'sine'; o2.frequency.value = f * 2.01;
+      g2.gain.setValueAtTime(0, nt); g2.gain.linearRampToValueAtTime(0.02, nt + 2); g2.gain.linearRampToValueAtTime(0, nt + 7);
+      o2.connect(g2); g2.connect(masterGain); o2.start(nt); o2.stop(nt + 8); nodes.push(o2);
+    });
+    createOsc(36, 'sine', 0.10, t);
+    createNoise(0.015, t, null, 100);
+    const lfo = ctx.createOscillator(); const lg = ctx.createGain();
+    lfo.frequency.value = 0.05; lg.gain.value = 10;
+    const mod = ctx.createOscillator(); const mg = ctx.createGain();
+    mod.type = 'sine'; mod.frequency.value = 72; mg.gain.value = 0.03;
+    lfo.connect(lg); lg.connect(mod.frequency); mod.connect(mg); mg.connect(masterGain);
+    lfo.start(t); mod.start(t); nodes.push(lfo, mod);
+  },
+  function track5(t) { // Final Wave
+    loopDuration = 20;
+    createOsc(30, 'sawtooth', 0.18, t);
+    createOsc(60, 'sawtooth', 0.10, t);
+    createOsc(90, 'sawtooth', 0.05, t);
+    createNoise(0.10, t, null, 1200);
+    for (let i = 0; i < 10; i++) {
+      const ht = t + i * 2.0;
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(200 + i * 30, ht);
+      o.frequency.linearRampToValueAtTime(800 + i * 20, ht + 1.8);
+      g.gain.setValueAtTime(0.06, ht);
+      g.gain.linearRampToValueAtTime(0.001, ht + 1.9);
+      o.connect(g); g.connect(masterGain); o.start(ht); o.stop(ht + 2); nodes.push(o);
+    }
+    scheduleBeep(t, 440, 1.0);
+    scheduleBeep(t + 0.5, 587, 1.0);
+    scheduleMetallic(t, 400);
+  }
+];
+
+function playTrack() {
+  initAudio();
+  stopNodes();
+  cancelAnimationFrame(vizAnim);
+  const t = ctx.currentTime + 0.05;
+  TRACKS[selectedTrack](t);
+  isPlaying = true;
+  loopStart = Date.now();
+  const durations = [32, 28, 36, 24, 40, 20];
+  loopDuration = durations[selectedTrack];
+  document.getElementById('loopDur').textContent = Math.floor(loopDuration/60) + ':' + String(loopDuration%60).padStart(2,'0');
+  document.getElementById('statusDot').className = 'status-dot active';
+  const names = ['Dead District','Enemy Horizon','Last Light','Sector Collapse','Ghost Protocol','Final Wave'];
+  document.getElementById('statusText').textContent = 'PLAYING: ' + names[selectedTrack] + ' — LOOPING';
+  document.querySelectorAll('.track-card').forEach((c, j) => {
+    c.className = 'track-card' + (j === selectedTrack ? ' playing' : '');
+  });
+  animateViz();
+  setTimeout(() => {
+    if (isPlaying) { stopNodes(); TRACKS[selectedTrack](ctx.currentTime + 0.05); loopStart = Date.now(); }
+    setInterval(() => {
+      if (isPlaying) { stopNodes(); TRACKS[selectedTrack](ctx.currentTime + 0.05); loopStart = Date.now(); }
+    }, loopDuration * 1000);
+  }, loopDuration * 1000);
+}
+
+function stopTrack() {
+  isPlaying = false;
+  stopNodes();
+  cancelAnimationFrame(vizAnim);
+  document.getElementById('statusDot').className = 'status-dot';
+  document.getElementById('statusText').textContent = 'Stopped';
+  document.getElementById('progressFill').style.width = '0%';
+  document.querySelectorAll('.track-card').forEach((c, j) => {
+    c.className = 'track-card' + (j === selectedTrack ? ' active' : '');
+  });
+  vizBars.forEach(b => { b.style.height = '2px'; b.className = 'bar'; });
+}
+
+async function downloadTrack(idx) {
+  const btn = document.querySelectorAll('.dl-btn')[idx];
+  btn.textContent = 'Rendering...';
+  btn.className = 'dl-btn dl-active';
+  const offCtx = new OfflineAudioContext(2, SAMPLE_RATE * 35, SAMPLE_RATE);
+  const offGain = offCtx.createGain();
+  offGain.gain.value = 0.7;
+  offGain.connect(offCtx.destination);
+
+  function offOsc(freq, type, gain, t, dur) {
+    const osc = offCtx.createOscillator();
+    const g = offCtx.createGain(); g.gain.value = gain;
+    osc.type = type; osc.frequency.value = freq;
+    osc.connect(g); g.connect(offGain);
+    osc.start(t);
+    if (dur) osc.stop(t + dur); else osc.stop(34);
+    return osc;
+  }
+  function offNoise(gain, filterFreq) {
+    const buf = offCtx.createBuffer(1, SAMPLE_RATE * 8, SAMPLE_RATE);
+    const d = buf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (Math.random()*2-1)*0.5;
+    const src = offCtx.createBufferSource(); src.buffer = buf; src.loop = true;
+    const f = offCtx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = filterFreq;
+    const g = offCtx.createGain(); g.gain.value = gain;
+    src.connect(f); f.connect(g); g.connect(offGain);
+    src.start(0); src.stop(34); return src;
+  }
+
+  const dur = [32,28,36,24,40,20][idx];
+  const reps = Math.ceil(34/dur);
+  for (let r = 0; r < reps; r++) {
+    const t = r * dur;
+    if (t >= 34) break;
+    if (idx === 0) {
+      offOsc(40,'sine',0.15,t); offOsc(41.2,'sine',0.08,t); offOsc(80,'sawtooth',0.025,t); offNoise(0.035,200);
+    } else if (idx === 1) {
+      offOsc(35,'sine',0.18,t); offOsc(70,'square',0.02,t); offNoise(0.025,500);
+      for (let i = 0; i < 12; i++) { const bt=t+i*2.3; const o=offCtx.createOscillator(); const g=offCtx.createGain(); o.type='sine'; o.frequency.value=38+(i%3)*5; g.gain.setValueAtTime(0,bt); g.gain.linearRampToValueAtTime(0.12,bt+0.05); g.gain.exponentialRampToValueAtTime(0.001,bt+1.8); o.connect(g);g.connect(offGain);o.start(bt);o.stop(bt+2); }
+    } else if (idx === 2) {
+      offOsc(55,'sine',0.10,t); offNoise(0.015,150);
+      const notes=[261.63,293.66,329.63,392.00,261.63,246.94,220.00,329.63];
+      notes.forEach((f,i) => { const nt=t+i*4.2+0.5; const o=offCtx.createOscillator(); const g=offCtx.createGain(); o.type='triangle'; o.frequency.value=f; g.gain.setValueAtTime(0,nt); g.gain.linearRampToValueAtTime(0.06,nt+0.15); g.gain.exponentialRampToValueAtTime(0.001,nt+3.5); o.connect(g);g.connect(offGain);o.start(nt);o.stop(nt+4); });
+    } else if (idx === 3) {
+      offOsc(28,'sawtooth',0.13,t); offOsc(56,'sawtooth',0.07,t); offOsc(33,'sine',0.17,t); offNoise(0.07,800);
+      for (let i=0;i<16;i++) { const ht=t+i*1.5; const o=offCtx.createOscillator(); const g=offCtx.createGain(); o.type='square'; o.frequency.value=60+(i%4)*20; g.gain.setValueAtTime(0.10,ht); g.gain.exponentialRampToValueAtTime(0.001,ht+0.25); o.connect(g);g.connect(offGain);o.start(ht);o.stop(ht+0.3); }
+    } else if (idx === 4) {
+      offOsc(36,'sine',0.08,t); offNoise(0.012,100);
+      const vf=[220,247,261,294,220]; vf.forEach((f,i) => { const nt=t+i*7.5; const o=offCtx.createOscillator(); const g=offCtx.createGain(); o.type='sine'; o.frequency.value=f; g.gain.setValueAtTime(0,nt); g.gain.linearRampToValueAtTime(0.05,nt+2); g.gain.linearRampToValueAtTime(0,nt+7); o.connect(g);g.connect(offGain);o.start(nt);o.stop(nt+8); });
+    } else if (idx === 5) {
+      offOsc(30,'sawtooth',0.15,t); offOsc(60,'sawtooth',0.08,t); offNoise(0.08,1200);
+      for (let i=0;i<10;i++) { const ht=t+i*2.0; const o=offCtx.createOscillator(); const g=offCtx.createGain(); o.type='sawtooth'; o.frequency.setValueAtTime(200+i*30,ht); o.frequency.linearRampToValueAtTime(800+i*20,ht+1.8); g.gain.setValueAtTime(0.05,ht); g.gain.linearRampToValueAtTime(0.001,ht+1.9); o.connect(g);g.connect(offGain);o.start(ht);o.stop(ht+2); }
+    }
+  }
+
+  try {
+    const rendered = await offCtx.startRendering();
+    const wav = encodeWAV(rendered);
+    const blob = new Blob([wav], {type:'audio/wav'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const names = ['Dead_District','Enemy_Horizon','Last_Light','Sector_Collapse','Ghost_Protocol','Final_Wave'];
+    a.href = url; a.download = 'Section8_' + names[idx] + '.wav';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    btn.textContent = ['I. Dead District','II. Enemy Horizon','III. Last Light','IV. Sector Collapse','V. Ghost Protocol','VI. Final Wave'][idx];
+    btn.className = 'dl-btn';
+  } catch(e) {
+    btn.textContent = 'Error — retry'; btn.className = 'dl-btn';
+  }
+}
+
+function encodeWAV(audioBuffer) {
+  const numCh = audioBuffer.numberOfChannels;
+  const sampleRate = audioBuffer.sampleRate;
+  const format = 1; const bitsPerSample = 16;
+  const blockAlign = numCh * bitsPerSample / 8;
+  const byteRate = sampleRate * blockAlign;
+  const samples = audioBuffer.length;
+  const dataSize = samples * blockAlign;
+  const buf = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(buf);
+  function ws(o,s){for(let i=0;i<s.length;i++)view.setUint8(o+i,s.charCodeAt(i));}
+  ws(0,'RIFF'); view.setUint32(4,36+dataSize,true); ws(8,'WAVE');
+  ws(12,'fmt '); view.setUint32(16,16,true); view.setUint16(20,format,true);
+  view.setUint16(22,numCh,true); view.setUint32(24,sampleRate,true);
+  view.setUint32(28,byteRate,true); view.setUint16(32,blockAlign,true);
+  view.setUint16(34,bitsPerSample,true); ws(36,'data'); view.setUint32(40,dataSize,true);
+  const channels = [];
+  for (let c=0;c<numCh;c++) channels.push(audioBuffer.getChannelData(c));
+  let offset = 44;
+  for (let i=0;i<samples;i++) {
+    for (let c=0;c<numCh;c++) {
+      let s = Math.max(-1,Math.min(1,channels[c][i]));
+      view.setInt16(offset, s < 0 ? s*0x8000 : s*0x7FFF, true);
+      offset += 2;
+    }
+  }
+  return buf;
+}
+
+buildViz();
+selectTrack(0);
+</script>

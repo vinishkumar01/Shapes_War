@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Heavy Character – Jump & Landing Sounds</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #06060d;
+    display: flex; flex-direction: column; align-items: center;
+    min-height: 100vh; font-family: 'Courier New', monospace;
+    color: #aef; gap: 7px; user-select: none; padding: 10px 0;
+  }
+  h1 { font-size: 0.74rem; letter-spacing: 6px; color: #5af; text-transform: uppercase; }
+  #game-canvas { border: 2px solid #181e30; display: block; box-shadow: 0 0 44px #06101e88; }
+
+  #hud { display: flex; gap: 22px; font-size: 0.58rem; letter-spacing: 3px; }
+  .hud-item { color: #22303e; transition: color 0.08s; }
+  .hud-item.active    { color: #4df; text-shadow: 0 0 8px #4df8; }
+  .hud-item.j-active  { text-shadow: 0 0 10px currentColor; }
+  .hud-item.l-active  { text-shadow: 0 0 10px currentColor; }
+
+  /* Two panels side by side */
+  #panels { display: flex; gap: 10px; width: 760px; }
+
+  .panel {
+    flex: 1; background: #09090f; border: 1px solid #151e2e;
+    border-radius: 8px; padding: 10px 12px;
+    display: flex; flex-direction: column; gap: 5px;
+  }
+  .panel-title {
+    font-size: 0.55rem; letter-spacing: 4px; text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+
+  .vrow { display: flex; align-items: stretch; gap: 7px; margin-bottom: 1px; }
+
+  .vbtn {
+    flex: 1; background: #0c1020; border: 1.5px solid #18263a;
+    border-radius: 5px; color: #42647a;
+    font-family: 'Courier New', monospace; font-size: 0.54rem;
+    letter-spacing: 1px; padding: 7px 9px;
+    cursor: pointer; transition: all 0.11s; text-align: left; line-height: 1.45;
+  }
+  .vbtn:hover { background: #101828; border-color: #304e68; color: #70a0c0; }
+  .vbtn.sel   { background: #0f1a28; border-color: var(--col); box-shadow: 0 0 8px var(--col-d); }
+  .vbtn .vname { font-size: 0.62rem; font-weight: bold; display: block; margin-bottom: 1px; }
+  .vbtn .vdesc { font-size: 0.48rem; color: #2e4050; letter-spacing: 0.6px; display: block; line-height: 1.4; }
+  .vbtn.sel .vdesc { color: #486070; }
+
+  .dlbtn {
+    background: #0a0e16; border: 1px solid #18222e;
+    border-radius: 4px; padding: 0 9px;
+    font-family: 'Courier New', monospace; font-size: 0.5rem;
+    letter-spacing: 0.8px; cursor: pointer; transition: all 0.11s;
+    white-space: nowrap; color: #334050;
+    display: flex; align-items: center;
+  }
+  .dlbtn:hover { color: #90b8d0; border-color: #406080; background: #0f1820; }
+  .dlbtn.adl  { color: var(--col); border-color: var(--col); background: #0a1018; box-shadow: 0 0 5px var(--col-d); }
+
+  #instructions { font-size: 0.52rem; color: #20283a; letter-spacing: 2px; }
+</style>
+</head>
+<body>
+<h1>▸ Heavy Character — Jump &amp; Landing Sounds</h1>
+<canvas id="game-canvas" width="760" height="240"></canvas>
+
+<div id="hud">
+  <span class="hud-item" id="ind-slide">▷ SLIDE</span>
+  <span class="hud-item" id="ind-jump">▷ JUMP</span>
+  <span class="hud-item" id="ind-land">▷ LAND</span>
+</div>
+
+<div id="panels">
+
+  <!-- JUMP PANEL -->
+  <div class="panel">
+    <div class="panel-title" style="color:#6cf">▸ Jump Sounds — [ SPACE / ↑ ]</div>
+
+    <div class="vrow">
+      <button class="vbtn sel" id="jb0" style="--col:#6cf;--col-d:#66ccff33" onclick="selJ(0)">
+        <span class="vname" style="color:#6cf">J1 · HEAVY LIFT</span>
+        <span class="vdesc">Strained low grunt + deep whoosh — mass fighting gravity</span>
+      </button>
+      <button class="dlbtn adl" id="jd0" style="--col:#6cf;--col-d:#66ccff33" onclick="dlJ(0)">⬇ J1</button>
+    </div>
+
+    <div class="vrow">
+      <button class="vbtn" id="jb1" style="--col:#8af;--col-d:#88aaff33" onclick="selJ(1)">
+        <span class="vname" style="color:#8af">J2 · STONE LAUNCH</span>
+        <span class="vdesc">Ground crack on push-off + rising rumble — rock leaving earth</span>
+      </button>
+      <button class="dlbtn" id="jd1" style="--col:#8af;--col-d:#88aaff33" onclick="dlJ(1)">⬇ J2</button>
+    </div>
+
+    <div class="vrow">
+      <button class="vbtn" id="jb2" style="--col:#adf;--col-d:#aaddff33" onclick="selJ(2)">
+        <span class="vname" style="color:#adf">J3 · IRON SPRING</span>
+        <span class="vdesc">Compressed spring release crack + metal resonance — mechanical coil</span>
+      </button>
+      <button class="dlbtn" id="jd2" style="--col:#adf;--col-d:#aaddff33" onclick="dlJ(2)">⬇ J3</button>
+    </div>
+
+    <div class="vrow">
+      <button class="vbtn" id="jb3" style="--col:#7be;--col-d:#77bbee33" onclick="selJ(3)">
+        <span class="vname" style="color:#7be">J4 · PRESSURE BURST</span>
+        <span class="vdesc">Hydraulic compression release — air hiss + low body surge upward</span>
+      </button>
+      <button class="dlbtn" id="jd3" style="--col:#7be;--col-d:#77bbee33" onclick="dlJ(3)">⬇ J4</button>
+    </div>
+
+    <div class="vrow">
+      <button class="vbtn" id="jb4" style="--col:#5cd;--col-d:#55ccdd33" onclick="selJ(4)">
+        <span class="vname" style="color:#5cd">J5 · RUMBLE LEAP</span>
+        <span class="vdesc">Low floor vibration builds then surges — seismic momentum release</span>
+      </button>
+      <button class="dlbtn" id="jd4" style="--col:#5cd;--col-d:#55ccdd33" onclick="dlJ(4)">⬇ J5</button>
+    </div>
+
+    <div class="vrow">
+      <button class="vbtn" id="jb5" style="--col:#4bc;--col-d:#44bbcc33" onclick="selJ(5)">
+        <span class="vname" style="color:#4bc">J6 · TITAN PUSH</span>
+        <span class="vdesc">Deep sub boom on launch + wide air displacement — colossal weight airborne</span>
+      </button>
+      <button class="dlbtn" id="jd5" style="--col:#4bc;--col-d:#44bbcc33" onclick="dlJ(5)">⬇ J6</button>
+    </div>
+  </div>
+
+  <!-- LANDING PANEL -->
+  <div class="panel">
+    <div class="panel-title" style="color:#fa8">▸ Landing Sounds — auto on land</div>
+
+    <div class="vrow">
+      <button class="vbtn sel" id="lb0" style="--col:#fa8;--col-d:#ffaa8833" onclick="selL(0)">
+        <span class="vname" style="color:#fa8">L1 · EARTH SLAM</span>
+        <span class="vdesc">Massive sub impact + dust cloud noise burst — full weight hits ground</span>
+      </button>
+      <button class="dlbtn adl" id="ld0" style="--col:#fa8;--col-d:#ffaa8833" onclick="dlL(0)">⬇ L1</button>
+    </div>
+
+    <div class="vrow">
+      <button class="vbtn" id="lb1" style="--col:#f90;--col-d:#ff990033" onclick="selL(1)">
+        <span class="vname" style="color:#f90">L2 · STONE CRACK</span>
+        <span class="vdesc">Hard crack resonance + low rumble — floor fracturing under weight</span>
+      </button>
+      <button class="dlbtn" id="ld1" style="--col:#f90;--col-d:#ff990033" onclick="dlL(1)">⬇ L2</button>
+    </div>
+
+    <div class="vrow">
+      <button class="vbtn" id="lb2" style="--col:#fb6;--col-d:#ffbb6633" onclick="selL(2)">
+        <span class="vname" style="color:#fb6">L3 · IRON DROP</span>
+        <span class="vdesc">Metal plate impact thud + high ring decay — dense object on steel</span>
+      </button>
+      <button class="dlbtn" id="ld2" style="--col:#fb6;--col-d:#ffbb6633" onclick="dlL(2)">⬇ L3</button>
+    </div>
+
+    <div class="vrow">
+      <button class="vbtn" id="lb3" style="--col:#e80;--col-d:#ee880033" onclick="selL(3)">
+        <span class="vname" style="color:#e80">L4 · SHOCKWAVE</span>
+        <span class="vdesc">Sub pulse radiates outward then decays — impact wave through solid ground</span>
+      </button>
+      <button class="dlbtn" id="ld3" style="--col:#e80;--col-d:#ee880033" onclick="dlL(3)">⬇ L4</button>
+    </div>
+
+    <div class="vrow">
+      <button class="vbtn" id="lb4" style="--col:#d70;--col-d:#dd770033" onclick="selL(4)">
+        <span class="vname" style="color:#d70">L5 · CRATER HIT</span>
+        <span class="vdesc">Two-stage: sharp crack then delayed deep boom — like a delayed pressure wave</span>
+      </button>
+      <button class="dlbtn" id="ld4" style="--col:#d70;--col-d:#dd770033" onclick="dlL(4)">⬇ L5</button>
+    </div>
+
+    <div class="vrow">
+      <button class="vbtn" id="lb5" style="--col:#c60;--col-d:#cc660033" onclick="selL(5)">
+        <span class="vname" style="color:#c60">L6 · DEAD WEIGHT</span>
+        <span class="vdesc">No crack — pure massive low thud, no ring, just enormous weight settling</span>
+      </button>
+      <button class="dlbtn" id="ld5" style="--col:#c60;--col-d:#cc660033" onclick="dlL(5)">⬇ L6</button>
+    </div>
+  </div>
+</div>
+
+<div id="instructions">[ ← → / A D ] MOVE &nbsp;·&nbsp; [ SPACE / ↑ / W ] JUMP</div>
+
+<script>
+// ═══════════════════════════════════════════
+//  AUDIO ENGINE
+// ═══════════════════════════════════════════
+const AC = window.AudioContext || window.webkitAudioContext;
+let ctx = null, noiseBuf = null;
+
+function initAudio() {
+  if (ctx) return;
+  ctx = new AC();
+  const len = ctx.sampleRate * 0.5;
+  noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
+  const d = noiseBuf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  buildSlide();
+}
+
+// ── Slide ─────────────────────────────────
+let slideGain=null, slideSrc=null, slideActive=false;
+function buildSlide(){
+  slideSrc=ctx.createBufferSource(); slideSrc.buffer=noiseBuf; slideSrc.loop=true;
+  const bpf=ctx.createBiquadFilter(); bpf.type='bandpass'; bpf.frequency.value=320; bpf.Q.value=1.4;
+  const shelf=ctx.createBiquadFilter(); shelf.type='lowshelf'; shelf.frequency.value=200; shelf.gain.value=6;
+  slideGain=ctx.createGain(); slideGain.gain.value=0;
+  slideSrc.connect(bpf); bpf.connect(shelf); shelf.connect(slideGain); slideGain.connect(ctx.destination);
+  slideSrc.start();
+}
+function setSlide(on){
+  if(!ctx||on===slideActive) return; slideActive=on;
+  const now=ctx.currentTime;
+  slideGain.gain.cancelScheduledValues(now);
+  slideGain.gain.setValueAtTime(slideGain.gain.value,now);
+  slideGain.gain.linearRampToValueAtTime(on?0.07:0,now+(on?0.08:0.25));
+}
+
+// ═══════════════════════════════════════════
+//  6 JUMP SOUNDS — Heavy character
+// ═══════════════════════════════════════════
+
+// J1 · HEAVY LIFT — strained low noise + deep upward whoosh
+function jumpJ1(o, dest, buf) {
+  const t = o.currentTime;
+  // Strained low grunt — very low bandpass, short
+  const s1=o.createBufferSource(); s1.buffer=buf; s1.loop=true;
+  const bp1=o.createBiquadFilter(); bp1.type='bandpass'; bp1.Q.value=2.5;
+  bp1.frequency.setValueAtTime(120,t); bp1.frequency.exponentialRampToValueAtTime(80,t+0.08);
+  const g1=o.createGain(); g1.gain.setValueAtTime(0,t); g1.gain.linearRampToValueAtTime(0.14,t+0.02); g1.gain.exponentialRampToValueAtTime(0.0001,t+0.10);
+  s1.connect(bp1); bp1.connect(g1); g1.connect(dest);
+  // Deep whoosh upward — wide, slow sweep
+  const s2=o.createBufferSource(); s2.buffer=buf; s2.loop=true;
+  const bp2=o.createBiquadFilter(); bp2.type='bandpass'; bp2.Q.value=0.7;
+  bp2.frequency.setValueAtTime(180,t+0.04); bp2.frequency.exponentialRampToValueAtTime(600,t+0.28); bp2.frequency.exponentialRampToValueAtTime(300,t+0.55);
+  const shelf2=o.createBiquadFilter(); shelf2.type='lowshelf'; shelf2.frequency.value=250; shelf2.gain.value=7;
+  const g2=o.createGain(); g2.gain.setValueAtTime(0,t+0.04); g2.gain.linearRampToValueAtTime(0.07,t+0.07); g2.gain.linearRampToValueAtTime(0.04,t+0.22); g2.gain.linearRampToValueAtTime(0,t+0.58);
+  s2.connect(bp2); bp2.connect(shelf2); shelf2.connect(g2); g2.connect(dest);
+  // Sub floor push — very low
+  const s3=o.createBufferSource(); s3.buffer=buf; s3.loop=true;
+  const lp3=o.createBiquadFilter(); lp3.type='lowpass'; lp3.frequency.value=90;
+  const g3=o.createGain(); g3.gain.setValueAtTime(0,t); g3.gain.linearRampToValueAtTime(0.18,t+0.012); g3.gain.exponentialRampToValueAtTime(0.0001,t+0.14);
+  s3.connect(lp3); lp3.connect(g3); g3.connect(dest);
+  s1.start(t); s1.stop(t+0.14);
+  s2.start(t+0.04); s2.stop(t+0.62);
+  s3.start(t); s3.stop(t+0.18);
+}
+
+// J2 · STONE LAUNCH — ground crack on push + rising low rumble
+function jumpJ2(o, dest, buf) {
+  const t = o.currentTime;
+  // Ground crack — detuned low-mid sines, sharp
+  [95,138,180].forEach((f,i)=>{
+    const osc=o.createOscillator(); osc.type='sine'; osc.frequency.value=f;
+    const g=o.createGain(); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.055-i*0.01,t+0.006); g.gain.exponentialRampToValueAtTime(0.0001,t+0.12+i*0.02);
+    osc.connect(g); g.connect(dest); osc.start(t); osc.stop(t+0.16);
+  });
+  // Noise crack burst
+  const sc=o.createBufferSource(); sc.buffer=buf; sc.loop=true;
+  const bpc=o.createBiquadFilter(); bpc.type='bandpass'; bpc.Q.value=1.8; bpc.frequency.value=280;
+  const gc=o.createGain(); gc.gain.setValueAtTime(0,t); gc.gain.linearRampToValueAtTime(0.09,t+0.007); gc.gain.exponentialRampToValueAtTime(0.0001,t+0.10);
+  sc.connect(bpc); bpc.connect(gc); gc.connect(dest);
+  // Rising low rumble
+  const sr=o.createBufferSource(); sr.buffer=buf; sr.loop=true;
+  const bpr=o.createBiquadFilter(); bpr.type='bandpass'; bpr.Q.value=0.9;
+  bpr.frequency.setValueAtTime(150,t+0.04); bpr.frequency.exponentialRampToValueAtTime(500,t+0.32); bpr.frequency.exponentialRampToValueAtTime(280,t+0.60);
+  const gr=o.createGain(); gr.gain.setValueAtTime(0,t+0.04); gr.gain.linearRampToValueAtTime(0.065,t+0.055); gr.gain.linearRampToValueAtTime(0.035,t+0.28); gr.gain.linearRampToValueAtTime(0,t+0.62);
+  sr.connect(bpr); bpr.connect(gr); gr.connect(dest);
+  sc.start(t); sc.stop(t+0.14);
+  sr.start(t+0.04); sr.stop(t+0.66);
+}
+
+// J3 · IRON SPRING — compressed spring snap + metal resonance ring
+function jumpJ3(o, dest, buf) {
+  const t = o.currentTime;
+  // Spring compression noise — tight mid
+  const sc=o.createBufferSource(); sc.buffer=buf; sc.loop=true;
+  const bpc=o.createBiquadFilter(); bpc.type='bandpass'; bpc.Q.value=2.2;
+  bpc.frequency.setValueAtTime(400,t); bpc.frequency.exponentialRampToValueAtTime(180,t+0.06);
+  const gc=o.createGain(); gc.gain.setValueAtTime(0,t); gc.gain.linearRampToValueAtTime(0.055,t+0.06); gc.gain.linearRampToValueAtTime(0,t+0.08);
+  sc.connect(bpc); bpc.connect(gc); gc.connect(dest);
+  // Spring release crack — noise burst
+  const sr=o.createBufferSource(); sr.buffer=buf; sr.loop=true;
+  const bpr=o.createBiquadFilter(); bpr.type='bandpass'; bpr.Q.value=1.0;
+  bpr.frequency.setValueAtTime(300,t+0.08); bpr.frequency.exponentialRampToValueAtTime(1400,t+0.16); bpr.frequency.exponentialRampToValueAtTime(500,t+0.42);
+  const gr=o.createGain(); gr.gain.setValueAtTime(0,t+0.08); gr.gain.linearRampToValueAtTime(0.08,t+0.088); gr.gain.linearRampToValueAtTime(0.03,t+0.22); gr.gain.linearRampToValueAtTime(0,t+0.46);
+  sr.connect(bpr); bpr.connect(gr); gr.connect(dest);
+  // Metal ring — detuned sines that decay slowly
+  [220,276,330].forEach((f,i)=>{
+    const osc=o.createOscillator(); osc.type='sine'; osc.frequency.value=f;
+    const g=o.createGain(); g.gain.setValueAtTime(0,t+0.08); g.gain.linearRampToValueAtTime(0.038-i*0.008,t+0.09); g.gain.exponentialRampToValueAtTime(0.0001,t+0.45+i*0.08);
+    osc.connect(g); g.connect(dest); osc.start(t+0.08); osc.stop(t+0.60);
+  });
+  // Sub thud
+  const st=o.createBufferSource(); st.buffer=buf; st.loop=true;
+  const lpt=o.createBiquadFilter(); lpt.type='lowpass'; lpt.frequency.value=100;
+  const gt=o.createGain(); gt.gain.setValueAtTime(0,t+0.08); gt.gain.linearRampToValueAtTime(0.14,t+0.086); gt.gain.exponentialRampToValueAtTime(0.0001,t+0.20);
+  st.connect(lpt); lpt.connect(gt); gt.connect(dest);
+  sc.start(t); sc.stop(t+0.10);
+  sr.start(t+0.08); sr.stop(t+0.52);
+  st.start(t+0.08); st.stop(t+0.24);
+}
+
+// J4 · PRESSURE BURST — hydraulic air release + low body surge
+function jumpJ4(o, dest, buf) {
+  const t = o.currentTime;
+  // Pressure build hiss
+  const sb=o.createBufferSource(); sb.buffer=buf; sb.loop=true;
+  const bpb=o.createBiquadFilter(); bpb.type='bandpass'; bpb.Q.value=2.0;
+  bpb.frequency.setValueAtTime(800,t); bpb.frequency.exponentialRampToValueAtTime(320,t+0.07);
+  const gb=o.createGain(); gb.gain.setValueAtTime(0,t); gb.gain.linearRampToValueAtTime(0.055,t+0.07); gb.gain.linearRampToValueAtTime(0,t+0.09);
+  sb.connect(bpb); bpb.connect(gb); gb.connect(dest);
+  // Air blast release
+  const sa=o.createBufferSource(); sa.buffer=buf; sa.loop=true;
+  const bpa=o.createBiquadFilter(); bpa.type='bandpass'; bpa.Q.value=0.8;
+  bpa.frequency.setValueAtTime(400,t+0.09); bpa.frequency.exponentialRampToValueAtTime(1800,t+0.20); bpa.frequency.exponentialRampToValueAtTime(600,t+0.44);
+  const ga=o.createGain(); ga.gain.setValueAtTime(0,t+0.09); ga.gain.linearRampToValueAtTime(0.065,t+0.096); ga.gain.linearRampToValueAtTime(0.028,t+0.24); ga.gain.linearRampToValueAtTime(0,t+0.50);
+  sa.connect(bpa); bpa.connect(ga); ga.connect(dest);
+  // High air hiss tail
+  const sh=o.createBufferSource(); sh.buffer=buf; sh.loop=true;
+  const hph=o.createBiquadFilter(); hph.type='highpass'; hph.frequency.value=1400;
+  const gh=o.createGain(); gh.gain.setValueAtTime(0,t+0.09); gh.gain.linearRampToValueAtTime(0.035,t+0.13); gh.gain.linearRampToValueAtTime(0,t+0.44);
+  sh.connect(hph); hph.connect(gh); gh.connect(dest);
+  // Low body surge
+  const sl=o.createBufferSource(); sl.buffer=buf; sl.loop=true;
+  const lpl=o.createBiquadFilter(); lpl.type='lowpass'; lpl.frequency.value=130;
+  const gl=o.createGain(); gl.gain.setValueAtTime(0,t+0.09); gl.gain.linearRampToValueAtTime(0.16,t+0.095); gl.gain.exponentialRampToValueAtTime(0.0001,t+0.22);
+  sl.connect(lpl); lpl.connect(gl); gl.connect(dest);
+  sb.start(t); sb.stop(t+0.12);
+  sa.start(t+0.09); sa.stop(t+0.55);
+  sh.start(t+0.09); sh.stop(t+0.50);
+  sl.start(t+0.09); sl.stop(t+0.26);
+}
+
+// J5 · RUMBLE LEAP — seismic floor vibration surge
+function jumpJ5(o, dest, buf) {
+  const t = o.currentTime;
+  // Floor vibration — very low noise rumble building
+  const sv=o.createBufferSource(); sv.buffer=buf; sv.loop=true;
+  const lpv=o.createBiquadFilter(); lpv.type='lowpass'; lpv.frequency.value=140;
+  const gv=o.createGain(); gv.gain.setValueAtTime(0,t); gv.gain.linearRampToValueAtTime(0.10,t+0.08); gv.gain.linearRampToValueAtTime(0,t+0.12);
+  sv.connect(lpv); lpv.connect(gv); gv.connect(dest);
+  // Low seismic sine throb — oscillates slightly
+  const osc=o.createOscillator(); osc.type='sine'; osc.frequency.setValueAtTime(58,t); osc.frequency.exponentialRampToValueAtTime(42,t+0.08);
+  const og=o.createGain(); og.gain.setValueAtTime(0,t); og.gain.linearRampToValueAtTime(0.12,t+0.04); og.gain.linearRampToValueAtTime(0,t+0.12);
+  osc.connect(og); og.connect(dest);
+  // Leap whoosh — wide mid-to-high sweep
+  const sw=o.createBufferSource(); sw.buffer=buf; sw.loop=true;
+  const bpw=o.createBiquadFilter(); bpw.type='bandpass'; bpw.Q.value=0.65;
+  bpw.frequency.setValueAtTime(220,t+0.10); bpw.frequency.exponentialRampToValueAtTime(700,t+0.30); bpw.frequency.exponentialRampToValueAtTime(380,t+0.62);
+  const shelf=o.createBiquadFilter(); shelf.type='lowshelf'; shelf.frequency.value=280; shelf.gain.value=6;
+  const gw=o.createGain(); gw.gain.setValueAtTime(0,t+0.10); gw.gain.linearRampToValueAtTime(0.08,t+0.115); gw.gain.linearRampToValueAtTime(0.04,t+0.30); gw.gain.linearRampToValueAtTime(0,t+0.65);
+  sw.connect(bpw); bpw.connect(shelf); shelf.connect(gw); gw.connect(dest);
+  sv.start(t); sv.stop(t+0.16);
+  osc.start(t); osc.stop(t+0.14);
+  sw.start(t+0.10); sw.stop(t+0.70);
+}
+
+// J6 · TITAN PUSH — colossal sub boom + wide air displacement
+function jumpJ6(o, dest, buf) {
+  const t = o.currentTime;
+  // Massive sub boom
+  const osc1=o.createOscillator(); osc1.type='sine'; osc1.frequency.setValueAtTime(55,t); osc1.frequency.exponentialRampToValueAtTime(35,t+0.18);
+  const og1=o.createGain(); og1.gain.setValueAtTime(0,t); og1.gain.linearRampToValueAtTime(0.22,t+0.008); og1.gain.exponentialRampToValueAtTime(0.0001,t+0.22);
+  osc1.connect(og1); og1.connect(dest);
+  // Sub noise reinforcement
+  const ss=o.createBufferSource(); ss.buffer=buf; ss.loop=true;
+  const lps=o.createBiquadFilter(); lps.type='lowpass'; lps.frequency.value=80;
+  const gs=o.createGain(); gs.gain.setValueAtTime(0,t); gs.gain.linearRampToValueAtTime(0.16,t+0.010); gs.gain.exponentialRampToValueAtTime(0.0001,t+0.20);
+  ss.connect(lps); lps.connect(gs); gs.connect(dest);
+  // Wide air displacement — very wide Q, slow heavy sweep
+  const sa=o.createBufferSource(); sa.buffer=buf; sa.loop=true;
+  const bpa=o.createBiquadFilter(); bpa.type='bandpass'; bpa.Q.value=0.5;
+  bpa.frequency.setValueAtTime(160,t+0.05); bpa.frequency.exponentialRampToValueAtTime(550,t+0.35); bpa.frequency.exponentialRampToValueAtTime(280,t+0.75);
+  const shelf=o.createBiquadFilter(); shelf.type='lowshelf'; shelf.frequency.value=300; shelf.gain.value=8;
+  const ga=o.createGain(); ga.gain.setValueAtTime(0,t+0.05); ga.gain.linearRampToValueAtTime(0.08,t+0.07); ga.gain.linearRampToValueAtTime(0.045,t+0.30); ga.gain.linearRampToValueAtTime(0,t+0.78);
+  sa.connect(bpa); bpa.connect(shelf); shelf.connect(ga); ga.connect(dest);
+  // Mid air rush
+  const sm=o.createBufferSource(); sm.buffer=buf; sm.loop=true;
+  const bpm=o.createBiquadFilter(); bpm.type='bandpass'; bpm.Q.value=1.1;
+  bpm.frequency.setValueAtTime(380,t+0.05); bpm.frequency.exponentialRampToValueAtTime(1000,t+0.22); bpm.frequency.exponentialRampToValueAtTime(550,t+0.55);
+  const gm=o.createGain(); gm.gain.setValueAtTime(0,t+0.05); gm.gain.linearRampToValueAtTime(0.04,t+0.07); gm.gain.linearRampToValueAtTime(0,t+0.48);
+  sm.connect(bpm); bpm.connect(gm); gm.connect(dest);
+  osc1.start(t); osc1.stop(t+0.26);
+  ss.start(t); ss.stop(t+0.24);
+  sa.start(t+0.05); sa.stop(t+0.82);
+  sm.start(t+0.05); sm.stop(t+0.60);
+}
+
+// ═══════════════════════════════════════════
+//  6 LANDING SOUNDS — Heavy character
+// ═══════════════════════════════════════════
+
+// L1 · EARTH SLAM — massive sub impact + dust cloud noise
+function landL1(o, dest, buf) {
+  const t = o.currentTime;
+  // Sub impact sine — big and low
+  const osc=o.createOscillator(); osc.type='sine'; osc.frequency.setValueAtTime(52,t); osc.frequency.exponentialRampToValueAtTime(28,t+0.30);
+  const og=o.createGain(); og.gain.setValueAtTime(0,t); og.gain.linearRampToValueAtTime(0.28,t+0.006); og.gain.exponentialRampToValueAtTime(0.0001,t+0.35);
+  osc.connect(og); og.connect(dest);
+  // Low noise slam
+  const s1=o.createBufferSource(); s1.buffer=buf; s1.loop=true;
+  const lp1=o.createBiquadFilter(); lp1.type='lowpass'; lp1.frequency.value=120;
+  const g1=o.createGain(); g1.gain.setValueAtTime(0,t); g1.gain.linearRampToValueAtTime(0.20,t+0.007); g1.gain.exponentialRampToValueAtTime(0.0001,t+0.28);
+  s1.connect(lp1); lp1.connect(g1); g1.connect(dest);
+  // Dust cloud — wide mid noise burst spreads out
+  const s2=o.createBufferSource(); s2.buffer=buf; s2.loop=true;
+  const bp2=o.createBiquadFilter(); bp2.type='bandpass'; bp2.Q.value=0.6;
+  bp2.frequency.setValueAtTime(280,t+0.02); bp2.frequency.exponentialRampToValueAtTime(600,t+0.18); bp2.frequency.exponentialRampToValueAtTime(200,t+0.60);
+  const g2=o.createGain(); g2.gain.setValueAtTime(0,t+0.02); g2.gain.linearRampToValueAtTime(0.055,t+0.035); g2.gain.linearRampToValueAtTime(0.02,t+0.28); g2.gain.linearRampToValueAtTime(0,t+0.65);
+  s2.connect(bp2); bp2.connect(g2); g2.connect(dest);
+  // High dust hiss
+  const s3=o.createBufferSource(); s3.buffer=buf; s3.loop=true;
+  const hp3=o.createBiquadFilter(); hp3.type='highpass'; hp3.frequency.value=1800;
+  const g3=o.createGain(); g3.gain.setValueAtTime(0,t+0.02); g3.gain.linearRampToValueAtTime(0.028,t+0.05); g3.gain.linearRampToValueAtTime(0,t+0.40);
+  s3.connect(hp3); hp3.connect(g3); g3.connect(dest);
+  osc.start(t); osc.stop(t+0.40);
+  s1.start(t); s1.stop(t+0.32);
+  s2.start(t+0.02); s2.stop(t+0.70);
+  s3.start(t+0.02); s3.stop(t+0.46);
+}
+
+// L2 · STONE CRACK — hard crack resonance + low rumble decay
+function landL2(o, dest, buf) {
+  const t = o.currentTime;
+  // Crack — wide noise, immediate
+  const sc=o.createBufferSource(); sc.buffer=buf; sc.loop=true;
+  const bpc=o.createBiquadFilter(); bpc.type='bandpass'; bpc.Q.value=1.2;
+  bpc.frequency.setValueAtTime(600,t); bpc.frequency.exponentialRampToValueAtTime(180,t+0.08);
+  const gc=o.createGain(); gc.gain.setValueAtTime(0,t); gc.gain.linearRampToValueAtTime(0.12,t+0.005); gc.gain.exponentialRampToValueAtTime(0.0001,t+0.14);
+  sc.connect(bpc); bpc.connect(gc); gc.connect(dest);
+  // Stone resonance — multiple low sine harmonics
+  [88,132,176,220].forEach((f,i)=>{
+    const osc=o.createOscillator(); osc.type='sine'; osc.frequency.value=f;
+    const g=o.createGain(); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.045-i*0.006,t+0.008); g.gain.exponentialRampToValueAtTime(0.0001,t+0.28+i*0.06);
+    osc.connect(g); g.connect(dest); osc.start(t); osc.stop(t+0.45);
+  });
+  // Low rumble tail
+  const sr=o.createBufferSource(); sr.buffer=buf; sr.loop=true;
+  const lpr=o.createBiquadFilter(); lpr.type='lowpass'; lpr.frequency.value=160;
+  const gr=o.createGain(); gr.gain.setValueAtTime(0,t+0.02); gr.gain.linearRampToValueAtTime(0.08,t+0.035); gr.gain.exponentialRampToValueAtTime(0.0001,t+0.38);
+  sr.connect(lpr); lpr.connect(gr); gr.connect(dest);
+  sc.start(t); sc.stop(t+0.18);
+  sr.start(t+0.02); sr.stop(t+0.42);
+}
+
+// L3 · IRON DROP — metal plate thud + high ring decay
+function landL3(o, dest, buf) {
+  const t = o.currentTime;
+  // Metal plate thud — mid-low noise
+  const sm=o.createBufferSource(); sm.buffer=buf; sm.loop=true;
+  const bpm=o.createBiquadFilter(); bpm.type='bandpass'; bpm.Q.value=1.6; bpm.frequency.value=280;
+  const gm=o.createGain(); gm.gain.setValueAtTime(0,t); gm.gain.linearRampToValueAtTime(0.10,t+0.006); gm.gain.exponentialRampToValueAtTime(0.0001,t+0.16);
+  sm.connect(bpm); bpm.connect(gm); gm.connect(dest);
+  // Sub thud
+  const ss=o.createBufferSource(); ss.buffer=buf; ss.loop=true;
+  const lps=o.createBiquadFilter(); lps.type='lowpass'; lps.frequency.value=100;
+  const gs=o.createGain(); gs.gain.setValueAtTime(0,t); gs.gain.linearRampToValueAtTime(0.18,t+0.007); gs.gain.exponentialRampToValueAtTime(0.0001,t+0.18);
+  ss.connect(lps); lps.connect(gs); gs.connect(dest);
+  // Metal ring — higher pitched sine pair, long decay
+  [380,490,620,780].forEach((f,i)=>{
+    const osc=o.createOscillator(); osc.type='sine'; osc.frequency.value=f;
+    const g=o.createGain(); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.032-i*0.005,t+0.007); g.gain.exponentialRampToValueAtTime(0.0001,t+0.50-i*0.05);
+    osc.connect(g); g.connect(dest); osc.start(t); osc.stop(t+0.58);
+  });
+  sm.start(t); sm.stop(t+0.20);
+  ss.start(t); ss.stop(t+0.22);
+}
+
+// L4 · SHOCKWAVE — sub pulse radiates, decays through ground
+function landL4(o, dest, buf) {
+  const t = o.currentTime;
+  // Primary impact sub
+  const o1=o.createOscillator(); o1.type='sine'; o1.frequency.setValueAtTime(48,t); o1.frequency.exponentialRampToValueAtTime(24,t+0.25);
+  const og1=o.createGain(); og1.gain.setValueAtTime(0,t); og1.gain.linearRampToValueAtTime(0.25,t+0.005); og1.gain.exponentialRampToValueAtTime(0.0001,t+0.30);
+  o1.connect(og1); og1.connect(dest);
+  // Shockwave ring — slightly higher, delayed, decays slower
+  const o2=o.createOscillator(); o2.type='sine'; o2.frequency.setValueAtTime(72,t+0.04); o2.frequency.exponentialRampToValueAtTime(36,t+0.35);
+  const og2=o.createGain(); og2.gain.setValueAtTime(0,t+0.04); og2.gain.linearRampToValueAtTime(0.12,t+0.048); og2.gain.exponentialRampToValueAtTime(0.0001,t+0.48);
+  o2.connect(og2); og2.connect(dest);
+  // Third harmonic ripple — even more delayed
+  const o3=o.createOscillator(); o3.type='sine'; o3.frequency.setValueAtTime(96,t+0.10); o3.frequency.exponentialRampToValueAtTime(48,t+0.50);
+  const og3=o.createGain(); og3.gain.setValueAtTime(0,t+0.10); og3.gain.linearRampToValueAtTime(0.06,t+0.112); og3.gain.exponentialRampToValueAtTime(0.0001,t+0.58);
+  o3.connect(og3); og3.connect(dest);
+  // Ground noise rumble
+  const sn=o.createBufferSource(); sn.buffer=buf; sn.loop=true;
+  const lpn=o.createBiquadFilter(); lpn.type='lowpass'; lpn.frequency.value=140;
+  const gn=o.createGain(); gn.gain.setValueAtTime(0,t); gn.gain.linearRampToValueAtTime(0.10,t+0.008); gn.gain.exponentialRampToValueAtTime(0.0001,t+0.32);
+  sn.connect(lpn); lpn.connect(gn); gn.connect(dest);
+  o1.start(t); o1.stop(t+0.34); o2.start(t+0.04); o2.stop(t+0.52); o3.start(t+0.10); o3.stop(t+0.62);
+  sn.start(t); sn.stop(t+0.36);
+}
+
+// L5 · CRATER HIT — sharp crack then delayed deep boom
+function landL5(o, dest, buf) {
+  const t = o.currentTime;
+  // Initial sharp crack — high-mid, very brief
+  const sc=o.createBufferSource(); sc.buffer=buf; sc.loop=true;
+  const bpc=o.createBiquadFilter(); bpc.type='bandpass'; bpc.Q.value=1.4; bpc.frequency.value=800;
+  const gc=o.createGain(); gc.gain.setValueAtTime(0,t); gc.gain.linearRampToValueAtTime(0.10,t+0.004); gc.gain.exponentialRampToValueAtTime(0.0001,t+0.06);
+  sc.connect(bpc); bpc.connect(gc); gc.connect(dest);
+  // Crack resonance mid
+  const sm=o.createBufferSource(); sm.buffer=buf; sm.loop=true;
+  const bpm=o.createBiquadFilter(); bpm.type='bandpass'; bpm.Q.value=1.8; bpm.frequency.value=320;
+  const gm=o.createGain(); gm.gain.setValueAtTime(0,t); gm.gain.linearRampToValueAtTime(0.08,t+0.006); gm.gain.exponentialRampToValueAtTime(0.0001,t+0.10);
+  sm.connect(bpm); bpm.connect(gm); gm.connect(dest);
+  // Delayed deep boom — 80ms after
+  const ob=o.createOscillator(); ob.type='sine'; ob.frequency.setValueAtTime(44,t+0.08); ob.frequency.exponentialRampToValueAtTime(22,t+0.38);
+  const ogb=o.createGain(); ogb.gain.setValueAtTime(0,t+0.08); ogb.gain.linearRampToValueAtTime(0.22,t+0.086); ogb.gain.exponentialRampToValueAtTime(0.0001,t+0.44);
+  ob.connect(ogb); ogb.connect(dest);
+  // Boom noise body
+  const sb=o.createBufferSource(); sb.buffer=buf; sb.loop=true;
+  const lpb=o.createBiquadFilter(); lpb.type='lowpass'; lpb.frequency.value=110;
+  const gb=o.createGain(); gb.gain.setValueAtTime(0,t+0.08); gb.gain.linearRampToValueAtTime(0.14,t+0.086); gb.gain.exponentialRampToValueAtTime(0.0001,t+0.36);
+  sb.connect(lpb); lpb.connect(gb); gb.connect(dest);
+  // Debris noise — mid noise settling after boom
+  const sd=o.createBufferSource(); sd.buffer=buf; sd.loop=true;
+  const bpd=o.createBiquadFilter(); bpd.type='bandpass'; bpd.Q.value=0.8;
+  bpd.frequency.setValueAtTime(400,t+0.12); bpd.frequency.exponentialRampToValueAtTime(180,t+0.60);
+  const gd=o.createGain(); gd.gain.setValueAtTime(0,t+0.12); gd.gain.linearRampToValueAtTime(0.035,t+0.16); gd.gain.linearRampToValueAtTime(0,t+0.64);
+  sd.connect(bpd); bpd.connect(gd); gd.connect(dest);
+  sc.start(t); sc.stop(t+0.08);
+  sm.start(t); sm.stop(t+0.14);
+  ob.start(t+0.08); ob.stop(t+0.50);
+  sb.start(t+0.08); sb.stop(t+0.42);
+  sd.start(t+0.12); sd.stop(t+0.68);
+}
+
+// L6 · DEAD WEIGHT — pure massive low thud, no ring, just weight
+function landL6(o, dest, buf) {
+  const t = o.currentTime;
+  // Huge sub sine — no pitch bounce, just descends
+  const o1=o.createOscillator(); o1.type='sine'; o1.frequency.setValueAtTime(40,t); o1.frequency.exponentialRampToValueAtTime(18,t+0.45);
+  const og1=o.createGain(); og1.gain.setValueAtTime(0,t); og1.gain.linearRampToValueAtTime(0.30,t+0.007); og1.gain.exponentialRampToValueAtTime(0.0001,t+0.50);
+  o1.connect(og1); og1.connect(dest);
+  // Second sub sine slightly higher — adds mass
+  const o2=o.createOscillator(); o2.type='sine'; o2.frequency.setValueAtTime(62,t); o2.frequency.exponentialRampToValueAtTime(30,t+0.38);
+  const og2=o.createGain(); og2.gain.setValueAtTime(0,t); og2.gain.linearRampToValueAtTime(0.16,t+0.007); og2.gain.exponentialRampToValueAtTime(0.0001,t+0.42);
+  o2.connect(og2); og2.connect(dest);
+  // Low noise thud reinforcement
+  const sn=o.createBufferSource(); sn.buffer=buf; sn.loop=true;
+  const lpn=o.createBiquadFilter(); lpn.type='lowpass'; lpn.frequency.value=95;
+  const gn=o.createGain(); gn.gain.setValueAtTime(0,t); gn.gain.linearRampToValueAtTime(0.18,t+0.007); gn.gain.exponentialRampToValueAtTime(0.0001,t+0.30);
+  sn.connect(lpn); lpn.connect(gn); gn.connect(dest);
+  // Very slight floor noise — not a crack, just air displacement
+  const sf=o.createBufferSource(); sf.buffer=buf; sf.loop=true;
+  const bpf=o.createBiquadFilter(); bpf.type='bandpass'; bpf.Q.value=0.7;
+  bpf.frequency.setValueAtTime(200,t+0.01); bpf.frequency.exponentialRampToValueAtTime(120,t+0.40);
+  const gf=o.createGain(); gf.gain.setValueAtTime(0,t+0.01); gf.gain.linearRampToValueAtTime(0.04,t+0.02); gf.gain.linearRampToValueAtTime(0,t+0.45);
+  sf.connect(bpf); bpf.connect(gf); gf.connect(dest);
+  o1.start(t); o1.stop(t+0.55); o2.start(t); o2.stop(t+0.48);
+  sn.start(t); sn.stop(t+0.34); sf.start(t+0.01); sf.stop(t+0.50);
+}
+
+const JUMPS   = [jumpJ1,jumpJ2,jumpJ3,jumpJ4,jumpJ5,jumpJ6];
+const LANDS   = [landL1,landL2,landL3,landL4,landL5,landL6];
+const J_COLS  = ['#6cf','#8af','#adf','#7be','#5cd','#4bc'];
+const J_GLOW  = ['#66ccff','#88aaff','#aaddff','#77bbee','#55ccdd','#44bbcc'];
+const L_COLS  = ['#fa8','#f90','#fb6','#e80','#d70','#c60'];
+const L_GLOW  = ['#ffaa88','#ff9900','#ffbb66','#ee8800','#dd7700','#cc6600'];
+const J_BODY  = ['#44ddff','#66aaff','#88ccff','#55bbee','#33ccdd','#22bbcc'];
+
+let curJ=0, curL=0;
+
+function selJ(i){
+  curJ=i;
+  document.querySelectorAll('[id^="jb"]').forEach((b,j)=>b.classList.toggle('sel',j===i));
+  document.querySelectorAll('[id^="jd"]').forEach((b,j)=>b.classList.toggle('adl',j===i));
+}
+function selL(i){
+  curL=i;
+  document.querySelectorAll('[id^="lb"]').forEach((b,j)=>b.classList.toggle('sel',j===i));
+  document.querySelectorAll('[id^="ld"]').forEach((b,j)=>b.classList.toggle('adl',j===i));
+}
+
+function playJump(){ if(!ctx) return; JUMPS[curJ](ctx,ctx.destination,noiseBuf); }
+function playLand(){ if(!ctx) return; LANDS[curL](ctx,ctx.destination,noiseBuf); }
+
+function dlJ(idx){
+  const sr=44100,dur=0.85,off=new OfflineAudioContext(1,Math.floor(sr*dur),sr);
+  const bLen=Math.floor(sr*0.5),b=off.createBuffer(1,bLen,sr),d=b.getChannelData(0);
+  for(let i=0;i<bLen;i++) d[i]=Math.random()*2-1;
+  JUMPS[idx](off,off.destination,b);
+  off.startRendering().then(r=>{
+    const names=['J1-heavy-lift','J2-stone-launch','J3-iron-spring','J4-pressure-burst','J5-rumble-leap','J6-titan-push'];
+    const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([encodeWAV(r)],{type:'audio/wav'}));
+    a.download=`jump-${names[idx]}.wav`; a.click();
+  });
+}
+function dlL(idx){
+  const sr=44100,dur=0.85,off=new OfflineAudioContext(1,Math.floor(sr*dur),sr);
+  const bLen=Math.floor(sr*0.5),b=off.createBuffer(1,bLen,sr),d=b.getChannelData(0);
+  for(let i=0;i<bLen;i++) d[i]=Math.random()*2-1;
+  LANDS[idx](off,off.destination,b);
+  off.startRendering().then(r=>{
+    const names=['L1-earth-slam','L2-stone-crack','L3-iron-drop','L4-shockwave','L5-crater-hit','L6-dead-weight'];
+    const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([encodeWAV(r)],{type:'audio/wav'}));
+    a.download=`land-${names[idx]}.wav`; a.click();
+  });
+}
+function encodeWAV(ab){
+  const sr=ab.sampleRate,s=ab.getChannelData(0),n=s.length,ds=n*2;
+  const buf=new ArrayBuffer(44+ds),v=new DataView(buf);
+  const ws=(o,x)=>{for(let i=0;i<x.length;i++)v.setUint8(o+i,x.charCodeAt(i));};
+  ws(0,'RIFF');v.setUint32(4,36+ds,true);ws(8,'WAVE');ws(12,'fmt ');
+  v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);
+  v.setUint16(34,16,true);ws(36,'data');v.setUint32(40,ds,true);
+  let off=44;for(let i=0;i<n;i++){const x=Math.max(-1,Math.min(1,s[i]));v.setInt16(off,x<0?x*0x8000:x*0x7FFF,true);off+=2;}
+  return buf;
+}
+
+selJ(0); selL(0);
+
+// ═══════════════════════════════════════════
+//  GAME
+// ═══════════════════════════════════════════
+const canvas=document.getElementById('game-canvas');
+const c=canvas.getContext('2d');
+const W=canvas.width,H=canvas.height,FLOOR_Y=H-44;
+
+const indSlide=document.getElementById('ind-slide');
+const indJump=document.getElementById('ind-jump');
+const indLand=document.getElementById('ind-land');
+
+const platforms=[
+  {x:0,y:FLOOR_Y,w:W,h:44},
+  {x:100,y:170,w:140,h:12},
+  {x:310,y:132,w:130,h:12},
+  {x:520,y:170,w:120,h:12},
+  {x:38,y:108,w:95,h:12},
+  {x:620,y:98,w:95,h:12},
+];
+
+// Heavy player — wider, shorter, chunkier
+const player={
+  x:60,y:FLOOR_Y-36,w:32,h:36,
+  vx:0,vy:0,onGround:false,wasOnGround:false,facing:1,
+  parts:[],jparts:[],lparts:[],
+  landFlash:0,jumpFlash:0,squash:0,stretch:0
+};
+
+const keys={};
+let jUsed=false,frame=0,jFlash=0,lFlash=0;
+document.addEventListener('keydown',e=>{if(!keys[e.code]){keys[e.code]=true;initAudio();}});
+document.addEventListener('keyup',e=>{keys[e.code]=false;if(['Space','ArrowUp','KeyW'].includes(e.code))jUsed=false;});
+
+function onPlat(p){return player.vy>=0&&player.x+player.w>p.x&&player.x<p.x+p.w&&player.y+player.h>=p.y&&player.y+player.h<=p.y+p.h+8;}
+
+function update(){
+  frame++;
+  if(jFlash>0)jFlash--; if(lFlash>0)lFlash--;
+  if(player.squash>0)player.squash-=0.06; if(player.squash<0)player.squash=0;
+  if(player.stretch>0)player.stretch-=0.05; if(player.stretch<0)player.stretch=0;
+
+  const L=keys['ArrowLeft']||keys['KeyA'],R=keys['ArrowRight']||keys['KeyD'];
+  const J=keys['Space']||keys['ArrowUp']||keys['KeyW'];
+
+  if(L){player.vx-=0.9;player.facing=-1;} if(R){player.vx+=0.9;player.facing=1;}
+  player.vx*=0.74; if(Math.abs(player.vx)>2.8)player.vx=2.8*Math.sign(player.vx);
+  player.vy+=0.50; // heavier gravity
+  player.x+=player.vx; player.y+=player.vy;
+  if(player.x<0)player.x=0; if(player.x+player.w>W)player.x=W-player.w;
+
+  player.wasOnGround=player.onGround;
+  player.onGround=false;
+  for(const p of platforms){
+    if(onPlat(p)){
+      player.y=p.y-player.h; player.vy=0; player.onGround=true;
+    }
+  }
+
+  // Landing trigger
+  if(player.onGround&&!player.wasOnGround){
+    playLand(); lFlash=28;
+    player.squash=1.0;
+    // Shockwave particles
+    for(let i=0;i<16;i++) player.lparts.push({
+      x:player.x+player.w/2, y:player.y+player.h,
+      vx:(Math.random()-0.5)*7, vy:-(Math.random()*2+0.5),
+      life:1, r:Math.random()*5+3
+    });
+  }
+
+  // Jump trigger
+  if(J&&player.onGround&&!jUsed){
+    player.vy=-8.8; player.onGround=false; jUsed=true; jFlash=22;
+    player.stretch=1.0; playJump();
+    for(let i=0;i<12;i++) player.jparts.push({
+      x:player.x+player.w/2, y:player.y+player.h,
+      vx:(Math.random()-0.5)*4, vy:-(Math.random()*2.5+0.5),
+      life:1, r:Math.random()*4+2
+    });
+  }
+
+  if(player.y>H+60){player.y=-50;player.vy=0;}
+
+  const mv=player.onGround&&Math.abs(player.vx)>0.5;
+  setSlide(mv);
+  if(mv&&frame%3===0) player.parts.push({x:player.x+(player.facing===1?2:player.w-2),y:player.y+player.h-1,vx:-player.facing*(Math.random()*1.4+0.4),vy:-Math.random()*0.8,life:1,r:Math.random()*3+1.5});
+
+  player.parts=player.parts.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.04;p.life-=0.065;return p.life>0;});
+  player.jparts=player.jparts.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.10;p.life-=0.055;return p.life>0;});
+  player.lparts=player.lparts.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.18;p.life-=0.06;return p.life>0;});
+
+  const jlb=`J${curJ+1}`;
+  const llb=`L${curL+1}`;
+  indSlide.className='hud-item'+(mv?' active':''); indSlide.textContent=mv?'◆ SLIDE':'▷ SLIDE';
+  indJump.className='hud-item'+(jFlash>0?' j-active':'');
+  indJump.style.color=jFlash>0?J_GLOW[curJ]:'';
+  indJump.textContent=jFlash>0?`◆ ${jlb}`:`▷ ${jlb}`;
+  indLand.className='hud-item'+(lFlash>0?' l-active':'');
+  indLand.style.color=lFlash>0?L_GLOW[curL]:'';
+  indLand.textContent=lFlash>0?`◆ ${llb}`:`▷ ${llb}`;
+}
+
+const bgT=[];
+for(let tx=0;tx<W;tx+=16)for(let ty=0;ty<FLOOR_Y;ty+=16)if(Math.random()<0.04)bgT.push({x:tx,y:ty,b:Math.random()*0.05+0.015});
+const stars=Array.from({length:55},()=>({x:Math.floor(Math.random()*(W/2))*2,y:Math.floor(Math.random()*(FLOOR_Y*0.7/2))*2,on:Math.random()>0.5}));
+
+function drawBG(){
+  const sky=c.createLinearGradient(0,0,0,FLOOR_Y); sky.addColorStop(0,'#02020a'); sky.addColorStop(1,'#070c1a');
+  c.fillStyle=sky; c.fillRect(0,0,W,H);
+  if(frame%40===0)stars.forEach(s=>{if(Math.random()<0.15)s.on=!s.on;});
+  c.fillStyle='#a8c8ee'; stars.forEach(s=>{if(s.on)c.fillRect(s.x,s.y,2,2);});
+  bgT.forEach(t=>{c.fillStyle=`rgba(60,120,200,${t.b})`;c.fillRect(t.x,t.y,16,16);});
+  c.fillStyle='#060a12';
+  [{x:0,w:56,h:68},{x:52,w:36,h:48},{x:85,w:46,h:88},{x:660,w:46,h:78},{x:700,w:36,h:54},{x:730,w:30,h:66}].forEach(b=>{
+    c.fillRect(b.x,FLOOR_Y-b.h,b.w,b.h);
+    c.fillStyle='#ffe88024';
+    for(let wy=FLOOR_Y-b.h+8;wy<FLOOR_Y-8;wy+=14)for(let wx=b.x+6;wx<b.x+b.w-6;wx+=12)if(Math.sin(wx*3.1+wy*1.7)>0.2)c.fillRect(wx,wy,5,7);
+    c.fillStyle='#060a12';
+  });
+}
+function drawPlatforms(){
+  platforms.forEach((p,i)=>{
+    c.fillStyle=i===0?'#181e38':'#1a2c50'; c.fillRect(p.x,p.y,p.w,p.h);
+    c.fillStyle=i===0?'#283060':'#305880'; c.fillRect(p.x,p.y,p.w,3);
+    if(i>0){c.fillStyle='#3e68a0';c.fillRect(p.x,p.y,4,4);c.fillRect(p.x+p.w-4,p.y,4,4);}
+    if(i===0){c.fillStyle='rgba(255,255,255,0.018)';for(let gx=0;gx<W;gx+=16)c.fillRect(gx,p.y,1,p.h);for(let gy=p.y;gy<H;gy+=16)c.fillRect(0,gy,W,1);}
+  });
+}
+function drawParticles(){
+  // landing shockwave
+  player.lparts.forEach(p=>{
+    c.globalAlpha=p.life*0.7; c.fillStyle=`hsl(30,80%,${50+p.life*25}%)`;
+    const r=Math.max(2,Math.round(p.r*p.life/2))*2;
+    c.fillRect(Math.round(p.x/2)*2,Math.round(p.y/2)*2,r,r);
+  });
+  // jump dust
+  player.jparts.forEach(p=>{
+    c.globalAlpha=p.life*0.65; c.fillStyle=`hsl(200,60%,${55+p.life*20}%)`;
+    const r=Math.max(1,Math.round(p.r*p.life/2))*2;
+    c.fillRect(Math.round(p.x/2)*2,Math.round(p.y/2)*2,r,r);
+  });
+  // slide dust
+  player.parts.forEach(p=>{
+    c.globalAlpha=p.life*0.5; c.fillStyle=`hsl(205,52%,${52+p.life*20}%)`;
+    const r=Math.max(1,Math.round(p.r*p.life/2))*2;
+    c.fillRect(Math.round(p.x/2)*2,Math.round(p.y/2)*2,r,r);
+  });
+  c.globalAlpha=1;
+}
+function drawPlayer(){
+  const {x,y,w,h,vx,vy,onGround,facing,squash,stretch}=player;
+  const isMoving=onGround&&Math.abs(vx)>0.5;
+  const isJumping=!onGround&&vy<0;
+  const isFalling=!onGround&&vy>0;
+
+  // Squash & stretch for heavy feel
+  const sqY=onGround?1+squash*0.28:1; // squash on land = wider shorter
+  const sqX=onGround?1-squash*0.18:1;
+  const stY=isJumping?1-stretch*0.22:1; // stretch on jump = taller thinner
+  const stX=isJumping?1+stretch*0.15:1;
+  const scaleX=sqX*stX, scaleY=sqY*stY;
+
+  const rw=Math.round(w*scaleX), rh=Math.round(h*scaleY);
+  const rx=Math.round(x+(w-rw)/2), ry=Math.round(y+(h-rh));
+
+  // Shadow — grows on landing
+  const shadW=w*(1+squash*0.5);
+  c.fillStyle=`rgba(0,0,0,${0.18+squash*0.12})`;
+  c.beginPath(); c.ellipse(x+w/2,y+h+2,shadW*0.6,5+squash*4,0,0,Math.PI*2); c.fill();
+
+  // Glow
+  if(lFlash>0){c.shadowColor=L_GLOW[curL];c.shadowBlur=16+squash*12;}
+  else if(jFlash>0){c.shadowColor=J_GLOW[curJ];c.shadowBlur=12;}
+  else if(isMoving){c.shadowColor='#2ea8f8';c.shadowBlur=11+3*Math.sin(frame*0.28);}
+  else if(!onGround){c.shadowColor='#55d5f8';c.shadowBlur=8;}
+
+  // Body — heavy rect, no rounding
+  c.fillStyle=lFlash>0?`hsl(30,80%,${48+squash*15}%)`:isMoving?'#3cc5f5':!onGround?'#4ed5f8':'#2c78c8';
+  c.fillRect(rx,ry,rw,rh);
+  c.fillStyle='rgba(0,0,40,0.26)'; c.fillRect(rx,ry+Math.floor(rh*0.55),rw,Math.ceil(rh*0.45));
+  c.fillStyle='rgba(255,255,255,0.16)'; c.fillRect(rx+2,ry+2,rw-4,4);
+  c.fillStyle='rgba(0,0,0,0.28)'; c.fillRect(rx,ry,3,rh); // left edge
+  c.shadowBlur=0;
+
+  // Eye
+  const ex=facing===1?rx+rw-9:rx+5;
+  c.fillStyle='#fff'; c.fillRect(ex,ry+8,7,9);
+  c.fillStyle=lFlash>0?L_GLOW[curL]:jFlash>0?J_GLOW[curJ]:isMoving?'#00eeff':'#001840';
+  c.fillRect(ex+facing+(facing===1?1:1),ry+10,3,5);
+  c.shadowBlur=0;
+}
+
+function draw(){c.clearRect(0,0,W,H);drawBG();drawPlatforms();drawParticles();drawPlayer();}
+function loop(){update();draw();requestAnimationFrame(loop);}
+loop();
+</script>
+</body>
+</html>

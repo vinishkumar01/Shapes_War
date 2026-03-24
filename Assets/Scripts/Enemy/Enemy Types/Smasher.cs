@@ -62,8 +62,13 @@ public class Smasher : Enemy
 
     private int _smasherDamageGives { get; set; }
 
-    [Header("Chaser Visuals")]
+    [Header("Smasher Visuals")]
     private SquashAndStretch _smasherSquashAndStretch;
+
+    [Header("SFX")]
+    [SerializeField] private AudioClip _smasherJumpEffect;
+    [SerializeField] private AudioClip _smasherLandEffect;
+    [SerializeField] private AudioClip _smasherSlamEffect;
 
     public override void EnemyOnEnable()
     {
@@ -179,10 +184,21 @@ public class Smasher : Enemy
             {
                 Dust.Stop();
             }
+
+            //Sound effect for movement
+            if(!_audioSource.isPlaying)
+            {
+                _audioSource.Play();
+            }
         }
         else
         {
             Dust.Stop();
+
+            if (_audioSource.isPlaying)
+            {
+                _audioSource.Stop();
+            }
         }
 
         if (isPlayerNearToPorformSlam && !isJumping)
@@ -298,6 +314,9 @@ public class Smasher : Enemy
         //Play the dust particle when the smasher jumps
         Dust.Play();
 
+        //Sound Effect for jump
+        SFXManager._instance.playSFX(_smasherJumpEffect, gameObject.transform.position, 1f, false);
+
         yield return new WaitForSeconds(SecondsToReachApex);
 
         while (RB.velocity.y > 0) // wailt until vertical velocity is downward or zero
@@ -324,6 +343,9 @@ public class Smasher : Enemy
         //Animation Triggered here
         _animator.SetTrigger("Jump_Attack");
 
+        //Sound Effect for landing
+        SFXManager._instance.playSFX(_smasherLandEffect, gameObject.transform.position, 1f, true, false);
+
         RB.gravityScale = acentGravity;
 
         yield return new WaitForSeconds(pauseBeforeNextJump);
@@ -341,6 +363,9 @@ public class Smasher : Enemy
         Dust.Stop();
 
         _animator.ResetTrigger("Slam_Attack");
+
+        //Slam Sound Effect
+        SFXManager._instance.playSFX(_smasherSlamEffect, gameObject.transform.position, 1f, true , false);
         
 
         //Calculate bottom right pivot from spriteRenderer bounds

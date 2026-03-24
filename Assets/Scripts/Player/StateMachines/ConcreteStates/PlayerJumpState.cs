@@ -31,6 +31,8 @@ public class PlayerJumpState : PlayerState
         _jumpWasExecuted = false;
 
         _groundExitLockTime = 0.1f;
+
+        SFXManager._instance.playSFX(_player._jumpSoundClip, _player.transform.position, 1f,false, false);
     }
 
     public override void ExitState()
@@ -97,6 +99,9 @@ public class PlayerJumpState : PlayerState
             _player._jumpTimeCounter = _playerDataSO.jumpTime;
 
             _player.RB.velocity = new Vector2(_player.RB.velocity.x, _playerDataSO.doubleJumpForce);
+
+            //we are calling the Jump SFX here too so that it can trigger when in the mid air
+            SFXManager._instance.playSFX(_player._jumpSoundClip, _player.transform.position, 1f, false , false);
 
             //Flag hasDoubleJumped
             _hasDoubleJumped = true;

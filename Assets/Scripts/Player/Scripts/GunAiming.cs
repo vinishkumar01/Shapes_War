@@ -1,13 +1,6 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Experimental.AI;
-using UnityEngine.UI;
-using static UnityEngine.UIElements.UxmlAttributeDescription;
 
 public class GunAiming : MonoBehaviour , IUpdateObserver
 {
@@ -114,6 +107,11 @@ public class GunAiming : MonoBehaviour , IUpdateObserver
 
     public void GunAim_with_CursorUI_To_World_Conversion()
     {
+        if (UserInputs.instance == null || UserInputs.instance._cursorTransform == null)
+            return;
+
+        if (Camera.main == null)
+            return;
 
         //Converting cursor UI position to screen point
         Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(Camera.main, UserInputs.instance._cursorTransform.position);

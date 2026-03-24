@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dash Sound – 6 New Variations</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #06060d;
+    display: flex; flex-direction: column; align-items: center;
+    min-height: 100vh; font-family: 'Courier New', monospace;
+    color: #aef; gap: 8px; user-select: none; padding: 12px 0;
+  }
+  h1 { font-size: 0.75rem; letter-spacing: 6px; color: #5af; text-transform: uppercase; }
+  #game-canvas { border: 2px solid #181e30; display: block; box-shadow: 0 0 44px #06101e88; }
+
+  #hud { display: flex; gap: 24px; font-size: 0.58rem; letter-spacing: 3px; }
+  .hud-item { color: #22303e; transition: color 0.08s; }
+  .hud-item.active { color: #4df; text-shadow: 0 0 10px #4df8; }
+  .hud-item.dash-active { text-shadow: 0 0 12px currentColor; }
+
+  #cdwrap { width: 680px; height: 3px; background: #0c1218; border-radius: 2px; overflow: hidden; }
+  #cdbar  { height: 100%; width: 100%; transform-origin: left; transition: background 0.2s; }
+
+  /* Panel */
+  #vpanel {
+    width: 680px; background: #09090f;
+    border: 1px solid #151e2e; border-radius: 8px;
+    padding: 11px 13px; display: flex; flex-direction: column; gap: 6px;
+  }
+  .cat-label {
+    font-size: 0.5rem; letter-spacing: 4px; text-transform: uppercase;
+    padding: 3px 0 1px; border-top: 1px solid #151e2e; margin-top: 2px;
+  }
+  .cat-label:first-child { border-top: none; margin-top: 0; }
+
+  .vrow { display: flex; align-items: stretch; gap: 8px; }
+
+  .vbtn {
+    flex: 1; background: #0c1020; border: 1.5px solid #18263a;
+    border-radius: 6px; color: #42647a;
+    font-family: 'Courier New', monospace; font-size: 0.56rem;
+    letter-spacing: 1.2px; padding: 8px 10px;
+    cursor: pointer; transition: all 0.12s; text-align: left; line-height: 1.5;
+  }
+  .vbtn:hover { background: #101828; border-color: #304e68; color: #70a0c0; }
+  .vbtn.sel { background: #0f1a28; border-color: var(--col); box-shadow: 0 0 10px var(--col-d); }
+  .vbtn .vname { font-size: 0.64rem; font-weight: bold; display: block; margin-bottom: 2px; }
+  .vbtn .vdesc { font-size: 0.5rem; color: #2e4050; letter-spacing: 0.8px; display: block; line-height: 1.5; }
+  .vbtn.sel .vdesc { color: #4a6070; }
+
+  .dlbtn {
+    background: #0a0e16; border: 1px solid #18222e;
+    border-radius: 5px; padding: 0 11px;
+    font-family: 'Courier New', monospace; font-size: 0.52rem;
+    letter-spacing: 1px; cursor: pointer; transition: all 0.12s;
+    white-space: nowrap; color: #344050;
+    display: flex; align-items: center;
+  }
+  .dlbtn:hover { color: #90b8d0; border-color: #406080; background: #0f1820; }
+  .dlbtn.adl { color: var(--col); border-color: var(--col); background: #0a1018; box-shadow: 0 0 6px var(--col-d); }
+
+  #instructions { font-size: 0.52rem; color: #20283a; letter-spacing: 2px; }
+</style>
+</head>
+<body>
+<h1>▸ Dash Sound — 6 New Variations</h1>
+<canvas id="game-canvas" width="680" height="252"></canvas>
+
+<div id="hud">
+  <span class="hud-item" id="ind-slide">▷ SLIDE</span>
+  <span class="hud-item" id="ind-jump">▷ JUMP</span>
+  <span class="hud-item" id="ind-dash">▷ DASH</span>
+</div>
+<div id="cdwrap"><div id="cdbar"></div></div>
+
+<div id="vpanel">
+
+  <!-- MECHANICAL -->
+  <div class="cat-label" style="color:#e09040">⚙ Mechanical / Hydraulic</div>
+  <div class="vrow">
+    <button class="vbtn sel" id="vb0" style="--col:#e09040;--col-d:#e0904033" onclick="sel(0)">
+      <span class="vname" style="color:#e09040">M1 · PISTON SLAM</span>
+      <span class="vdesc">Heavy compressed-air hiss + hard metal clank on release — industrial hydraulic punch</span>
+    </button>
+    <button class="dlbtn adl" id="db0" style="--col:#e09040;--col-d:#e0904033" onclick="dl(0)">⬇ M1</button>
+
+    <button class="vbtn" id="vb1" style="--col:#c0b060;--col-d:#c0b06033" onclick="sel(1)">
+      <span class="vname" style="color:#c0b060">M2 · GEAR BURST</span>
+      <span class="vdesc">Ratcheting mechanical stutter then a spring-loaded launch — cogs spinning into overdrive</span>
+    </button>
+    <button class="dlbtn" id="db1" style="--col:#c0b060;--col-d:#c0b06033" onclick="dl(1)">⬇ M2</button>
+  </div>
+
+  <!-- MAGIC -->
+  <div class="cat-label" style="color:#b060ff">✦ Magic / Arcane</div>
+  <div class="vrow">
+    <button class="vbtn" id="vb2" style="--col:#b060ff;--col-d:#b060ff33" onclick="sel(2)">
+      <span class="vname" style="color:#b060ff">A1 · ARCANE SURGE</span>
+      <span class="vdesc">Crystalline harmonic chime builds then erupts — magical energy channelled and released</span>
+    </button>
+    <button class="dlbtn" id="db2" style="--col:#b060ff;--col-d:#b060ff33" onclick="dl(2)">⬇ A1</button>
+
+    <button class="vbtn" id="vb3" style="--col:#60c0ff;--col-d:#60c0ff33" onclick="sel(3)">
+      <span class="vname" style="color:#60c0ff">A2 · ICE BLINK</span>
+      <span class="vdesc">Sharp crystalline freeze crack + cold high shimmer — instant teleport through frost</span>
+    </button>
+    <button class="dlbtn" id="db3" style="--col:#60c0ff;--col-d:#60c0ff33" onclick="dl(3)">⬇ A2</button>
+  </div>
+
+  <!-- WIND -->
+  <div class="cat-label" style="color:#60e0a0">❧ Wind / Nature</div>
+  <div class="vrow">
+    <button class="vbtn" id="vb4" style="--col:#60e0a0;--col-d:#60e0a033" onclick="sel(4)">
+      <span class="vname" style="color:#60e0a0">W1 · STORM GUST</span>
+      <span class="vdesc">Low atmospheric rumble then a sharp gale burst — like sprinting into a wall of wind</span>
+    </button>
+    <button class="dlbtn" id="db4" style="--col:#60e0a0;--col-d:#60e0a033" onclick="dl(4)">⬇ W1</button>
+  </div>
+
+  <!-- GLITCH -->
+  <div class="cat-label" style="color:#ff4488">⌗ Glitch / Digital</div>
+  <div class="vrow">
+    <button class="vbtn" id="vb5" style="--col:#ff4488;--col-d:#ff448833" onclick="sel(5)">
+      <span class="vname" style="color:#ff4488">G1 · DATA CORRUPT</span>
+      <span class="vdesc">Bitcrushed stutter glitch + hard digital dropout — corrupted frame skip in reality</span>
+    </button>
+    <button class="dlbtn" id="db5" style="--col:#ff4488;--col-d:#ff448833" onclick="dl(5)">⬇ G1</button>
+  </div>
+
+</div>
+<div id="instructions">[ ← → / A D ] MOVE &nbsp;·&nbsp; [ SPACE / ↑ ] JUMP &nbsp;·&nbsp; [ SHIFT ] DASH</div>
+
+<script>
+// ═══════════════════════════════════════════
+//  AUDIO ENGINE
+// ═══════════════════════════════════════════
+const AC = window.AudioContext || window.webkitAudioContext;
+let ctx = null, noiseBuf = null;
+
+function initAudio() {
+  if (ctx) return;
+  ctx = new AC();
+  const len = ctx.sampleRate * 0.5;
+  noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
+  const d = noiseBuf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  buildSlide();
+}
+
+// ── Slide ─────────────────────────────────
+let slideGain=null, slideSrc=null, slideActive=false;
+function buildSlide(){
+  slideSrc=ctx.createBufferSource(); slideSrc.buffer=noiseBuf; slideSrc.loop=true;
+  const bpf=ctx.createBiquadFilter(); bpf.type='bandpass'; bpf.frequency.value=320; bpf.Q.value=1.4;
+  const shelf=ctx.createBiquadFilter(); shelf.type='lowshelf'; shelf.frequency.value=200; shelf.gain.value=6;
+  slideGain=ctx.createGain(); slideGain.gain.value=0;
+  slideSrc.connect(bpf); bpf.connect(shelf); shelf.connect(slideGain); slideGain.connect(ctx.destination);
+  slideSrc.start();
+}
+function setSlide(on){
+  if(!ctx||on===slideActive) return;
+  slideActive=on;
+  const now=ctx.currentTime;
+  slideGain.gain.cancelScheduledValues(now);
+  slideGain.gain.setValueAtTime(slideGain.gain.value,now);
+  slideGain.gain.linearRampToValueAtTime(on?0.07:0,now+(on?0.08:0.25));
+}
+
+// ── Jump ──────────────────────────────────
+function playJump(){
+  if(!ctx) return;
+  const t=ctx.currentTime;
+  const n=ctx.createBufferSource(); n.buffer=noiseBuf; n.loop=true;
+  const bpf=ctx.createBiquadFilter(); bpf.type='bandpass'; bpf.Q.value=1.6;
+  bpf.frequency.setValueAtTime(260,t); bpf.frequency.exponentialRampToValueAtTime(900,t+0.18); bpf.frequency.exponentialRampToValueAtTime(400,t+0.45);
+  const shelf=ctx.createBiquadFilter(); shelf.type='lowshelf'; shelf.frequency.value=200; shelf.gain.value=5;
+  const ng=ctx.createGain(); ng.gain.setValueAtTime(0,t); ng.gain.linearRampToValueAtTime(0.022,t+0.05); ng.gain.linearRampToValueAtTime(0.012,t+0.18); ng.gain.linearRampToValueAtTime(0,t+0.50);
+  n.connect(bpf); bpf.connect(shelf); shelf.connect(ng); ng.connect(ctx.destination);
+  const osc=ctx.createOscillator(); osc.type='square';
+  osc.frequency.setValueAtTime(180,t); osc.frequency.exponentialRampToValueAtTime(520,t+0.12); osc.frequency.exponentialRampToValueAtTime(300,t+0.28);
+  const hpf=ctx.createBiquadFilter(); hpf.type='highpass'; hpf.frequency.value=200;
+  const lpf=ctx.createBiquadFilter(); lpf.type='lowpass'; lpf.frequency.value=800;
+  const og=ctx.createGain(); og.gain.setValueAtTime(0,t); og.gain.linearRampToValueAtTime(0.012,t+0.04); og.gain.linearRampToValueAtTime(0.006,t+0.14); og.gain.linearRampToValueAtTime(0,t+0.30);
+  osc.connect(hpf); hpf.connect(lpf); lpf.connect(og); og.connect(ctx.destination);
+  n.start(t); osc.start(t); n.stop(t+0.55); osc.stop(t+0.35);
+}
+
+// ═══════════════════════════════════════════
+//  6 DASH VARIANTS
+// ═══════════════════════════════════════════
+
+// M1 · PISTON SLAM
+// Compressed-air hiss (bandpass noise builds like pressure)
+// then a hard resonant metal clank (short detuned sine pair) on the snap.
+function dashM1(o, dest, buf) {
+  const t = o.currentTime;
+  // Pressure hiss build
+  const s1=o.createBufferSource(); s1.buffer=buf; s1.loop=true;
+  const bp1=o.createBiquadFilter(); bp1.type='bandpass'; bp1.Q.value=2.0;
+  bp1.frequency.setValueAtTime(900,t); bp1.frequency.exponentialRampToValueAtTime(300,t+0.10);
+  const g1=o.createGain(); g1.gain.setValueAtTime(0,t); g1.gain.linearRampToValueAtTime(0.06,t+0.10); g1.gain.linearRampToValueAtTime(0,t+0.13);
+  s1.connect(bp1); bp1.connect(g1); g1.connect(dest);
+  // Metal clank — detuned sine pair, sharp attack
+  const o1=o.createOscillator(); o1.type='sine'; o1.frequency.value=180;
+  const o2=o.createOscillator(); o2.type='sine'; o2.frequency.value=213;
+  const o3=o.createOscillator(); o3.type='sine'; o3.frequency.value=142;
+  const clankG=o.createGain(); clankG.gain.setValueAtTime(0,t+0.12); clankG.gain.linearRampToValueAtTime(0.09,t+0.125); clankG.gain.exponentialRampToValueAtTime(0.0001,t+0.38);
+  o1.connect(clankG); o2.connect(clankG); o3.connect(clankG); clankG.connect(dest);
+  // Release air whoosh after clank
+  const s2=o.createBufferSource(); s2.buffer=buf; s2.loop=true;
+  const bp2=o.createBiquadFilter(); bp2.type='bandpass'; bp2.Q.value=0.8;
+  bp2.frequency.setValueAtTime(350,t+0.12); bp2.frequency.exponentialRampToValueAtTime(1400,t+0.26); bp2.frequency.exponentialRampToValueAtTime(600,t+0.48);
+  const g2=o.createGain(); g2.gain.setValueAtTime(0,t+0.12); g2.gain.linearRampToValueAtTime(0.07,t+0.135); g2.gain.linearRampToValueAtTime(0.03,t+0.28); g2.gain.linearRampToValueAtTime(0,t+0.52);
+  s2.connect(bp2); bp2.connect(g2); g2.connect(dest);
+  // Sub thud
+  const s3=o.createBufferSource(); s3.buffer=buf; s3.loop=true;
+  const lp3=o.createBiquadFilter(); lp3.type='lowpass'; lp3.frequency.value=100;
+  const g3=o.createGain(); g3.gain.setValueAtTime(0,t+0.12); g3.gain.linearRampToValueAtTime(0.14,t+0.124); g3.gain.exponentialRampToValueAtTime(0.0001,t+0.22);
+  s3.connect(lp3); lp3.connect(g3); g3.connect(dest);
+  s1.start(t); s1.stop(t+0.16);
+  o1.start(t+0.12); o1.stop(t+0.42); o2.start(t+0.12); o2.stop(t+0.42); o3.start(t+0.12); o3.stop(t+0.42);
+  s2.start(t+0.12); s2.stop(t+0.56);
+  s3.start(t+0.12); s3.stop(t+0.26);
+}
+
+// M2 · GEAR BURST
+// Fast repeated low-frequency thumps (stutter = ratchet feel)
+// then a spring-loaded whoosh burst upward.
+function dashM2(o, dest, buf) {
+  const t = o.currentTime;
+  // Ratchet stutter — 4 quick low pops spaced ~18ms apart
+  for (let i=0;i<4;i++) {
+    const si=o.createBufferSource(); si.buffer=buf; si.loop=true;
+    const lpi=o.createBiquadFilter(); lpi.type='lowpass'; lpi.frequency.value=200;
+    const gi=o.createGain(); const ti=t+i*0.018;
+    gi.gain.setValueAtTime(0,ti); gi.gain.linearRampToValueAtTime(0.10-i*0.015,ti+0.008); gi.gain.exponentialRampToValueAtTime(0.0001,ti+0.028);
+    si.connect(lpi); lpi.connect(gi); gi.connect(dest);
+    si.start(ti); si.stop(ti+0.035);
+  }
+  const breakPt = t+0.072;
+  // Spring whoosh — tight mid sweep upward fast
+  const s2=o.createBufferSource(); s2.buffer=buf; s2.loop=true;
+  const bp2=o.createBiquadFilter(); bp2.type='bandpass'; bp2.Q.value=1.5;
+  bp2.frequency.setValueAtTime(280,breakPt); bp2.frequency.exponentialRampToValueAtTime(2200,breakPt+0.12); bp2.frequency.exponentialRampToValueAtTime(700,breakPt+0.30);
+  const g2=o.createGain(); g2.gain.setValueAtTime(0,breakPt); g2.gain.linearRampToValueAtTime(0.075,breakPt+0.014); g2.gain.linearRampToValueAtTime(0.03,breakPt+0.16); g2.gain.linearRampToValueAtTime(0,breakPt+0.38);
+  s2.connect(bp2); bp2.connect(g2); g2.connect(dest);
+  // Metal spring ring — high sine decaying
+  const osc=o.createOscillator(); osc.type='sine'; osc.frequency.setValueAtTime(820,breakPt); osc.frequency.exponentialRampToValueAtTime(380,breakPt+0.30);
+  const og=o.createGain(); og.gain.setValueAtTime(0,breakPt); og.gain.linearRampToValueAtTime(0.04,breakPt+0.01); og.gain.exponentialRampToValueAtTime(0.0001,breakPt+0.32);
+  osc.connect(og); og.connect(dest);
+  s2.start(breakPt); s2.stop(breakPt+0.44);
+  osc.start(breakPt); osc.stop(breakPt+0.36);
+}
+
+// A1 · ARCANE SURGE
+// Harmonic chime cluster builds (sine trio, rising freq)
+// then a bright shimmering noise burst with a magical tail.
+function dashA1(o, dest, buf) {
+  const t = o.currentTime;
+  // Harmonic build — three sines slowly rising in pitch and volume
+  const freqs=[440,554,660];
+  freqs.forEach((f,i)=>{
+    const osc=o.createOscillator(); osc.type='sine';
+    osc.frequency.setValueAtTime(f,t); osc.frequency.exponentialRampToValueAtTime(f*1.6,t+0.12);
+    const g=o.createGain(); g.gain.setValueAtTime(0,t+i*0.018); g.gain.linearRampToValueAtTime(0.022,t+0.10); g.gain.linearRampToValueAtTime(0,t+0.14);
+    osc.connect(g); g.connect(dest);
+    osc.start(t+i*0.018); osc.stop(t+0.16);
+  });
+  // Magic burst — high shimmer noise
+  const s1=o.createBufferSource(); s1.buffer=buf; s1.loop=true;
+  const bp1=o.createBiquadFilter(); bp1.type='bandpass'; bp1.Q.value=1.2;
+  bp1.frequency.setValueAtTime(800,t+0.12); bp1.frequency.exponentialRampToValueAtTime(2400,t+0.22); bp1.frequency.exponentialRampToValueAtTime(1200,t+0.55);
+  const g1=o.createGain(); g1.gain.setValueAtTime(0,t+0.12); g1.gain.linearRampToValueAtTime(0.06,t+0.135); g1.gain.linearRampToValueAtTime(0.035,t+0.28); g1.gain.linearRampToValueAtTime(0,t+0.60);
+  s1.connect(bp1); bp1.connect(g1); g1.connect(dest);
+  // Sparkle overtone — very high sine shimmer
+  const oSparkle=o.createOscillator(); oSparkle.type='sine'; oSparkle.frequency.setValueAtTime(2200,t+0.12); oSparkle.frequency.exponentialRampToValueAtTime(3400,t+0.30); oSparkle.frequency.exponentialRampToValueAtTime(1800,t+0.60);
+  const gSparkle=o.createGain(); gSparkle.gain.setValueAtTime(0,t+0.12); gSparkle.gain.linearRampToValueAtTime(0.018,t+0.16); gSparkle.gain.linearRampToValueAtTime(0,t+0.58);
+  oSparkle.connect(gSparkle); gSparkle.connect(dest);
+  // Soft low body
+  const s2=o.createBufferSource(); s2.buffer=buf; s2.loop=true;
+  const lp2=o.createBiquadFilter(); lp2.type='lowpass'; lp2.frequency.value=300;
+  const g2=o.createGain(); g2.gain.setValueAtTime(0,t+0.12); g2.gain.linearRampToValueAtTime(0.05,t+0.14); g2.gain.exponentialRampToValueAtTime(0.0001,t+0.28);
+  s2.connect(lp2); lp2.connect(g2); g2.connect(dest);
+  s1.start(t+0.12); s1.stop(t+0.65);
+  s2.start(t+0.12); s2.stop(t+0.32);
+  oSparkle.start(t+0.12); oSparkle.stop(t+0.64);
+}
+
+// A2 · ICE BLINK
+// A glassy high-pitched crack (detuned triangle sines) + 
+// instant frozen-air noise burst, cold shimmer tail drifts down.
+function dashA2(o, dest, buf) {
+  const t = o.currentTime;
+  // Ice crack — triangle-like overtone cluster, very brief
+  [1050,1480,2100,2950].forEach((f,i)=>{
+    const osc=o.createOscillator(); osc.type='triangle';
+    osc.frequency.setValueAtTime(f,t); osc.frequency.exponentialRampToValueAtTime(f*0.7,t+0.18);
+    const g=o.createGain(); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.028-i*0.004,t+0.008); g.gain.exponentialRampToValueAtTime(0.0001,t+0.20-i*0.02);
+    osc.connect(g); g.connect(dest);
+    osc.start(t); osc.stop(t+0.24);
+  });
+  // Frozen air burst — very high bandpass, cold and thin
+  const s1=o.createBufferSource(); s1.buffer=buf; s1.loop=true;
+  const bp1=o.createBiquadFilter(); bp1.type='highpass'; bp1.frequency.value=2000;
+  const g1=o.createGain(); g1.gain.setValueAtTime(0,t); g1.gain.linearRampToValueAtTime(0.055,t+0.012); g1.gain.linearRampToValueAtTime(0.025,t+0.12); g1.gain.linearRampToValueAtTime(0,t+0.50);
+  s1.connect(bp1); bp1.connect(g1); g1.connect(dest);
+  // Cold shimmer — bandpass drifts DOWN (ice settling)
+  const s2=o.createBufferSource(); s2.buffer=buf; s2.loop=true;
+  const bp2=o.createBiquadFilter(); bp2.type='bandpass'; bp2.Q.value=2.5;
+  bp2.frequency.setValueAtTime(1600,t+0.02); bp2.frequency.exponentialRampToValueAtTime(400,t+0.55);
+  const g2=o.createGain(); g2.gain.setValueAtTime(0,t+0.02); g2.gain.linearRampToValueAtTime(0.032,t+0.06); g2.gain.linearRampToValueAtTime(0,t+0.58);
+  s2.connect(bp2); bp2.connect(g2); g2.connect(dest);
+  // Tiny sub pop — like cracking ice underfoot
+  const s3=o.createBufferSource(); s3.buffer=buf; s3.loop=true;
+  const lp3=o.createBiquadFilter(); lp3.type='lowpass'; lp3.frequency.value=120;
+  const g3=o.createGain(); g3.gain.setValueAtTime(0,t); g3.gain.linearRampToValueAtTime(0.08,t+0.006); g3.gain.exponentialRampToValueAtTime(0.0001,t+0.08);
+  s3.connect(lp3); lp3.connect(g3); g3.connect(dest);
+  s1.start(t); s1.stop(t+0.55);
+  s2.start(t); s2.stop(t+0.62);
+  s3.start(t); s3.stop(t+0.10);
+}
+
+// W1 · STORM GUST
+// Low atmospheric rumble grows (pressure), then sharp gale-force
+// noise burst — very wide, natural, like wind tearing past your ears.
+function dashW1(o, dest, buf) {
+  const t = o.currentTime;
+  // Atmospheric pre-rumble — very low, slow build
+  const s1=o.createBufferSource(); s1.buffer=buf; s1.loop=true;
+  const lp1=o.createBiquadFilter(); lp1.type='lowpass'; lp1.frequency.value=160;
+  const g1=o.createGain(); g1.gain.setValueAtTime(0,t); g1.gain.linearRampToValueAtTime(0.055,t+0.12); g1.gain.linearRampToValueAtTime(0,t+0.16);
+  s1.connect(lp1); lp1.connect(g1); g1.connect(dest);
+  // Gale burst — very wide, low Q (natural wind), slow sweep
+  const s2=o.createBufferSource(); s2.buffer=buf; s2.loop=true;
+  const bp2=o.createBiquadFilter(); bp2.type='bandpass'; bp2.Q.value=0.45; // very wide = natural
+  bp2.frequency.setValueAtTime(200,t+0.13); bp2.frequency.exponentialRampToValueAtTime(800,t+0.28); bp2.frequency.exponentialRampToValueAtTime(350,t+0.70);
+  const shelf2=o.createBiquadFilter(); shelf2.type='lowshelf'; shelf2.frequency.value=300; shelf2.gain.value=5;
+  const g2=o.createGain(); g2.gain.setValueAtTime(0,t+0.13); g2.gain.linearRampToValueAtTime(0.09,t+0.155); g2.gain.linearRampToValueAtTime(0.06,t+0.35); g2.gain.linearRampToValueAtTime(0,t+0.72);
+  s2.connect(bp2); bp2.connect(shelf2); shelf2.connect(g2); g2.connect(dest);
+  // High wind whistle — thin high-pass, natural tail
+  const s3=o.createBufferSource(); s3.buffer=buf; s3.loop=true;
+  const hp3=o.createBiquadFilter(); hp3.type='highpass'; hp3.frequency.value=1600;
+  const g3=o.createGain(); g3.gain.setValueAtTime(0,t+0.13); g3.gain.linearRampToValueAtTime(0.038,t+0.20); g3.gain.linearRampToValueAtTime(0.02,t+0.44); g3.gain.linearRampToValueAtTime(0,t+0.72);
+  s3.connect(hp3); hp3.connect(g3); g3.connect(dest);
+  // Mid turbulence
+  const s4=o.createBufferSource(); s4.buffer=buf; s4.loop=true;
+  const bp4=o.createBiquadFilter(); bp4.type='bandpass'; bp4.Q.value=0.9;
+  bp4.frequency.setValueAtTime(500,t+0.13); bp4.frequency.exponentialRampToValueAtTime(1100,t+0.22); bp4.frequency.exponentialRampToValueAtTime(500,t+0.55);
+  const g4=o.createGain(); g4.gain.setValueAtTime(0,t+0.13); g4.gain.linearRampToValueAtTime(0.04,t+0.16); g4.gain.linearRampToValueAtTime(0,t+0.48);
+  s4.connect(bp4); bp4.connect(g4); g4.connect(dest);
+  s1.start(t); s1.stop(t+0.20);
+  s2.start(t+0.13); s2.stop(t+0.78);
+  s3.start(t+0.13); s3.stop(t+0.78);
+  s4.start(t+0.13); s4.stop(t+0.55);
+}
+
+// G1 · DATA CORRUPT
+// 6 rapid bitcrushed glitch pops (noise bursts through very narrow
+// bandpass = aliased/crushed texture), then a hard digital dropout
+// (gain cuts to zero), then a short corrupted re-entry noise.
+function dashG1(o, dest, buf) {
+  const t = o.currentTime;
+  // Glitch stutter — 6 rapid pops with random-ish bandpass centres
+  const glitchFreqs=[320,1800,580,2400,900,3200];
+  glitchFreqs.forEach((f,i)=>{
+    const si=o.createBufferSource(); si.buffer=buf; si.loop=true;
+    const bpi=o.createBiquadFilter(); bpi.type='bandpass'; bpi.Q.value=4.0; // very narrow = harsh
+    bpi.frequency.value=f;
+    const gi=o.createGain(); const ti=t+i*0.014;
+    gi.gain.setValueAtTime(0,ti); gi.gain.linearRampToValueAtTime(0.065,ti+0.004); gi.gain.linearRampToValueAtTime(0,ti+0.012);
+    si.connect(bpi); bpi.connect(gi); gi.connect(dest);
+    si.start(ti); si.stop(ti+0.018);
+  });
+  const dropPt = t+0.084; // dropout moment
+  // Hard silence gap is implicit (no nodes playing at dropPt+0 to dropPt+0.04)
+  // Corrupted burst — wide noise but gated/stuttered via rapid gain toggles
+  const s2=o.createBufferSource(); s2.buffer=buf; s2.loop=true;
+  const bp2=o.createBiquadFilter(); bp2.type='bandpass'; bp2.Q.value=0.9;
+  bp2.frequency.setValueAtTime(400,dropPt+0.04); bp2.frequency.exponentialRampToValueAtTime(1600,dropPt+0.18); bp2.frequency.exponentialRampToValueAtTime(700,dropPt+0.36);
+  const g2=o.createGain();
+  // Stutter gating — alternating on/off creates digital artifact feel
+  g2.gain.setValueAtTime(0,dropPt+0.04);
+  g2.gain.linearRampToValueAtTime(0.07,dropPt+0.048);
+  g2.gain.linearRampToValueAtTime(0.01,dropPt+0.065);
+  g2.gain.linearRampToValueAtTime(0.065,dropPt+0.075);
+  g2.gain.linearRampToValueAtTime(0.04,dropPt+0.12);
+  g2.gain.linearRampToValueAtTime(0,dropPt+0.38);
+  s2.connect(bp2); bp2.connect(g2); g2.connect(dest);
+  // Digital high crunch tail
+  const s3=o.createBufferSource(); s3.buffer=buf; s3.loop=true;
+  const hp3=o.createBiquadFilter(); hp3.type='highpass'; hp3.frequency.value=3000;
+  const g3=o.createGain(); g3.gain.setValueAtTime(0,dropPt+0.04); g3.gain.linearRampToValueAtTime(0.042,dropPt+0.06); g3.gain.linearRampToValueAtTime(0,dropPt+0.28);
+  s3.connect(hp3); hp3.connect(g3); g3.connect(dest);
+  s2.start(dropPt+0.04); s2.stop(dropPt+0.44);
+  s3.start(dropPt+0.04); s3.stop(dropPt+0.32);
+}
+
+const VARIANTS = [dashM1, dashM2, dashA1, dashA2, dashW1, dashG1];
+const V_COLORS = ['#e09040','#c0b060','#b060ff','#60c0ff','#60e0a0','#ff4488'];
+const V_GLOWS  = ['#e09040','#c0b060','#b060ff','#60c0ff','#60e0a0','#ff4488'];
+const V_BODY   = ['#f0a050','#d0c070','#c080ff','#80d8ff','#80f0b8','#ff60a0'];
+const P_HUE    = [32,52,280,200,152,340];
+
+let currentV = 0;
+function sel(i){
+  currentV=i;
+  document.querySelectorAll('.vbtn').forEach((b,j)=>b.classList.toggle('sel',j===i));
+  document.querySelectorAll('.dlbtn').forEach((b,j)=>b.classList.toggle('adl',j===i));
+  document.getElementById('cdbar').style.background=V_COLORS[i];
+}
+function playDash(){ if(!ctx) return; VARIANTS[currentV](ctx,ctx.destination,noiseBuf); }
+
+function dl(idx){
+  const sr=44100, dur=0.90;
+  const off=new OfflineAudioContext(1,Math.floor(sr*dur),sr);
+  const bLen=Math.floor(sr*0.5), b=off.createBuffer(1,bLen,sr), d=b.getChannelData(0);
+  for(let i=0;i<bLen;i++) d[i]=Math.random()*2-1;
+  VARIANTS[idx](off,off.destination,b);
+  off.startRendering().then(r=>{
+    const wav=encodeWAV(r), a=document.createElement('a');
+    const names=['M1-piston-slam','M2-gear-burst','A1-arcane-surge','A2-ice-blink','W1-storm-gust','G1-data-corrupt'];
+    a.href=URL.createObjectURL(new Blob([wav],{type:'audio/wav'}));
+    a.download=`dash-${names[idx]}.wav`; a.click();
+  });
+}
+function encodeWAV(ab){
+  const sr=ab.sampleRate,s=ab.getChannelData(0),n=s.length,ds=n*2;
+  const buf=new ArrayBuffer(44+ds),v=new DataView(buf);
+  const ws=(o,x)=>{for(let i=0;i<x.length;i++)v.setUint8(o+i,x.charCodeAt(i));};
+  ws(0,'RIFF');v.setUint32(4,36+ds,true);ws(8,'WAVE');ws(12,'fmt ');
+  v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);
+  v.setUint16(34,16,true);ws(36,'data');v.setUint32(40,ds,true);
+  let off=44;
+  for(let i=0;i<n;i++){const x=Math.max(-1,Math.min(1,s[i]));v.setInt16(off,x<0?x*0x8000:x*0x7FFF,true);off+=2;}
+  return buf;
+}
+
+// init
+sel(0);
+
+// ═══════════════════════════════════════════
+//  GAME
+// ═══════════════════════════════════════════
+const canvas=document.getElementById('game-canvas');
+const c=canvas.getContext('2d');
+const W=canvas.width,H=canvas.height,FLOOR_Y=H-44;
+const indSlide=document.getElementById('ind-slide');
+const indJump=document.getElementById('ind-jump');
+const indDash=document.getElementById('ind-dash');
+const cdBar=document.getElementById('cdbar');
+
+const DASH_SPD=11,DASH_DUR=14,DASH_CD=60;
+
+const platforms=[
+  {x:0,y:FLOOR_Y,w:W,h:44},
+  {x:106,y:178,w:124,h:11},
+  {x:300,y:138,w:115,h:11},
+  {x:478,y:178,w:105,h:11},
+  {x:42,y:112,w:85,h:11},
+  {x:558,y:102,w:85,h:11},
+];
+
+const player={x:55,y:FLOOR_Y-32,w:24,h:32,vx:0,vy:0,onGround:false,facing:1,dashTimer:0,dashCD:0,isDashing:false,parts:[],jparts:[],dparts:[],afterImg:[]};
+const keys={};
+let jUsed=false,dUsed=false,frame=0,jFlash=0,dFlash=0;
+
+document.addEventListener('keydown',e=>{if(!keys[e.code]){keys[e.code]=true;initAudio();}});
+document.addEventListener('keyup',e=>{
+  keys[e.code]=false;
+  if(['Space','ArrowUp','KeyW'].includes(e.code)) jUsed=false;
+  if(['ShiftLeft','ShiftRight'].includes(e.code)) dUsed=false;
+});
+
+function onPlat(p){return player.vy>=0&&player.x+player.w>p.x&&player.x<p.x+p.w&&player.y+player.h>=p.y&&player.y+player.h<=p.y+p.h+7;}
+
+function update(){
+  frame++;
+  if(jFlash>0)jFlash--; if(dFlash>0)dFlash--; if(player.dashCD>0)player.dashCD--;
+  const L=keys['ArrowLeft']||keys['KeyA'],R=keys['ArrowRight']||keys['KeyD'];
+  const J=keys['Space']||keys['ArrowUp']||keys['KeyW'],D=keys['ShiftLeft']||keys['ShiftRight'];
+
+  if(D&&!dUsed&&player.dashCD===0&&!player.isDashing){
+    player.isDashing=true;player.dashTimer=DASH_DUR;player.dashCD=DASH_CD;dUsed=true;dFlash=32;playDash();
+    for(let i=0;i<5;i++)player.afterImg.push({x:player.x-player.facing*i*7,y:player.y,a:0.46-i*0.09});
+    for(let i=0;i<20;i++)player.dparts.push({x:player.x+player.w/2,y:player.y+player.h/2,vx:-player.facing*(Math.random()*5+1.5),vy:(Math.random()-0.5)*3,life:1,r:Math.random()*4+2});
+  }
+  if(player.isDashing){
+    player.vx=player.facing*DASH_SPD;player.vy=0;player.dashTimer--;
+    if(player.dashTimer<=0)player.isDashing=false;
+    if(frame%2===0)player.dparts.push({x:player.x+player.w/2-player.facing*4,y:player.y+player.h/2+(Math.random()-0.5)*16,vx:-player.facing*(Math.random()*2.5+0.5),vy:(Math.random()-0.5)*1.5,life:1,r:Math.random()*5+3});
+  } else {
+    if(L){player.vx-=1.05;player.facing=-1;}if(R){player.vx+=1.05;player.facing=1;}
+    player.vx*=0.76;if(Math.abs(player.vx)>3.2)player.vx=3.2*Math.sign(player.vx);
+    player.vy+=0.44;
+  }
+  player.x+=player.vx;player.y+=player.vy;
+  if(player.x<0)player.x=0;if(player.x+player.w>W)player.x=W-player.w;
+  player.onGround=false;
+  for(const p of platforms){if(onPlat(p)){player.y=p.y-player.h;player.vy=0;player.onGround=true;if(player.isDashing)player.isDashing=false;}}
+  if(J&&player.onGround&&!jUsed){player.vy=-9.2;player.onGround=false;jUsed=true;playJump();jFlash=22;for(let i=0;i<10;i++)player.jparts.push({x:player.x+player.w/2,y:player.y+player.h,vx:(Math.random()-0.5)*3.5,vy:-(Math.random()*3+1),life:1,r:Math.random()*3+1.5});}
+  if(player.y>H+60){player.y=-40;player.vy=0;player.isDashing=false;}
+  const mv=player.onGround&&Math.abs(player.vx)>0.5&&!player.isDashing;
+  setSlide(mv);
+  if(mv&&frame%3===0)player.parts.push({x:player.x+(player.facing===1?2:player.w-2),y:player.y+player.h-1,vx:-player.facing*(Math.random()*1.4+0.4),vy:-Math.random(),life:1,r:Math.random()*3+1.5});
+  player.parts=player.parts.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.04;p.life-=0.065;return p.life>0;});
+  player.jparts=player.jparts.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.12;p.life-=0.055;return p.life>0;});
+  player.dparts=player.dparts.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.life-=0.065;return p.life>0;});
+  player.afterImg=player.afterImg.filter(a=>{a.a-=0.055;return a.a>0;});
+  const vLabels=['M1','M2','A1','A2','W1','G1'];
+  const lb=vLabels[currentV];
+  indSlide.className='hud-item'+(mv?' active':'');indSlide.textContent=mv?'◆ SLIDE':'▷ SLIDE';
+  indJump.className='hud-item'+(jFlash>0?' active':'');indJump.textContent=jFlash>0?'◆ JUMP':'▷ JUMP';
+  const da=dFlash>0;
+  indDash.className='hud-item'+(da?' dash-active':'');
+  indDash.style.color=da?V_GLOWS[currentV]:'';
+  indDash.textContent=da?`◆ ${lb}`:player.dashCD>0?`○ ${lb}`:`▷ ${lb}`;
+  const pct=player.dashCD/DASH_CD;
+  cdBar.style.transform=`scaleX(${1-pct})`;cdBar.style.opacity=pct>0?'0.4':'1';
+}
+
+const bgT=[];
+for(let tx=0;tx<W;tx+=16)for(let ty=0;ty<FLOOR_Y;ty+=16)if(Math.random()<0.04)bgT.push({x:tx,y:ty,b:Math.random()*0.05+0.015});
+const stars=Array.from({length:50},()=>({x:Math.floor(Math.random()*(W/2))*2,y:Math.floor(Math.random()*(FLOOR_Y*0.7/2))*2,on:Math.random()>0.5}));
+
+function drawBG(){
+  const sky=c.createLinearGradient(0,0,0,FLOOR_Y);sky.addColorStop(0,'#02020a');sky.addColorStop(1,'#070c1a');
+  c.fillStyle=sky;c.fillRect(0,0,W,H);
+  if(frame%40===0)stars.forEach(s=>{if(Math.random()<0.15)s.on=!s.on;});
+  c.fillStyle='#a8c8ee';stars.forEach(s=>{if(s.on)c.fillRect(s.x,s.y,2,2);});
+  bgT.forEach(t=>{c.fillStyle=`rgba(60,120,200,${t.b})`;c.fillRect(t.x,t.y,16,16);});
+  c.fillStyle='#070b14';
+  [{x:0,w:56,h:68},{x:52,w:36,h:48},{x:85,w:46,h:88},{x:546,w:46,h:78},{x:588,w:36,h:54},{x:622,w:48,h:66}].forEach(b=>{
+    c.fillRect(b.x,FLOOR_Y-b.h,b.w,b.h);
+    c.fillStyle='#ffe88026';
+    for(let wy=FLOOR_Y-b.h+8;wy<FLOOR_Y-8;wy+=14)for(let wx=b.x+6;wx<b.x+b.w-6;wx+=12)if(Math.sin(wx*3.1+wy*1.7)>0.2)c.fillRect(wx,wy,5,7);
+    c.fillStyle='#070b14';
+  });
+}
+function drawPlatforms(){
+  platforms.forEach((p,i)=>{
+    c.fillStyle=i===0?'#181e38':'#1a2c50';c.fillRect(p.x,p.y,p.w,p.h);
+    c.fillStyle=i===0?'#283060':'#305880';c.fillRect(p.x,p.y,p.w,3);
+    if(i>0){c.fillStyle='#3e68a0';c.fillRect(p.x,p.y,4,4);c.fillRect(p.x+p.w-4,p.y,4,4);}
+    if(i===0){c.fillStyle='rgba(255,255,255,0.018)';for(let gx=0;gx<W;gx+=16)c.fillRect(gx,p.y,1,p.h);for(let gy=p.y;gy<H;gy+=16)c.fillRect(0,gy,W,1);}
+  });
+}
+function drawParticles(){
+  const hue=P_HUE[currentV];
+  player.afterImg.forEach(a=>{c.globalAlpha=a.a*0.38;c.fillStyle=V_BODY[currentV];c.fillRect(Math.round(a.x),Math.round(a.y),player.w,player.h);});
+  player.dparts.forEach(p=>{c.globalAlpha=p.life*0.62;c.fillStyle=`hsl(${hue},82%,${52+p.life*22}%)`;const r=Math.max(2,Math.round(p.r*p.life/2))*2;c.fillRect(Math.round(p.x/2)*2,Math.round(p.y/2)*2,r,r);});
+  player.parts.forEach(p=>{c.globalAlpha=p.life*0.5;c.fillStyle=`hsl(205,52%,${52+p.life*20}%)`;const r=Math.max(1,Math.round(p.r*p.life/2))*2;c.fillRect(Math.round(p.x/2)*2,Math.round(p.y/2)*2,r,r);});
+  player.jparts.forEach(p=>{c.globalAlpha=p.life*0.68;c.fillStyle=`hsl(195,78%,${68+p.life*15}%)`;const r=Math.max(1,Math.round(p.r*p.life/2))*2;c.fillRect(Math.round(p.x/2)*2,Math.round(p.y/2)*2,r,r);});
+  c.globalAlpha=1;
+}
+function drawPlayer(){
+  const {x,y,w,h,vx,onGround,facing,isDashing}=player;
+  const px=Math.round(x),py=Math.round(y);
+  const mv=onGround&&Math.abs(vx)>0.5&&!isDashing;
+  c.fillStyle='rgba(0,0,0,0.18)';c.fillRect(px+2,py+h+1,w-4,4);
+  if(isDashing){c.shadowColor=V_GLOWS[currentV];c.shadowBlur=20+6*Math.sin(frame*0.5);}
+  else if(mv){c.shadowColor='#2ea8f8';c.shadowBlur=12+4*Math.sin(frame*0.28);}
+  else if(!onGround){c.shadowColor='#55d5f8';c.shadowBlur=8;}
+  c.fillStyle=isDashing?V_BODY[currentV]:mv?'#3cc5f5':!onGround?'#4ed5f8':'#2c78c8';
+  c.fillRect(px,py,w,h);
+  c.fillStyle='rgba(0,0,40,0.22)';c.fillRect(px,py+Math.floor(h*0.55),w,Math.ceil(h*0.45));
+  c.fillStyle='rgba(255,255,255,0.15)';c.fillRect(px+2,py+2,w-4,3);
+  c.fillStyle='rgba(0,0,0,0.24)';c.fillRect(px,py,2,h);
+  if(isDashing){c.fillStyle='rgba(255,255,255,0.15)';c.fillRect(px+4,py+4,w-8,h-8);}
+  c.shadowBlur=0;
+  const ex=facing===1?px+w-7:px+4;
+  c.fillStyle='#fff';c.fillRect(ex,py+7,6,8);
+  c.fillStyle=isDashing?V_GLOWS[currentV]:mv?'#00eeff':'#001840';
+  c.fillRect(ex+facing+(facing===1?0:2),py+9,3,4);
+  c.shadowBlur=0;
+}
+function draw(){c.clearRect(0,0,W,H);drawBG();drawPlatforms();drawParticles();drawPlayer();}
+function loop(){update();draw();requestAnimationFrame(loop);}
+loop();
+</script>
+</body>
+</html>

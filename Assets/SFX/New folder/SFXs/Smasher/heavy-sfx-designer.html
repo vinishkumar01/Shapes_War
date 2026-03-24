@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Heavy Rectangle SFX Designer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&display=swap');
+
+  :root {
+    --bg:         #050508;
+    --panel:      #0a0b12;
+    --border:     #161824;
+    --hurt:       #ff4400;
+    --hurt-dim:   #2a0800;
+    --hurt-glow:  #cc2200;
+    --death:      #cc8800;
+    --death-dim:  #241400;
+    --death-glow: #aa6600;
+    --text:       #b8bcd0;
+    --muted:      #363848;
+    --groove:     #0e1020;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    padding: 26px 18px 48px;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,68,0,0.012) 40px, rgba(255,68,0,0.012) 41px),
+      repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(200,136,0,0.008) 40px, rgba(200,136,0,0.008) 41px);
+  }
+
+  /* ── Header ── */
+  header { text-align:center; margin-bottom:34px; }
+
+  .rect-row { display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:10px; }
+
+  .rect-icon {
+    width:52px; height:34px; border-radius:3px;
+    background: linear-gradient(160deg, #2a1a0a, #1a1008);
+    border: 2px solid var(--hurt);
+    box-shadow: 0 0 14px var(--hurt-glow), inset 0 1px 0 rgba(255,100,0,0.2);
+    animation: rectShake 3s ease-in-out infinite;
+    flex-shrink:0;
+  }
+  .rect-icon.d { border-color: var(--death); box-shadow: 0 0 14px var(--death-glow), inset 0 1px 0 rgba(200,150,0,0.2); animation-delay:1.5s; }
+  @keyframes rectShake {
+    0%,90%,100% { transform: translateY(0); }
+    92% { transform: translateY(-4px); }
+    95% { transform: translateY(2px); }
+    97% { transform: translateY(-2px); }
+  }
+
+  header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.4rem; letter-spacing: 10px;
+    background: linear-gradient(90deg, var(--hurt), #ff8844, var(--death));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    line-height:1;
+  }
+  header p { font-size:0.62rem; color:var(--muted); letter-spacing:5px; margin-top:6px; }
+  .header-line {
+    height:2px; max-width:560px; margin:14px auto 0;
+    background: linear-gradient(90deg, transparent, var(--hurt), var(--death), transparent);
+    box-shadow: 0 0 8px var(--hurt-glow);
+  }
+
+  /* ── Section labels ── */
+  .section-row { display:grid; grid-template-columns:1fr 1fr; gap:18px; max-width:880px; margin:0 auto 10px; }
+  .slabel {
+    font-family:'Bebas Neue',sans-serif; font-size:1.0rem; letter-spacing:6px;
+    display:flex; align-items:center; gap:10px; padding-left:4px;
+  }
+  .slabel .sq { width:10px; height:10px; border-radius:1px; flex-shrink:0; }
+  .hurt-label  { color:var(--hurt);  } .hurt-label  .sq { background:var(--hurt);  box-shadow:0 0 6px var(--hurt-glow); }
+  .death-label { color:var(--death); } .death-label .sq { background:var(--death); box-shadow:0 0 6px var(--death-glow); }
+
+  /* ── Grid ── */
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:13px; max-width:880px; margin:0 auto; }
+
+  /* ── Card ── */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius:6px;
+    padding:14px 14px 12px;
+    display:flex; flex-direction:column; gap:9px;
+    position:relative; overflow:hidden;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  /* bottom weight line */
+  .card::after {
+    content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+    opacity:0; transition:opacity 0.2s;
+  }
+  .hurt-card::after  { background: var(--hurt);  box-shadow:0 0 8px var(--hurt-glow); }
+  .death-card::after { background: var(--death); box-shadow:0 0 8px var(--death-glow); }
+  .card.playing::after { opacity:1; }
+  .hurt-card.playing  { border-color:var(--hurt);  box-shadow:0 4px 24px #ff440018; }
+  .death-card.playing { border-color:var(--death); box-shadow:0 4px 24px #cc880018; }
+
+  /* seismic rumble bar (top) */
+  .rumble-bar { height:3px; border-radius:1px; width:0; transition:width 0.1s; margin-bottom:1px; }
+  .hurt-card  .rumble-bar { background:linear-gradient(90deg, var(--hurt-glow), var(--hurt), #ff8844); }
+  .death-card .rumble-bar { background:linear-gradient(90deg, var(--death-glow), var(--death), #ffcc44); }
+  .card.playing .rumble-bar { width:100%; }
+
+  .card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+  .card-meta { display:flex; flex-direction:column; gap:2px; }
+  .card-tag  { font-size:0.57rem; letter-spacing:3px; color:var(--muted); }
+  .card-name { font-family:'Bebas Neue',sans-serif; font-size:1.1rem; letter-spacing:2px; line-height:1.1; }
+  .hurt-card  .card-name { color:var(--hurt); }
+  .death-card .card-name { color:var(--death); }
+
+  /* mini rect icon */
+  .rect-mini {
+    width:22px; height:14px; border-radius:2px; flex-shrink:0; margin-top:3px;
+    transition:transform 0.1s, box-shadow 0.1s;
+  }
+  .hurt-card  .rect-mini { background:#1a0800; border:1.5px solid var(--hurt); }
+  .death-card .rect-mini { background:#1a1000; border:1.5px solid var(--death); }
+  .card.playing .rect-mini { transform:scale(1.2); }
+  .hurt-card.playing  .rect-mini { box-shadow:0 0 8px var(--hurt-glow); }
+  .death-card.playing .rect-mini { box-shadow:0 0 8px var(--death-glow); }
+
+  /* waveform — flat heavy style */
+  .waveform { height:28px; display:flex; align-items:center; gap:2px; }
+  .wb { flex:1; border-radius:1px; min-height:1px; transition:height 0.05s; }
+  .hurt-card  .wb { background:var(--hurt);  opacity:0.35; }
+  .death-card .wb { background:var(--death); opacity:0.35; }
+  .card.playing .wb { opacity:0.9; }
+
+  .card-desc { font-size:0.62rem; color:var(--muted); line-height:1.65; letter-spacing:0.3px; }
+
+  /* buttons */
+  .card-actions { display:flex; gap:7px; margin-top:2px; }
+  .btn {
+    border:none; border-radius:4px; cursor:pointer;
+    font-family:'Share Tech Mono',monospace; font-size:0.62rem; letter-spacing:2px;
+    padding:9px 0; display:flex; align-items:center; justify-content:center; gap:5px;
+    transition:all 0.13s;
+  }
+  .btn-play { flex:1; background:transparent; border:1.5px solid currentColor; }
+  .hurt-card  .btn-play { color:var(--hurt); }
+  .death-card .btn-play { color:var(--death); }
+  .hurt-card  .btn-play:hover { background:var(--hurt-dim); }
+  .death-card .btn-play:hover { background:var(--death-dim); }
+  .btn-dl { flex:0 0 42px; background:var(--border); color:var(--muted); border:1.5px solid transparent; }
+  .btn-dl:hover { background:#1e2035; color:var(--text); }
+
+  footer { text-align:center; margin-top:28px; font-size:0.58rem; color:var(--muted); letter-spacing:4px; }
+
+  @media(max-width:580px){ .grid,.section-row{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="rect-row">
+    <div class="rect-icon"></div>
+    <h1>HEAVY SFX</h1>
+    <div class="rect-icon d"></div>
+  </div>
+  <p>HURT × 6 &nbsp;·&nbsp; DEATH × 6 &nbsp;·&nbsp; TECTONIC / SUB-HEAVY STYLE</p>
+  <div class="header-line"></div>
+</header>
+
+<div class="section-row">
+  <div class="slabel hurt-label"><span class="sq"></span>HURT SOUNDS</div>
+  <div class="slabel death-label"><span class="sq"></span>DEATH SOUNDS</div>
+</div>
+
+<div class="grid" id="grid"></div>
+<footer>▶ PREVIEW &nbsp;|&nbsp; ⬇ DOWNLOAD WAV &nbsp;|&nbsp; HEAVY RECTANGLE · TECTONIC WEIGHT</footer>
+
+<script>
+// ─── Audio ────────────────────────────────────────────────────────────────────
+let actx = null;
+const getCtx = () => { if(!actx) actx=new(window.AudioContext||window.webkitAudioContext)(); return actx; };
+
+// ─── WAV Encoder ──────────────────────────────────────────────────────────────
+function encodeWAV(buf) {
+  const sr=buf.sampleRate, s=buf.getChannelData(0), n=s.length;
+  const ab=new ArrayBuffer(44+n*2), v=new DataView(ab);
+  const ws=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i));};
+  ws(0,'RIFF'); v.setUint32(4,36+n*2,true); ws(8,'WAVE'); ws(12,'fmt ');
+  v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,sr,true); v.setUint32(28,sr*2,true);
+  v.setUint16(32,2,true);  v.setUint16(34,16,true);
+  ws(36,'data'); v.setUint32(40,n*2,true);
+  let o=44;
+  for(let i=0;i<n;i++){const x=Math.max(-1,Math.min(1,s[i]));v.setInt16(o,x<0?x*0x8000:x*0x7FFF,true);o+=2;}
+  return ab;
+}
+function dlBuf(buf,name){
+  const blob=new Blob([encodeWAV(buf)],{type:'audio/wav'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=name; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── DSP Helpers ──────────────────────────────────────────────────────────────
+function mkNoise(ctx, dur) {
+  const n=Math.ceil(ctx.sampleRate*dur), b=ctx.createBuffer(1,n,ctx.sampleRate);
+  const d=b.getChannelData(0); for(let i=0;i<n;i++) d[i]=Math.random()*2-1; return b;
+}
+
+// Brown noise — deep rumble, matches sub-dominant character of these sounds
+function mkBrown(ctx, dur) {
+  const n=Math.ceil(ctx.sampleRate*dur), b=ctx.createBuffer(1,n,ctx.sampleRate);
+  const d=b.getChannelData(0); let last=0;
+  for(let i=0;i<n;i++){
+    last+=(Math.random()*2-1)*0.04;
+    last=Math.max(-1,Math.min(1,last));
+    d[i]=last;
+  }
+  return b;
+}
+
+// Pink noise — between white and brown, good for mid-body rumble
+function mkPink(ctx, dur) {
+  const n=Math.ceil(ctx.sampleRate*dur), b=ctx.createBuffer(1,n,ctx.sampleRate);
+  const d=b.getChannelData(0);
+  let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+  for(let i=0;i<n;i++){
+    const w=Math.random()*2-1;
+    b0=0.99886*b0+w*0.0555179; b1=0.99332*b1+w*0.0750759;
+    b2=0.96900*b2+w*0.1538520; b3=0.86650*b3+w*0.3104856;
+    b4=0.55000*b4+w*0.5329522; b5=-0.7616*b5-w*0.0168980;
+    d[i]=Math.max(-1,Math.min(1,(b0+b1+b2+b3+b4+b5+b6+w*0.5362)*(1/6.5)));
+    b6=w*0.115926;
+  }
+  return b;
+}
+
+function chain(ctx, nodes, dest) {
+  for(let i=0;i<nodes.length-1;i++) nodes[i].connect(nodes[i+1]);
+  nodes[nodes.length-1].connect(dest||ctx.destination);
+}
+
+function distCurve(amt=6) {
+  const c=new Float32Array(512);
+  for(let i=0;i<512;i++){const x=i/256-1; c[i]=Math.tanh(x*amt);}
+  return c;
+}
+
+// Pitched osc — simple, no ramp complexity, just set/ramp
+function pOsc(ctx, dest, type, f0, f1, g0, dur, delay=0) {
+  const now=ctx.currentTime+delay;
+  const o=ctx.createOscillator(); o.type=type;
+  o.frequency.setValueAtTime(f0, now);
+  if(f1!==f0) o.frequency.exponentialRampToValueAtTime(Math.max(f1,0.01), now+dur*0.9);
+  const g=ctx.createGain();
+  g.gain.setValueAtTime(g0, now);
+  g.gain.exponentialRampToValueAtTime(0.0001, now+dur);
+  o.connect(g); g.connect(dest||ctx.destination);
+  o.start(now); o.stop(now+dur+0.05);
+}
+
+// Noise burst — filtered noise with gain envelope
+function nBurst(ctx, dest, {buf, lpF=null, hpF=null, bpF=null, bpQ=1, g0=1.0, dur=0.1, delay=0}) {
+  const now=ctx.currentTime+delay;
+  const src=ctx.createBufferSource(); src.buffer=buf;
+  const nodes=[src];
+  if(lpF){const f=ctx.createBiquadFilter();f.type='lowpass';f.frequency.value=lpF;nodes.push(f);}
+  if(hpF){const f=ctx.createBiquadFilter();f.type='highpass';f.frequency.value=hpF;nodes.push(f);}
+  if(bpF){const f=ctx.createBiquadFilter();f.type='bandpass';f.frequency.value=bpF;f.Q.value=bpQ;nodes.push(f);}
+  const g=ctx.createGain();
+  g.gain.setValueAtTime(g0, now);
+  g.gain.exponentialRampToValueAtTime(0.0001, now+dur);
+  nodes.push(g);
+  chain(ctx, nodes, dest);
+  src.start(now); src.stop(now+dur+0.02);
+}
+
+// ─── HURT SOUNDS ─────────────────────────────────────────────────────────────
+// Profile from analysis:
+//   jump-stone-launch  : 4.7ms attack, MID dominant (500Hz), noisy, 0.85s
+//   landing-shockwave  : 4.1ms attack, LOW dominant (150Hz), noisy, extreme ZCvar
+//   slam-tectonic      : 4.6ms attack, SUB dominant (60Hz), max ZCvar, 1.3s rumble
+//   slide-heavy        : 317ms slow attack, SUB/LOW, sustained 3s
+// → HURT = near-instant attack (<5ms), SUB+LOW heavy, noisy/complex, no brightness
+
+const hurtDefs = [
+  {
+    name: 'STONE IMPACT',
+    file: 'hurt-stone-impact.wav',
+    desc: 'Blunt tectonic punch. Sub-bass slam + mid stone crack. Raw and heavy.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      // SUB slam (like slam-tectonic: 60Hz dominant, 4.6ms attack)
+      pOsc(ctx,d,'sine', 58, 18, 1.0, 0.18);
+      pOsc(ctx,d,'triangle', 90, 30, 0.6, 0.14);
+      // LOW body thud (landing-shockwave: 150Hz dominant)
+      pOsc(ctx,d,'sine', 145, 40, 0.7, 0.20);
+      // Mid stone crack noise (jump-stone-launch: 500Hz, noisy)
+      const pb=mkPink(ctx,0.08);
+      nBurst(ctx,d,{buf:pb, lpF:600, g0:0.9, dur:0.08});
+      nBurst(ctx,d,{buf:mkNoise(ctx,0.04), bpF:450, bpQ:0.8, g0:0.7, dur:0.04});
+      return 0.30;
+    }
+  },
+  {
+    name: 'TECTONIC HIT',
+    file: 'hurt-tectonic-hit.wav',
+    desc: 'Ground-shaking strike. Deep sub-rumble like the tectonic slam reference.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      // Deep sub (tectonic-slam DNA: SUB dominant, extreme noisy)
+      pOsc(ctx,d,'sine', 42, 14, 1.1, 0.22);
+      pOsc(ctx,d,'sine', 70, 22, 0.75, 0.18);
+      // Brown noise rumble body
+      const bb=mkBrown(ctx,0.20);
+      const bn=ctx.createBufferSource(); bn.buffer=bb;
+      const blp=ctx.createBiquadFilter(); blp.type='lowpass'; blp.frequency.value=220;
+      const dist=ctx.createWaveShaper(); dist.curve=distCurve(8);
+      const bg=ctx.createGain();
+      bg.gain.setValueAtTime(0.95,now); bg.gain.exponentialRampToValueAtTime(0.0001,now+0.22);
+      chain(ctx,[bn,blp,dist,bg],d); bn.start(now); bn.stop(now+0.23);
+      // Stone mid crack
+      nBurst(ctx,d,{buf:mkNoise(ctx,0.05), bpF:380, bpQ:1.2, g0:0.6, dur:0.05});
+      return 0.28;
+    }
+  },
+  {
+    name: 'SHOCKWAVE PULSE',
+    file: 'hurt-shockwave-pulse.wav',
+    desc: 'Shockwave radiates outward. Matches landing-shockwave: LOW heavy, fast, noisy.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      // Shockwave sub pulse (landing-shockwave: 150Hz LOW dominant, 4.1ms attack)
+      pOsc(ctx,d,'sine', 150, 28, 1.0, 0.16);
+      pOsc(ctx,d,'sine', 55, 16, 0.85, 0.20);
+      // Pink noise wave body
+      nBurst(ctx,d,{buf:mkPink(ctx,0.14), lpF:400, g0:0.85, dur:0.14});
+      // Secondary pulse echo
+      pOsc(ctx,d,'sine', 90, 25, 0.4, 0.14, 0.06);
+      // Surface crack noise
+      nBurst(ctx,d,{buf:mkNoise(ctx,0.03), bpF:700, bpQ:2, g0:0.5, dur:0.03, delay:0.01});
+      return 0.32;
+    }
+  },
+  {
+    name: 'BOULDER CRACK',
+    file: 'hurt-boulder-crack.wav',
+    desc: 'Heavy body cracking under force. Stone fracture with sub-bass weight.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      // Sub weight
+      pOsc(ctx,d,'sine', 50, 15, 1.0, 0.18);
+      // Mid crack — stone fracture (jump-stone: MID dominant, 500Hz, noisy)
+      const nb=mkNoise(ctx,0.10);
+      const ns=ctx.createBufferSource(); ns.buffer=nb;
+      const bp1=ctx.createBiquadFilter(); bp1.type='bandpass'; bp1.frequency.value=480; bp1.Q.value=0.7;
+      const dist=ctx.createWaveShaper(); dist.curve=distCurve(6);
+      const ng=ctx.createGain();
+      ng.gain.setValueAtTime(0.9,now); ng.gain.exponentialRampToValueAtTime(0.0001,now+0.11);
+      chain(ctx,[ns,bp1,dist,ng],d); ns.start(now); ns.stop(now+0.12);
+      // Rumble tail
+      const rb=mkBrown(ctx,0.22);
+      nBurst(ctx,d,{buf:rb, lpF:180, g0:0.7, dur:0.22});
+      // High chip off
+      nBurst(ctx,d,{buf:mkNoise(ctx,0.03), hpF:2000, g0:0.35, dur:0.03, delay:0.01});
+      return 0.30;
+    }
+  },
+  {
+    name: 'IRON SLAM',
+    file: 'hurt-iron-slam.wav',
+    desc: 'Hard metal-on-stone. Instant impact, dense low-mid noise burst.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      // Sub punch — instant (matches <5ms attack of all 4 sounds)
+      pOsc(ctx,d,'sine', 65, 20, 1.1, 0.16);
+      pOsc(ctx,d,'triangle', 130, 35, 0.65, 0.12);
+      // Dense distorted noise — low-mid (noisy/complex texture, ZCvar 116k)
+      const nb=mkPink(ctx,0.12);
+      const ns=ctx.createBufferSource(); ns.buffer=nb;
+      const dist=ctx.createWaveShaper(); dist.curve=distCurve(11);
+      const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=550;
+      const ng=ctx.createGain();
+      ng.gain.setValueAtTime(1.0,now); ng.gain.exponentialRampToValueAtTime(0.0001,now+0.14);
+      chain(ctx,[ns,dist,lp,ng],d); ns.start(now); ns.stop(now+0.15);
+      // Metallic ring overtone
+      pOsc(ctx,d,'sine', 320, 140, 0.3, 0.18);
+      return 0.26;
+    }
+  },
+  {
+    name: 'GROUND RUPTURE',
+    file: 'hurt-ground-rupture.wav',
+    desc: 'Earth tears open beneath. Sub-bass rupture + rolling stone debris.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      // Deep rupture sub
+      pOsc(ctx,d,'sine', 38, 12, 1.1, 0.24);
+      pOsc(ctx,d,'sine', 75, 22, 0.8, 0.20);
+      // Slide-heavy noise character (slow swell: SUB dominant, 3s sustained texture)
+      // Abbreviated to 0.25s swell
+      const sb=mkBrown(ctx,0.25);
+      const ss=ctx.createBufferSource(); ss.buffer=sb;
+      const slp=ctx.createBiquadFilter(); slp.type='lowpass'; slp.frequency.value=160;
+      const sg=ctx.createGain();
+      sg.gain.setValueAtTime(0.0001,now); sg.gain.linearRampToValueAtTime(0.7,now+0.06);
+      sg.gain.exponentialRampToValueAtTime(0.0001,now+0.28);
+      chain(ctx,[ss,slp,sg],d); ss.start(now); ss.stop(now+0.30);
+      // Stone debris mid
+      nBurst(ctx,d,{buf:mkPink(ctx,0.08), bpF:320, bpQ:0.6, g0:0.65, dur:0.08, delay:0.04});
+      // Surface crack chip
+      nBurst(ctx,d,{buf:mkNoise(ctx,0.04), bpF:600, bpQ:1.5, g0:0.45, dur:0.04, delay:0.02});
+      return 0.34;
+    }
+  }
+];
+
+// ─── DEATH SOUNDS ─────────────────────────────────────────────────────────────
+// Death = bigger, longer, multi-stage. SUB dominance throughout.
+// Inspired by: tectonic-slam (1.3s rumble), landing-shockwave (wave propagation),
+// slide-heavy (3s sustained), jump-stone-launch (mid-body crack).
+
+const deathDefs = [
+  {
+    name: 'TECTONIC COLLAPSE',
+    file: 'death-tectonic-collapse.wav',
+    desc: 'Full tectonic-slam death. Sub-bass obliteration, rumble decays over 1.5s.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      const dur=1.6;
+      // ① Core slam — tectonic-slam DNA (SUB 60Hz, 4.6ms attack, ZCvar 116k)
+      pOsc(ctx,d,'sine', 42, 10, 1.2, 0.55);
+      pOsc(ctx,d,'sine', 68, 16, 0.9, 0.45);
+      pOsc(ctx,d,'triangle', 95, 22, 0.6, 0.38);
+      // Brown noise body — sustained like tectonic-slam envelope
+      const bb=mkBrown(ctx,0.6);
+      const bs=ctx.createBufferSource(); bs.buffer=bb;
+      const blp=ctx.createBiquadFilter(); blp.type='lowpass'; blp.frequency.value=250;
+      const bdist=ctx.createWaveShaper(); bdist.curve=distCurve(10);
+      const bg=ctx.createGain();
+      bg.gain.setValueAtTime(1.1,now); bg.gain.exponentialRampToValueAtTime(0.0001,now+0.65);
+      chain(ctx,[bs,blp,bdist,bg],d); bs.start(now); bs.stop(now+0.66);
+      // ② Secondary shockwave (landing-shockwave: 150Hz, noisy)
+      pOsc(ctx,d,'sine', 148, 35, 0.7, 0.30, 0.12);
+      nBurst(ctx,d,{buf:mkPink(ctx,0.25), lpF:380, g0:0.7, dur:0.25, delay:0.10});
+      // ③ Rolling debris tail (slide-heavy: sustained 3s, sub/low)
+      const rb=mkBrown(ctx,0.8);
+      const rs=ctx.createBufferSource(); rs.buffer=rb;
+      const rlp=ctx.createBiquadFilter(); rlp.type='lowpass'; rlp.frequency.value=180;
+      const rg=ctx.createGain();
+      rg.gain.setValueAtTime(0.0001,now+0.30); rg.gain.linearRampToValueAtTime(0.5,now+0.45);
+      rg.gain.exponentialRampToValueAtTime(0.0001,now+1.55);
+      chain(ctx,[rs,rlp,rg],d); rs.start(now+0.30); rs.stop(now+1.56);
+      // ④ Stone crack fragments
+      [0.05,0.18,0.35,0.55].forEach((t,i)=>{
+        nBurst(ctx,d,{buf:mkPink(ctx,0.07), bpF:350+i*60, bpQ:0.9, g0:0.5-i*0.08, dur:0.07, delay:t});
+      });
+      return dur;
+    }
+  },
+  {
+    name: 'SHOCKWAVE DEATH',
+    file: 'death-shockwave-death.wav',
+    desc: 'Shockwave radiates from destroyed body. Rings out like the landing reference.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      const dur=1.4;
+      // ① Initial impact — instant (4.1ms like landing-shockwave)
+      pOsc(ctx,d,'sine', 55, 14, 1.1, 0.22);
+      pOsc(ctx,d,'sine', 140, 30, 0.9, 0.18);
+      nBurst(ctx,d,{buf:mkBrown(ctx,0.15), lpF:300, g0:1.0, dur:0.15});
+      // ② Shockwave rings — 3 concentric pulses
+      [0.0, 0.18, 0.38].forEach((t,i)=>{
+        const f=120-i*25;
+        pOsc(ctx,d,'sine', f, f*0.25, 0.65-i*0.15, 0.28-i*0.04, t);
+        nBurst(ctx,d,{buf:mkPink(ctx,0.20-i*0.04), lpF:350-i*40, g0:0.6-i*0.12, dur:0.20-i*0.04, delay:t});
+      });
+      // ③ Long sub resonance decay
+      pOsc(ctx,d,'sine', 38, 8, 0.5, 0.90, 0.18);
+      // ④ Ground noise swell
+      const gs=mkBrown(ctx,0.9);
+      const gn=ctx.createBufferSource(); gn.buffer=gs;
+      const glp=ctx.createBiquadFilter(); glp.type='lowpass'; glp.frequency.value=160;
+      const gg=ctx.createGain();
+      gg.gain.setValueAtTime(0.0001,now+0.15); gg.gain.linearRampToValueAtTime(0.4,now+0.32);
+      gg.gain.exponentialRampToValueAtTime(0.0001,now+1.35);
+      chain(ctx,[gn,glp,gg],d); gn.start(now+0.15); gn.stop(now+1.36);
+      return dur;
+    }
+  },
+  {
+    name: 'STONE CRUMBLE',
+    file: 'death-stone-crumble.wav',
+    desc: 'Heavy body crumbles into rubble. Mid-stone crack then rolling chunks.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      const dur=1.5;
+      // ① Stone launch crack (jump-stone-launch: MID 500Hz, noisy, 4.7ms)
+      const nb=mkNoise(ctx,0.12);
+      const ns=ctx.createBufferSource(); ns.buffer=nb;
+      const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=460; bp.Q.value=0.6;
+      const dist=ctx.createWaveShaper(); dist.curve=distCurve(7);
+      const ng=ctx.createGain();
+      ng.gain.setValueAtTime(1.0,now); ng.gain.exponentialRampToValueAtTime(0.0001,now+0.13);
+      chain(ctx,[ns,bp,dist,ng],d); ns.start(now); ns.stop(now+0.14);
+      // Sub thud
+      pOsc(ctx,d,'sine', 60, 18, 1.0, 0.20);
+      pOsc(ctx,d,'sine', 110, 28, 0.6, 0.16);
+      // ② 8 rolling stone chunks — staggered heavy thuds
+      for(let i=0;i<8;i++){
+        const t=0.08+i*0.14+Math.random()*0.05;
+        const f=55-i*4;
+        pOsc(ctx,d,'sine', Math.max(f,22), Math.max(f*0.3,8), 0.45-i*0.04, 0.12, t);
+        nBurst(ctx,d,{buf:mkPink(ctx,0.06), lpF:280-i*15, g0:0.35-i*0.03, dur:0.06, delay:t});
+      }
+      // ③ Dust/gravel hiss trail
+      const dn=mkPink(ctx,0.7);
+      const ds=ctx.createBufferSource(); ds.buffer=dn;
+      const dbp=ctx.createBiquadFilter(); dbp.type='bandpass'; dbp.frequency.value=220; dbp.Q.value=0.5;
+      const dg=ctx.createGain();
+      dg.gain.setValueAtTime(0.0001,now+0.20); dg.gain.linearRampToValueAtTime(0.3,now+0.35);
+      dg.gain.exponentialRampToValueAtTime(0.0001,now+1.45);
+      chain(ctx,[ds,dbp,dg],d); ds.start(now+0.20); ds.stop(now+1.46);
+      return dur;
+    }
+  },
+  {
+    name: 'IRON BURIAL',
+    file: 'death-iron-burial.wav',
+    desc: 'Sinks into the ground. Slow sub-bass swell inspired by slide-heavy sustained texture.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      const dur=1.8;
+      // ① Impact crack
+      pOsc(ctx,d,'sine', 62, 18, 1.1, 0.18);
+      nBurst(ctx,d,{buf:mkPink(ctx,0.10), lpF:400, g0:0.85, dur:0.10});
+      // ② Slow swell (slide-heavy: 317ms attack, sub-dominant, sustained)
+      // Sub burial tone — sinks and sustains
+      const buried=ctx.createOscillator(); buried.type='sine';
+      buried.frequency.setValueAtTime(55,now+0.08);
+      buried.frequency.exponentialRampToValueAtTime(22,now+0.8);
+      const bg=ctx.createGain();
+      bg.gain.setValueAtTime(0.0001,now+0.08);
+      bg.gain.linearRampToValueAtTime(0.85,now+0.35);   // slow attack like slide-heavy
+      bg.gain.exponentialRampToValueAtTime(0.0001,now+1.75);
+      buried.connect(bg); bg.connect(d);
+      buried.start(now+0.08); buried.stop(now+1.76);
+      // Brown noise swell — sustained like slide
+      const sb=mkBrown(ctx,1.4);
+      const ss=ctx.createBufferSource(); ss.buffer=sb;
+      const slp=ctx.createBiquadFilter(); slp.type='lowpass'; slp.frequency.value=140;
+      const sg=ctx.createGain();
+      sg.gain.setValueAtTime(0.0001,now+0.08);
+      sg.gain.linearRampToValueAtTime(0.55,now+0.40);
+      sg.gain.exponentialRampToValueAtTime(0.0001,now+1.72);
+      chain(ctx,[ss,slp,sg],d); ss.start(now+0.08); ss.stop(now+1.73);
+      // ③ Distant rumble echoes
+      [0.25,0.55,0.90].forEach((t,i)=>{
+        pOsc(ctx,d,'sine', 45-i*8, 12-i*2, 0.35-i*0.08, 0.25, t);
+      });
+      return dur;
+    }
+  },
+  {
+    name: 'RUBBLE AVALANCHE',
+    file: 'death-rubble-avalanche.wav',
+    desc: 'Breaks apart and cascades. Combines all 4 sound characters in sequence.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      const dur=1.7;
+      // ① Stone launch crack (jump-stone-launch MID 500Hz)
+      const c1=mkNoise(ctx,0.09);
+      nBurst(ctx,d,{buf:c1, bpF:500, bpQ:0.8, g0:1.0, dur:0.09});
+      // ② Tectonic sub hit (slam-tectonic SUB 60Hz)
+      pOsc(ctx,d,'sine', 45, 12, 1.1, 0.30, 0.02);
+      pOsc(ctx,d,'triangle', 80, 20, 0.7, 0.24, 0.02);
+      const bb=mkBrown(ctx,0.30);
+      nBurst(ctx,d,{buf:bb, lpF:200, g0:0.95, dur:0.30, delay:0.01});
+      // ③ Shockwave rings (landing-shockwave LOW 150Hz)
+      pOsc(ctx,d,'sine', 148, 32, 0.75, 0.25, 0.15);
+      nBurst(ctx,d,{buf:mkPink(ctx,0.20), lpF:350, g0:0.65, dur:0.20, delay:0.14});
+      // ④ Avalanche rumble swell (slide-heavy 3s, slow attack)
+      const rb=mkBrown(ctx,1.1);
+      const rs=ctx.createBufferSource(); rs.buffer=rb;
+      const rlp=ctx.createBiquadFilter(); rlp.type='lowpass'; rlp.frequency.value=160;
+      const rg=ctx.createGain();
+      rg.gain.setValueAtTime(0.0001,now+0.28); rg.gain.linearRampToValueAtTime(0.6,now+0.55);
+      rg.gain.exponentialRampToValueAtTime(0.0001,now+1.65);
+      chain(ctx,[rs,rlp,rg],d); rs.start(now+0.28); rs.stop(now+1.66);
+      // ⑤ Cascading stone chunks
+      for(let i=0;i<6;i++){
+        const t=0.18+i*0.18+Math.random()*0.06;
+        pOsc(ctx,d,'sine', 48-i*4, 14-i*2, 0.5-i*0.06, 0.14, t);
+        nBurst(ctx,d,{buf:mkPink(ctx,0.07), lpF:260, g0:0.35-i*0.04, dur:0.07, delay:t});
+      }
+      return dur;
+    }
+  },
+  {
+    name: 'EARTH SPLIT',
+    file: 'death-earth-split.wav',
+    desc: 'Ground splits open and swallows. Deepest sub-bass, longest decay.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      const dur=2.0;
+      // ① Split crack — stone mid burst
+      nBurst(ctx,d,{buf:mkNoise(ctx,0.10), bpF:420, bpQ:0.7, g0:1.1, dur:0.10});
+      // ② Sub sink — deepest possible (below slam reference at 42Hz)
+      pOsc(ctx,d,'sine', 38, 8, 1.2, 0.60);
+      pOsc(ctx,d,'sine', 55, 12, 0.9, 0.50);
+      pOsc(ctx,d,'sine', 28, 6, 0.7, 0.70);  // infra sub
+      // Tectonic brown noise — long
+      const tb=mkBrown(ctx,0.70);
+      const ts=ctx.createBufferSource(); ts.buffer=tb;
+      const tlp=ctx.createBiquadFilter(); tlp.type='lowpass'; tlp.frequency.value=220;
+      const tdist=ctx.createWaveShaper(); tdist.curve=distCurve(9);
+      const tg=ctx.createGain();
+      tg.gain.setValueAtTime(1.0,now); tg.gain.exponentialRampToValueAtTime(0.0001,now+0.75);
+      chain(ctx,[ts,tlp,tdist,tg],d); ts.start(now); ts.stop(now+0.76);
+      // ③ Shockwave pulse
+      pOsc(ctx,d,'sine', 130, 28, 0.7, 0.22, 0.10);
+      nBurst(ctx,d,{buf:mkPink(ctx,0.18), lpF:320, g0:0.65, dur:0.18, delay:0.09});
+      // ④ Deep sustained tomb — slow swell like slide-heavy
+      const eb=mkBrown(ctx,1.3);
+      const es=ctx.createBufferSource(); es.buffer=eb;
+      const elp=ctx.createBiquadFilter(); elp.type='lowpass'; elp.frequency.value=120;
+      const eg=ctx.createGain();
+      eg.gain.setValueAtTime(0.0001,now+0.35); eg.gain.linearRampToValueAtTime(0.7,now+0.70);
+      eg.gain.exponentialRampToValueAtTime(0.0001,now+1.95);
+      chain(ctx,[es,elp,eg],d); es.start(now+0.35); es.stop(now+1.96);
+      // ⑤ Rubble settling — fading pebble taps
+      for(let i=0;i<5;i++){
+        const t=0.60+i*0.22+Math.random()*0.08;
+        pOsc(ctx,d,'sine', 50-i*5, 15, 0.3-i*0.04, 0.10, t);
+      }
+      return dur;
+    }
+  }
+];
+
+// ─── Offline render & download ────────────────────────────────────────────────
+function renderAndDownload(def) {
+  const sr=44100;
+  const tmp=new(window.AudioContext||window.webkitAudioContext)();
+  const dur=def.gen(tmp,null); tmp.close();
+  const off=new OfflineAudioContext(1,Math.ceil(sr*(dur+0.3)),sr);
+  def.gen(off,off.destination);
+  off.startRendering().then(buf=>dlBuf(buf,def.file));
+}
+
+// ─── Build UI ─────────────────────────────────────────────────────────────────
+const grid=document.getElementById('grid');
+const BARS=26;
+
+for(let i=0;i<6;i++){
+  ['hurt','death'].forEach(type=>{
+    const def=type==='hurt'?hurtDefs[i]:deathDefs[i];
+    const card=document.createElement('div');
+    card.className=`card ${type}-card`; card.id=`card-${type}-${i}`;
+    const bars=Array.from({length:BARS},()=>{
+      const h=1+Math.random()*22;
+      return `<div class="wb" style="height:${h}px" data-h="${h}"></div>`;
+    }).join('');
+    card.innerHTML=`
+      <div class="rumble-bar"></div>
+      <div class="card-top">
+        <div class="card-meta">
+          <span class="card-tag">VAR ${String(i+1).padStart(2,'0')} · ${type.toUpperCase()}</span>
+          <span class="card-name">${def.name}</span>
+        </div>
+        <div class="rect-mini"></div>
+      </div>
+      <div class="waveform">${bars}</div>
+      <div class="card-desc">${def.desc}</div>
+      <div class="card-actions">
+        <button class="btn btn-play" onclick="preview('${type}',${i},this)">▶ PREVIEW</button>
+        <button class="btn btn-dl" title="Download WAV" onclick="renderAndDownload(${type==='hurt'?'hurtDefs':'deathDefs'}[${i}])">⬇</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ─── Preview ──────────────────────────────────────────────────────────────────
+const timers={};
+function preview(type,idx,btn){
+  const ctx=getCtx();
+  const def=type==='hurt'?hurtDefs[idx]:deathDefs[idx];
+  const card=document.getElementById(`card-${type}-${idx}`);
+  const bars=card.querySelectorAll('.wb');
+  const key=`${type}-${idx}`;
+  if(timers[key]){clearInterval(timers[key].a);clearTimeout(timers[key].s);}
+  card.classList.add('playing'); btn.textContent='■ RUMBLING';
+  timers[key]={};
+  timers[key].a=setInterval(()=>{
+    bars.forEach(b=>{
+      const h=parseFloat(b.dataset.h);
+      // Heavy: bars move slow and wide, not fast and thin
+      b.style.height=(h*(0.4+Math.random()*1.6))+'px';
+    });
+  },80);
+  const dur=def.gen(ctx,ctx.destination);
+  timers[key].s=setTimeout(()=>{
+    clearInterval(timers[key].a);
+    bars.forEach(b=>{b.style.height=b.dataset.h+'px';});
+    card.classList.remove('playing'); btn.textContent='▶ PREVIEW';
+  },dur*1000+200);
+}
+</script>
+</body>
+</html>

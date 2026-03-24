@@ -36,6 +36,9 @@ TagManager:
   - ChaserVisuals
   - EnemyHolder
   - PlatformsWithSpikes
+  - PlatformwithNoNodes
+  - MenuPanel
+  - OptionPanel
   layers:
   - Default
   - TransparentFX
@@ -58,7 +61,7 @@ TagManager:
   - PowerUps
   - MiniMapIcon
   - Spikes
-  - 
+  - PlatformithoutNodes
   - 
   - 
   - 

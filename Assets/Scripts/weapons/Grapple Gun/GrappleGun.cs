@@ -30,6 +30,10 @@ public class GrappleGun : MonoBehaviour, IUpdateObserver
     [Header("grapple Condition")]
     private bool _grappled = false;
 
+    [Header("Grapple Gun SFX")]
+    [SerializeField] private AudioClip _grappleShotDeploy;
+    
+
     #endregion
 
     private void OnEnable()
@@ -77,8 +81,10 @@ public class GrappleGun : MonoBehaviour, IUpdateObserver
                 {
                     _grapple.SetActive(false);
                     _grappleRopeConfigs.enabled = true;
+
+                    //Implementing the deploy SFX here
+                    SFXManager._instance.playSFX(_grappleShotDeploy, _firePoint.transform.position, 1f,false, false);
                 }
-                
             }
             else if(UserInputs.instance._playerInputs.Player.Fire.IsPressed())
             {
@@ -127,7 +133,9 @@ public class GrappleGun : MonoBehaviour, IUpdateObserver
 
 
         if (!hit)
+        {
             return false;
+        }
 
         // now we are storing the hit position (means wherever in the layer mask) to the grapplePoint which is nothing but the Vector2(x, y)
         _grapplePoint = hit.point;

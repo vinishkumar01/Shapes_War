@@ -53,6 +53,7 @@ public class PlayerDashState : PlayerState
             _player.RB.velocity = new Vector2(_player.RB.velocity.x, 0f);
 
             Dash();
+            SFXManager._instance.playSFX(_player._dashSoundClip, _player.transform.position, 1f, false, false);
         }
     }
 
@@ -126,7 +127,16 @@ public class PlayerDashState : PlayerState
 
         //If the player is not moving and pressed the Dash button we will make the player to dash on the direction its facing
         if (Mathf.Abs(XMove) < 0.01f)
-            XMove = _player.transform.localScale.x > 0 ? 1f : -1f;
+        {
+            if(_player.IsFacingRight)
+            {
+                XMove = 1f;
+            }
+            else if(!_player.IsFacingRight)
+            {
+                XMove = -1f;
+            }
+        }
 
         _player.RB.velocity = new Vector2(XMove * _playerDataSO.dashSpeed, 0);
 

@@ -29,17 +29,32 @@ public class PlayerMoveState : PlayerState
     {
         base.EnterState();
         _player._animator.SetBool("isMoving", true);
+
+        if (_player._isGrounded)
+        {
+            //SFXManager._instance.PlayMovementSoundFXClip(_player._slideSoundClip, _player.transform, 1f, true);
+            _player._audioSource.clip = _player._slideSoundClip;
+            _player._audioSource.Play();
+        }
     }
 
     public override void ExitState()
     {
         base.ExitState();
         _player._animator.SetBool("isMoving", false);
+
+        _player._audioSource.Stop();
     }
 
     public override void FrameUpdate()
     {
         base.FrameUpdate();
+
+        //Constantly check if the player is touching the ground to control the movement SFX
+        if (!_player._isGrounded)
+        {
+            _player._audioSource.Stop();
+        }
 
         MovePlayer();
 

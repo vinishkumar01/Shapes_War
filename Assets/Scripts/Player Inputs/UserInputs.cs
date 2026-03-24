@@ -4,6 +4,8 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Users;
 using UnityEngine.InputSystem.LowLevel;
+using UnityEngine.SceneManagement;
+using System.Linq;
 
 
 public class UserInputs : MonoBehaviour
@@ -32,16 +34,7 @@ public class UserInputs : MonoBehaviour
 
     private void Awake()
     {
-        if(instance == null)
-        {
-            instance = this;
-
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        instance = this;
 
         _playerInputs = new PlayerInputsScheme();
 
@@ -50,6 +43,7 @@ public class UserInputs : MonoBehaviour
 
     private void OnEnable()
     {
+
         _mainCamera = Camera.main;
         _currentMouse = Mouse.current;
 
@@ -91,6 +85,9 @@ public class UserInputs : MonoBehaviour
 
     private void UpdateMotion()
     {
+        if (_canvas == null || _cursorTransform == null)
+            return;
+
         //Control the cursor using Gamepad
         if (_virtualMouse != null && Gamepad.current != null)
         {
@@ -133,6 +130,11 @@ public class UserInputs : MonoBehaviour
 
     public void AnchorCursor(Vector2 position)
     {
+        if(_canvasRectTransform == null || _cursorTransform == null)
+        {
+            return;
+        }
+
         Vector2 anchoredPosition;
 
         // we can directly assign the anchored position to the new position but because of the different screen size we might not achieve the result we expect so we use this functionality from unity for it.
@@ -167,7 +169,11 @@ public class UserInputs : MonoBehaviour
     {
         //Unsubscribe from this event on Disable of the gameObject that this script is attached
         InputSystem.onAfterUpdate -= UpdateMotion;
-        _playerInput.onControlsChanged -= OnControlChanged;
+
+        if(_playerInput != null)
+        {
+            _playerInput.onControlsChanged -= OnControlChanged;
+        }
 
         if (_virtualMouse != null && _virtualMouse.added)
         {
@@ -175,6 +181,9 @@ public class UserInputs : MonoBehaviour
             InputSystem.RemoveDevice(_virtualMouse);
         }
 
-        _playerInputs.Disable();
+        if(_playerInput != null)
+        {
+            _playerInputs.Disable();
+        }
     }
 }

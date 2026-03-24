@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Triangle Slider — Missile Edition</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #07080f;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    min-height: 100vh;
+    font-family: 'Share Tech Mono', monospace;
+    overflow: hidden; color: #7efff5;
+    gap: 8px;
+  }
+  h1 { font-size: 1rem; letter-spacing: 0.3em; opacity: 0.6; margin: 0; }
+  canvas {
+    display: block;
+    border: 1px solid #1e2a3a; border-radius: 3px;
+    box-shadow: 0 0 40px #00ffe030, 0 0 80px #0044ff18;
+  }
+  #bottom {
+    display: flex; gap: 12px; align-items: flex-start;
+    width: 700px;
+  }
+  .panel {
+    background: #0b0f1a; border: 1px solid #162030;
+    border-radius: 4px; padding: 8px 10px;
+    font-size: 0.62rem; letter-spacing: 0.12em;
+  }
+  .panel-title {
+    color: #3a6680; margin-bottom: 6px;
+    font-size: 0.6rem; letter-spacing: 0.2em;
+  }
+  .var-row {
+    display: flex; gap: 5px; flex-wrap: wrap;
+  }
+  .var-btn {
+    background: #0f1825; border: 1px solid #1e3040;
+    color: #3a5a70; padding: 3px 7px; border-radius: 2px;
+    cursor: pointer; font-family: inherit; font-size: 0.6rem;
+    letter-spacing: 0.1em; transition: all 0.1s;
+  }
+  .var-btn:hover { border-color: #00ffe0; color: #7efff5; }
+  .var-btn.active { background: #0d2535; border-color: #00ffe0; color: #00ffe0; box-shadow: 0 0 6px #00ffe040; }
+  #hud-row {
+    display: flex; align-items: center; gap: 8px;
+    flex: 1; justify-content: flex-end;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #1e3040; transition: all 0.05s; }
+  .dot.slide-on  { background: #00ffe0; box-shadow: 0 0 8px #00ffe0; }
+  .dot.missile-on { background: #ff6020; box-shadow: 0 0 8px #ff6020; }
+  .bars { display: flex; gap: 2px; align-items: flex-end; height: 14px; }
+  .bar { width: 3px; background: #1e3040; border-radius: 1px; transition: height 0.07s, background 0.07s; }
+  .hint { font-size: 0.58rem; color: #2a4050; letter-spacing: 0.1em; }
+  .ammo-display { color: #ff8040; font-size: 0.62rem; letter-spacing: 0.15em; }
+
+  /* Download section */
+  .dl-section { margin-top: 8px; border-top: 1px solid #162030; padding-top: 7px; }
+  .dl-title { font-size: 0.55rem; color: #2a4555; letter-spacing: 0.18em; margin-bottom: 5px; }
+  .dl-row { display: flex; gap: 4px; flex-wrap: wrap; }
+  .dl-btn {
+    background: #0a1520; border: 1px solid #1a3040;
+    color: #2a6050; padding: 2px 6px; border-radius: 2px;
+    cursor: pointer; font-family: inherit; font-size: 0.55rem;
+    letter-spacing: 0.08em; transition: all 0.1s; display: flex; align-items: center; gap: 3px;
+  }
+  .dl-btn:hover { border-color: #00cc99; color: #00ffe0; background: #0d2030; }
+  .dl-btn.rendering { border-color: #ff8030; color: #ff8030; cursor: wait; animation: blink 0.6s infinite; }
+  .dl-btn.done { border-color: #00ff80; color: #00ff80; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .dl-icon { font-size: 0.7rem; line-height: 1; }
+</style>
+</head>
+<body>
+
+<h1>&#9655; TRIANGLE SLIDER — MISSILE EDITION</h1>
+<canvas id="c" width="700" height="360"></canvas>
+
+<div id="bottom">
+  <!-- Launch sound panel -->
+  <div class="panel">
+    <div class="panel-title">&#128280; LAUNCH SOUND</div>
+    <div class="var-row" id="launch-btns"></div>
+    <div class="dl-section">
+      <div class="dl-title">&#11015; DOWNLOAD WAV</div>
+      <div class="dl-row" id="launch-dl-btns"></div>
+    </div>
+  </div>
+  <!-- Travel sound panel -->
+  <div class="panel">
+    <div class="panel-title">&#127756; TRAVEL SOUND</div>
+    <div class="var-row" id="travel-btns"></div>
+    <div class="dl-section">
+      <div class="dl-title">&#11015; DOWNLOAD WAV</div>
+      <div class="dl-row" id="travel-dl-btns"></div>
+    </div>
+  </div>
+  <!-- Explosion sound panel -->
+  <div class="panel">
+    <div class="panel-title">&#128165; EXPLOSION SOUND</div>
+    <div class="var-row" id="explode-btns"></div>
+    <div class="dl-section">
+      <div class="dl-title">&#11015; DOWNLOAD WAV</div>
+      <div class="dl-row" id="explode-dl-btns"></div>
+    </div>
+  </div>
+  <!-- Jump sound panel -->
+  <div class="panel">
+    <div class="panel-title">&#11014; JUMP SOUND</div>
+    <div class="var-row" id="jump-btns"></div>
+    <div class="dl-section">
+      <div class="dl-title">&#11015; DOWNLOAD WAV</div>
+      <div class="dl-row" id="jump-dl-btns"></div>
+    </div>
+  </div>
+  <!-- HUD -->
+  <div class="panel" style="margin-left:auto;">
+    <div class="panel-title">STATUS</div>
+    <div id="hud-row">
+      <div class="dot" id="dot-slide"></div>
+      <span class="hint">SLIDE</span>
+      <div class="dot" id="dot-missile"></div>
+      <span class="hint">MISSILE</span>
+      <div class="bars">
+        <div class="bar" id="b1"></div><div class="bar" id="b2"></div>
+        <div class="bar" id="b3"></div><div class="bar" id="b4"></div>
+        <div class="bar" id="b5"></div>
+      </div>
+    </div>
+    <div style="margin-top:6px; font-size:0.58rem; color:#2a4050; letter-spacing:0.1em;">
+      MOVE: ←→ &nbsp; JUMP: SPACE/↑ &nbsp; FIRE: F/Z
+    </div>
+    <div id="ammo-disp" class="ammo-display" style="margin-top:4px;">AMMO: ∞</div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// AUDIO CONTEXT
+// ═══════════════════════════════════════════════════════════
+var audioCtx = null;
+function getAC() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function createNoise(ac, dur) {
+  dur = dur || 2;
+  var sz = ac.sampleRate * dur;
+  var buf = ac.createBuffer(1, sz, ac.sampleRate);
+  var d = buf.getChannelData(0);
+  for (var i = 0; i < sz; i++) d[i] = Math.random() * 2 - 1;
+  var src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
+  return src;
+}
+
+// ═══════════════════════════════════════════════════════════
+// SLIDE SOUND (unchanged)
+// ═══════════════════════════════════════════════════════════
+var slide = (function() {
+  var playing = false, ns = null, so = null, bp = null, hp = null, mg = null, an = null, fd = null;
+  function _start(speed) {
+    if (playing) return;
+    var ac = getAC(); if (ac.state === 'suspended') ac.resume();
+    mg = ac.createGain(); mg.gain.setValueAtTime(0, ac.currentTime); mg.gain.linearRampToValueAtTime(0.35, ac.currentTime + 0.04);
+    an = ac.createAnalyser(); an.fftSize = 64; fd = new Uint8Array(an.frequencyBinCount);
+    bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 600 + speed * 300; bp.Q.value = 1.8;
+    hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 400;
+    so = ac.createOscillator(); so.type = 'sine'; so.frequency.value = 3.5;
+    var sg = ac.createGain(); sg.gain.value = 180; so.connect(sg); sg.connect(bp.frequency); so.start();
+    ns = createNoise(ac, 2);
+    ns.connect(bp); bp.connect(hp); hp.connect(mg); mg.connect(an); an.connect(ac.destination);
+    ns.start(); playing = true;
+  }
+  function _stop() {
+    if (!playing) return;
+    var ac = getAC(); mg.gain.setTargetAtTime(0, ac.currentTime, 0.06);
+    var _ns = ns, _so = so; setTimeout(function(){ try{_ns.stop();_so.stop();}catch(e){} }, 300);
+    playing = false; ns = null; so = null;
+  }
+  return {
+    start: _start,
+    stop: _stop,
+    setSpeed: function(s) { if (!playing||!bp) return; bp.frequency.setTargetAtTime(500+s*400, getAC().currentTime, 0.05); mg.gain.setTargetAtTime(0.28+Math.min(s,2)*0.08, getAC().currentTime, 0.04); },
+    isPlaying: function() { return playing; },
+    getFreqData: function() { if (!an||!fd) return null; an.getByteFrequencyData(fd); return fd; }
+  };
+})();
+
+// ═══════════════════════════════════════════════════════════
+// MISSILE LAUNCH SOUND — 6 VARIANTS
+// ═══════════════════════════════════════════════════════════
+var launchVariants = [
+  {
+    name: 'THUMP BLAST',
+    // Deep punch + noise burst
+    play: function() {
+      var ac = getAC(); var t = ac.currentTime;
+      // Sub thump
+      var o = ac.createOscillator(); var g = ac.createGain();
+      o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(30, t+0.18);
+      g.gain.setValueAtTime(0.9, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.22);
+      o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t+0.25);
+      // Noise crack
+      var ns = createNoise(ac, 0.2);
+      var nbp = ac.createBiquadFilter(); nbp.type='bandpass'; nbp.frequency.value=2000; nbp.Q.value=0.8;
+      var ng = ac.createGain(); ng.gain.setValueAtTime(0.7, t); ng.gain.exponentialRampToValueAtTime(0.001, t+0.12);
+      ns.connect(nbp); nbp.connect(ng); ng.connect(ac.destination);
+      ns.start(t); ns.stop(t+0.14);
+    }
+  },
+  {
+    name: 'PLASMA POP',
+    // High-pitched zap with shimmer
+    play: function() {
+      var ac = getAC(); var t = ac.currentTime;
+      var o = ac.createOscillator(); var g = ac.createGain();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(900, t); o.frequency.exponentialRampToValueAtTime(3200, t+0.06);
+      o.frequency.exponentialRampToValueAtTime(400, t+0.18);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.5, t+0.015);
+      g.gain.exponentialRampToValueAtTime(0.001, t+0.2);
+      var dist = ac.createWaveShaper();
+      var curve = new Float32Array(256);
+      for(var i=0;i<256;i++){var x=i*2/255-1; curve[i]=Math.tanh(x*4);}
+      dist.curve = curve;
+      o.connect(dist); dist.connect(g); g.connect(ac.destination);
+      o.start(t); o.stop(t+0.22);
+    }
+  },
+  {
+    name: 'CANNON BOOM',
+    // Classic big cannon with reverb tail
+    play: function() {
+      var ac = getAC(); var t = ac.currentTime;
+      // Low boom
+      var o = ac.createOscillator(); var g = ac.createGain();
+      o.frequency.setValueAtTime(60, t); o.frequency.exponentialRampToValueAtTime(20, t+0.35);
+      g.gain.setValueAtTime(1.0, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.4);
+      o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t+0.42);
+      // Noise body
+      var ns = createNoise(ac, 0.5);
+      var lp = ac.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=600;
+      var ng = ac.createGain(); ng.gain.setValueAtTime(0.8, t); ng.gain.exponentialRampToValueAtTime(0.001, t+0.35);
+      ns.connect(lp); lp.connect(ng); ng.connect(ac.destination);
+      ns.start(t); ns.stop(t+0.38);
+      // High crack
+      var ns2 = createNoise(ac, 0.1);
+      var hbp = ac.createBiquadFilter(); hbp.type='highpass'; hbp.frequency.value=3000;
+      var ng2 = ac.createGain(); ng2.gain.setValueAtTime(0.4, t); ng2.gain.exponentialRampToValueAtTime(0.001, t+0.08);
+      ns2.connect(hbp); hbp.connect(ng2); ng2.connect(ac.destination);
+      ns2.start(t); ns2.stop(t+0.1);
+    }
+  },
+  {
+    name: 'SCI-FI ZAP',
+    // Retro sci-fi energy beam
+    play: function() {
+      var ac = getAC(); var t = ac.currentTime;
+      [0, 0.01, 0.02].forEach(function(dt, i) {
+        var o = ac.createOscillator(); var g = ac.createGain();
+        o.type = 'square';
+        o.frequency.setValueAtTime(200 + i*55, t+dt);
+        o.frequency.exponentialRampToValueAtTime(1800 + i*200, t+dt+0.08);
+        o.frequency.exponentialRampToValueAtTime(300, t+dt+0.22);
+        g.gain.setValueAtTime(0.25, t+dt); g.gain.exponentialRampToValueAtTime(0.001, t+dt+0.25);
+        var lp = ac.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=2000;
+        o.connect(lp); lp.connect(g); g.connect(ac.destination);
+        o.start(t+dt); o.stop(t+dt+0.28);
+      });
+    }
+  },
+  {
+    name: 'WHOMP FIRE',
+    // Low whomp + trailing hiss
+    play: function() {
+      var ac = getAC(); var t = ac.currentTime;
+      var o = ac.createOscillator(); var g = ac.createGain();
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(180, t); o.frequency.exponentialRampToValueAtTime(45, t+0.25);
+      g.gain.setValueAtTime(0.0, t); g.gain.linearRampToValueAtTime(0.8, t+0.025);
+      g.gain.exponentialRampToValueAtTime(0.001, t+0.3);
+      o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t+0.32);
+      // hiss
+      var ns = createNoise(ac, 0.4);
+      var bp = ac.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=4000; bp.Q.value=1.5;
+      var ng = ac.createGain(); ng.gain.setValueAtTime(0, t+0.02); ng.gain.linearRampToValueAtTime(0.3, t+0.06);
+      ng.gain.exponentialRampToValueAtTime(0.001, t+0.35);
+      ns.connect(bp); bp.connect(ng); ng.connect(ac.destination);
+      ns.start(t); ns.stop(t+0.38);
+    }
+  },
+  {
+    name: 'HYPER BURST',
+    // Fast multi-layer energy burst with pitch sweep
+    play: function() {
+      var ac = getAC(); var t = ac.currentTime;
+      // Fast upward sweep
+      var o = ac.createOscillator(); var g = ac.createGain();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(80, t); o.frequency.exponentialRampToValueAtTime(4000, t+0.07);
+      g.gain.setValueAtTime(0.6, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.1);
+      var lp = ac.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=3500;
+      o.connect(lp); lp.connect(g); g.connect(ac.destination); o.start(t); o.stop(t+0.12);
+      // Sub thud
+      var o2 = ac.createOscillator(); var g2 = ac.createGain();
+      o2.frequency.setValueAtTime(80, t); o2.frequency.exponentialRampToValueAtTime(22, t+0.15);
+      g2.gain.setValueAtTime(0.7, t); g2.gain.exponentialRampToValueAtTime(0.001, t+0.18);
+      o2.connect(g2); g2.connect(ac.destination); o2.start(t); o2.stop(t+0.2);
+      // Noise burst
+      var ns = createNoise(ac, 0.12);
+      var nhp = ac.createBiquadFilter(); nhp.type='highpass'; nhp.frequency.value=2500;
+      var ng = ac.createGain(); ng.gain.setValueAtTime(0.5, t); ng.gain.exponentialRampToValueAtTime(0.001, t+0.1);
+      ns.connect(nhp); nhp.connect(ng); ng.connect(ac.destination);
+      ns.start(t); ns.stop(t+0.12);
+    }
+  }
+];
+
+// ═══════════════════════════════════════════════════════════
+// MISSILE TRAVEL SOUND — 6 VARIANTS (looping, per missile)
+// ═══════════════════════════════════════════════════════════
+var travelVariants = [
+  {
+    name: 'JET HISS',
+    // Filtered noise roar — like a jet engine
+    start: function(ac) {
+      var mg = ac.createGain(); mg.gain.setValueAtTime(0, ac.currentTime); mg.gain.linearRampToValueAtTime(0.28, ac.currentTime+0.05);
+      var ns = createNoise(ac, 2);
+      var bp = ac.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1200; bp.Q.value=2;
+      var lfo = ac.createOscillator(); lfo.frequency.value=6;
+      var lfog = ac.createGain(); lfog.gain.value=180; lfo.connect(lfog); lfog.connect(bp.frequency); lfo.start();
+      ns.connect(bp); bp.connect(mg); mg.connect(ac.destination); ns.start();
+      return { nodes:[ns, lfo], gain: mg };
+    }
+  },
+  {
+    name: 'PLASMA WHIR',
+    // Oscillator + FM whirring
+    start: function(ac) {
+      var mg = ac.createGain(); mg.gain.setValueAtTime(0, ac.currentTime); mg.gain.linearRampToValueAtTime(0.22, ac.currentTime+0.06);
+      var car = ac.createOscillator(); car.type='sawtooth'; car.frequency.value=180;
+      var mod = ac.createOscillator(); mod.type='sine'; mod.frequency.value=42;
+      var modg = ac.createGain(); modg.gain.value=90; mod.connect(modg); modg.connect(car.frequency);
+      var lp = ac.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=900;
+      car.connect(lp); lp.connect(mg); mg.connect(ac.destination);
+      car.start(); mod.start();
+      return { nodes:[car, mod], gain: mg };
+    }
+  },
+  {
+    name: 'ROCKET ROAR',
+    // Two-layer noise: low rumble + high sizzle
+    start: function(ac) {
+      var mg = ac.createGain(); mg.gain.setValueAtTime(0, ac.currentTime); mg.gain.linearRampToValueAtTime(0.32, ac.currentTime+0.06);
+      var ns1 = createNoise(ac, 2);
+      var lp = ac.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=350;
+      var g1 = ac.createGain(); g1.gain.value=0.8; ns1.connect(lp); lp.connect(g1); g1.connect(mg);
+      var ns2 = createNoise(ac, 2);
+      var hp = ac.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=3500;
+      var g2 = ac.createGain(); g2.gain.value=0.4; ns2.connect(hp); hp.connect(g2); g2.connect(mg);
+      mg.connect(ac.destination); ns1.start(); ns2.start();
+      return { nodes:[ns1, ns2], gain: mg };
+    }
+  },
+  {
+    name: 'LASER BUZZ',
+    // Square-wave buzz with vibrato
+    start: function(ac) {
+      var mg = ac.createGain(); mg.gain.setValueAtTime(0, ac.currentTime); mg.gain.linearRampToValueAtTime(0.18, ac.currentTime+0.04);
+      var o = ac.createOscillator(); o.type='square'; o.frequency.value=320;
+      var vib = ac.createOscillator(); vib.frequency.value=22;
+      var vibg = ac.createGain(); vibg.gain.value=35; vib.connect(vibg); vibg.connect(o.frequency);
+      var bp = ac.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=900; bp.Q.value=1.2;
+      o.connect(bp); bp.connect(mg); mg.connect(ac.destination); o.start(); vib.start();
+      return { nodes:[o, vib], gain: mg };
+    }
+  },
+  {
+    name: 'WIND SCREAM',
+    // Rising noise filtered sweep — like wind tearing past
+    start: function(ac) {
+      var mg = ac.createGain(); mg.gain.setValueAtTime(0, ac.currentTime); mg.gain.linearRampToValueAtTime(0.25, ac.currentTime+0.06);
+      var ns = createNoise(ac, 2);
+      var bp = ac.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=800; bp.Q.value=3;
+      var lfo = ac.createOscillator(); lfo.type='sawtooth'; lfo.frequency.value=2.5;
+      var lfog = ac.createGain(); lfog.gain.value=600; lfo.connect(lfog); lfog.connect(bp.frequency); lfo.start();
+      ns.connect(bp); bp.connect(mg); mg.connect(ac.destination); ns.start();
+      return { nodes:[ns, lfo], gain: mg };
+    }
+  },
+  {
+    name: 'PULSE DRIVE',
+    // Rhythmic pulsing tone — like a thruster
+    start: function(ac) {
+      var mg = ac.createGain(); mg.gain.setValueAtTime(0, ac.currentTime); mg.gain.linearRampToValueAtTime(0.24, ac.currentTime+0.05);
+      var o = ac.createOscillator(); o.type='triangle'; o.frequency.value=240;
+      var trm = ac.createOscillator(); trm.frequency.value=18;
+      var trmg = ac.createGain(); trmg.gain.value=0.5; trm.connect(trmg); trmg.connect(mg.gain);
+      var lp = ac.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=1200;
+      o.connect(lp); lp.connect(mg); mg.connect(ac.destination); o.start(); trm.start();
+      return { nodes:[o, trm], gain: mg };
+    }
+  }
+];
+
+// ─── Active variant indices ───────────────────────────────
+var launchIdx  = 0;
+var travelIdx  = 0;
+var explodeIdx = 0;
+
+// ═══════════════════════════════════════════════════════════
+// MISSILE EXPLOSION SOUND — 6 VARIANTS
+// ═══════════════════════════════════════════════════════════
+var explodeVariants = [
+  {
+    name: 'CLASSIC BOOM',
+    // The timeless low-freq explosion: thud body + rumble tail + debris crack
+    play: function() {
+      var ac = getAC(); var t = ac.currentTime;
+      // Core sub boom — deep pitch drop
+      var o = ac.createOscillator(); var og = ac.createGain();
+      o.frequency.setValueAtTime(90, t); o.frequency.exponentialRampToValueAtTime(18, t+0.5);
+      og.gain.setValueAtTime(1.0, t); og.gain.exponentialRampToValueAtTime(0.001, t+0.55);
+      o.connect(og); og.connect(ac.destination); o.start(t); o.stop(t+0.58);
+      // Noise rumble body
+      var ns = createNoise(ac, 1); var lp = ac.createBiquadFilter();
+      lp.type='lowpass'; lp.frequency.value=420;
+      var ng = ac.createGain(); ng.gain.setValueAtTime(0.85, t); ng.gain.exponentialRampToValueAtTime(0.001, t+0.7);
+      ns.connect(lp); lp.connect(ng); ng.connect(ac.destination); ns.start(t); ns.stop(t+0.75);
+      // High debris crack
+      var ns2 = createNoise(ac, 0.12); var hp = ac.createBiquadFilter();
+      hp.type='highpass'; hp.frequency.value=3500;
+      var ng2 = ac.createGain(); ng2.gain.setValueAtTime(0.55, t); ng2.gain.exponentialRampToValueAtTime(0.001, t+0.1);
+      ns2.connect(hp); hp.connect(ng2); ng2.connect(ac.destination); ns2.start(t); ns2.stop(t+0.12);
+    }
+  },
+  {
+    name: 'PLASMA BURST',
+    // Sci-fi energy discharge: electric crackle + rising whine snap
+    play: function() {
+      var ac = getAC(); var t = ac.currentTime;
+      // Sharp electric snap — fast downward sweep
+      var o = ac.createOscillator(); var og = ac.createGain();
+      o.type='sawtooth';
+      o.frequency.setValueAtTime(2800, t); o.frequency.exponentialRampToValueAtTime(120, t+0.22);
+      og.gain.setValueAtTime(0, t); og.gain.linearRampToValueAtTime(0.7, t+0.01);
+      og.gain.exponentialRampToValueAtTime(0.001, t+0.28);
+      var dist = ac.createWaveShaper(); var crv = new Float32Array(256);
+      for(var i=0;i<256;i++){var x=i*2/255-1;crv[i]=Math.tanh(x*6);} dist.curve=crv;
+      o.connect(dist); dist.connect(og); og.connect(ac.destination); o.start(t); o.stop(t+0.3);
+      // Crackle noise burst
+      var ns = createNoise(ac, 0.35); var bp = ac.createBiquadFilter();
+      bp.type='bandpass'; bp.frequency.value=1800; bp.Q.value=1.2;
+      var ng = ac.createGain(); ng.gain.setValueAtTime(0.6, t); ng.gain.exponentialRampToValueAtTime(0.001, t+0.3);
+      ns.connect(bp); bp.connect(ng); ng.connect(ac.destination); ns.start(t); ns.stop(t+0.32);
+      // Tail hiss
+      var ns3 = createNoise(ac, 0.5); var hp2 = ac.createBiquadFilter();
+      hp2.type='highpass'; hp2.frequency.value=2000;
+      var ng3 = ac.createGain(); ng3.gain.setValueAtTime(0, t+0.08); ng3.gain.linearRampToValueAtTime(0.3, t+0.14);
+      ng3.gain.exponentialRampToValueAtTime(0.001, t+0.5);
+      ns3.connect(hp2); hp2.connect(ng3); ng3.connect(ac.destination); ns3.start(t); ns3.stop(t+0.52);
+    }
+  },
+  {
+    name: 'MEGA BLAST',
+    // Huge layered explosion with shockwave feel — multiple impact layers
+    play: function() {
+      var ac = getAC(); var t = ac.currentTime;
+      // Layer 1: initial shockwave crack
+      var ns1 = createNoise(ac, 0.08); var hp1 = ac.createBiquadFilter();
+      hp1.type='highpass'; hp1.frequency.value=4000;
+      var ng1 = ac.createGain(); ng1.gain.setValueAtTime(0.9, t); ng1.gain.exponentialRampToValueAtTime(0.001, t+0.06);
+      ns1.connect(hp1); hp1.connect(ng1); ng1.connect(ac.destination); ns1.start(t); ns1.stop(t+0.08);
+      // Layer 2: low thump 30ms later
+      var o = ac.createOscillator(); var og = ac.createGain();
+      o.frequency.setValueAtTime(65, t+0.03); o.frequency.exponentialRampToValueAtTime(14, t+0.6);
+      og.gain.setValueAtTime(1.0, t+0.03); og.gain.exponentialRampToValueAtTime(0.001, t+0.65);
+      o.connect(og); og.connect(ac.destination); o.start(t+0.03); o.stop(t+0.68);
+      // Layer 3: full-spectrum noise rumble
+      var ns2 = createNoise(ac, 1.2); var lp = ac.createBiquadFilter();
+      lp.type='lowpass'; lp.frequency.value=700;
+      var ng2 = ac.createGain(); ng2.gain.setValueAtTime(0, t+0.03); ng2.gain.linearRampToValueAtTime(0.9, t+0.08);
+      ng2.gain.exponentialRampToValueAtTime(0.001, t+1.1);
+      ns2.connect(lp); lp.connect(ng2); ng2.connect(ac.destination); ns2.start(t); ns2.stop(t+1.15);
+      // Layer 4: mid crunch
+      var ns3 = createNoise(ac, 0.5); var bp = ac.createBiquadFilter();
+      bp.type='bandpass'; bp.frequency.value=900; bp.Q.value=0.8;
+      var ng3 = ac.createGain(); ng3.gain.setValueAtTime(0.5, t+0.02); ng3.gain.exponentialRampToValueAtTime(0.001, t+0.45);
+      ns3.connect(bp); bp.connect(ng3); ng3.connect(ac.destination); ns3.start(t); ns3.stop(t+0.48);
+    }
+  },
+  {
+    name: 'RETRO POP',
+    // 8-bit style square-wave explosion with descending arpeggio
+    play: function() {
+      var ac = getAC(); var t = ac.currentTime;
+      // Descending square sweeps — staggered
+      var freqs = [880, 660, 440, 220, 110];
+      freqs.forEach(function(f, i) {
+        var o = ac.createOscillator(); var og = ac.createGain();
+        o.type = 'square';
+        o.frequency.setValueAtTime(f, t + i*0.04);
+        o.frequency.exponentialRampToValueAtTime(f * 0.3, t + i*0.04 + 0.12);
+        og.gain.setValueAtTime(0.28, t + i*0.04);
+        og.gain.exponentialRampToValueAtTime(0.001, t + i*0.04 + 0.14);
+        var lp = ac.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=1800;
+        o.connect(lp); lp.connect(og); og.connect(ac.destination);
+        o.start(t + i*0.04); o.stop(t + i*0.04 + 0.16);
+      });
+      // Low pulse thud underneath
+      var o2 = ac.createOscillator(); var og2 = ac.createGain();
+      o2.type='square'; o2.frequency.setValueAtTime(55, t);
+      o2.frequency.exponentialRampToValueAtTime(22, t+0.25);
+      og2.gain.setValueAtTime(0.5, t); og2.gain.exponentialRampToValueAtTime(0.001, t+0.28);
+      o2.connect(og2); og2.connect(ac.destination); o2.start(t); o2.stop(t+0.3);
+    }
+  },
+  {
+    name: 'DEEP THUD',
+    // Subsonic impact — pure low-end destruction, felt more than heard
+    play: function() {
+      var ac = getAC(); var t = ac.currentTime;
+      // Ultra-low fundamental
+      var o = ac.createOscillator(); var og = ac.createGain();
+      o.frequency.setValueAtTime(50, t); o.frequency.exponentialRampToValueAtTime(12, t+0.8);
+      og.gain.setValueAtTime(1.0, t); og.gain.exponentialRampToValueAtTime(0.001, t+0.9);
+      // Waveshaper to add harmonics so low freq is audible on small speakers
+      var ws = ac.createWaveShaper(); var crv2 = new Float32Array(512);
+      for(var j=0;j<512;j++){var x=j*2/511-1; crv2[j]=x*Math.abs(x);}
+      ws.curve=crv2;
+      o.connect(ws); ws.connect(og); og.connect(ac.destination); o.start(t); o.stop(t+0.92);
+      // Low bandpass noise swell
+      var ns = createNoise(ac, 1.2); var lp = ac.createBiquadFilter();
+      lp.type='lowpass'; lp.frequency.value=280;
+      var ng = ac.createGain(); ng.gain.setValueAtTime(0, t); ng.gain.linearRampToValueAtTime(0.7, t+0.05);
+      ng.gain.exponentialRampToValueAtTime(0.001, t+0.85);
+      ns.connect(lp); lp.connect(ng); ng.connect(ac.destination); ns.start(t); ns.stop(t+0.88);
+      // Transient high crack at start
+      var ns2 = createNoise(ac, 0.05); var hp = ac.createBiquadFilter();
+      hp.type='highpass'; hp.frequency.value=5000;
+      var ng2 = ac.createGain(); ng2.gain.setValueAtTime(0.65, t); ng2.gain.exponentialRampToValueAtTime(0.001, t+0.04);
+      ns2.connect(hp); hp.connect(ng2); ng2.connect(ac.destination); ns2.start(t); ns2.stop(t+0.05);
+    }
+  },
+  {
+    name: 'SHATTER BURST',
+    // Glass + metal fragmentation: sharp high-frequency shards + mid crunch
+    play: function() {
+      var ac = getAC(); var t = ac.currentTime;
+      // Multiple sharp metallic ring tones (inharmonic)
+      var ringFreqs = [1340, 2100, 3780, 890, 5200, 1680];
+      ringFreqs.forEach(function(f, i) {
+        var o = ac.createOscillator(); var og = ac.createGain();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(f, t); o.frequency.linearRampToValueAtTime(f * 0.85, t+0.4);
+        og.gain.setValueAtTime(0.18 + Math.random()*0.12, t);
+        og.gain.exponentialRampToValueAtTime(0.001, t + 0.15 + Math.random()*0.35);
+        o.connect(og); og.connect(ac.destination); o.start(t); o.stop(t+0.55);
+      });
+      // Broadband noise burst (the "mass" of the explosion)
+      var ns = createNoise(ac, 0.6); var bp = ac.createBiquadFilter();
+      bp.type='bandpass'; bp.frequency.value=2200; bp.Q.value=0.6;
+      var ng = ac.createGain(); ng.gain.setValueAtTime(0.7, t); ng.gain.exponentialRampToValueAtTime(0.001, t+0.35);
+      ns.connect(bp); bp.connect(ng); ng.connect(ac.destination); ns.start(t); ns.stop(t+0.38);
+      // Low thud anchor
+      var o2 = ac.createOscillator(); var og2 = ac.createGain();
+      o2.frequency.setValueAtTime(75, t); o2.frequency.exponentialRampToValueAtTime(22, t+0.3);
+      og2.gain.setValueAtTime(0.8, t); og2.gain.exponentialRampToValueAtTime(0.001, t+0.35);
+      o2.connect(og2); og2.connect(ac.destination); o2.start(t); o2.stop(t+0.38);
+    }
+  }
+];
+
+// ─── Jump index
+var jumpIdx = 0;
+
+// ═══════════════════════════════════════════════════════════
+// JUMP SOUND — 6 VARIANTS
+// ═══════════════════════════════════════════════════════════
+var jumpVariants = [
+  {
+    name: 'SPRING BOING',
+    // Classic rubbery spring bounce — quick upward pitch sweep with bouncy tail
+    play: function() {
+      var ac = getAC(); var t = ac.currentTime;
+      // Rising sine sweep — the "boing"
+      var o = ac.createOscillator(); var g = ac.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(180, t);
+      o.frequency.exponentialRampToValueAtTime(620, t + 0.12);
+      o.frequency.exponentialRampToValueAtTime(480, t + 0.22);
+      g.gain.setValueAtTime(0.0, t); g.gain.linearRampToValueAtTime(0.55, t + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+      o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.3);
+      // Soft thud on takeoff
+      var o2 = ac.createOscillator(); var g2 = ac.createGain();
+      o2.frequency.setValueAtTime(90, t); o2.frequency.exponentialRampToValueAtTime(40, t + 0.06);
+      g2.gain.setValueAtTime(0.35, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+      o2.connect(g2); g2.connect(ac.destination); o2.start(t); o2.stop(t + 0.1);
+    }
+  },
+  {
+    name: 'SCI-FI LIFT',
+    // Futuristic energy burst — short upward synth blip with a shimmer
+    play: function() {
+      var ac = getAC(); var t = ac.currentTime;
+      // Fast upward sawtooth sweep
+      var o = ac.createOscillator(); var g = ac.createGain();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(220, t);
+      o.frequency.exponentialRampToValueAtTime(1100, t + 0.1);
+      g.gain.setValueAtTime(0.0, t); g.gain.linearRampToValueAtTime(0.4, t + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      var lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2200;
+      var dist = ac.createWaveShaper(); var crv = new Float32Array(256);
+      for (var i = 0; i < 256; i++) { var x = i*2/255-1; crv[i] = Math.tanh(x*3); } dist.curve = crv;
+      o.connect(dist); dist.connect(lp); lp.connect(g); g.connect(ac.destination);
+      o.start(t); o.stop(t + 0.2);
+      // High shimmer tail
+      var o2 = ac.createOscillator(); var g2 = ac.createGain();
+      o2.type = 'sine'; o2.frequency.setValueAtTime(1800, t + 0.08);
+      o2.frequency.exponentialRampToValueAtTime(3200, t + 0.22);
+      g2.gain.setValueAtTime(0.18, t + 0.08); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+      o2.connect(g2); g2.connect(ac.destination); o2.start(t + 0.08); o2.stop(t + 0.3);
+    }
+  },
+  {
+    name: 'POWER LEAP',
+    // Heavy athletic jump — low thump push-off + whoosh of air
+    play: function() {
+      var ac = getAC(); var t = ac.currentTime;
+      // Thump — low impact of leg push
+      var o = ac.createOscillator(); var g = ac.createGain();
+      o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(38, t + 0.14);
+      g.gain.setValueAtTime(0.7, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.2);
+      // Air whoosh rising
+      var ns = createNoise(ac, 0.4);
+      var bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 600; bp.Q.value = 2.5;
+      // Sweep the whoosh upward
+      bp.frequency.setValueAtTime(400, t + 0.04);
+      bp.frequency.linearRampToValueAtTime(2000, t + 0.28);
+      var ng = ac.createGain(); ng.gain.setValueAtTime(0.0, t); ng.gain.linearRampToValueAtTime(0.32, t + 0.06);
+      ng.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+      ns.connect(bp); bp.connect(ng); ng.connect(ac.destination); ns.start(t); ns.stop(t + 0.32);
+    }
+  },
+  {
+    name: 'PIXEL HOP',
+    // Retro 8-bit square blip — short, punchy, nostalgic
+    play: function() {
+      var ac = getAC(); var t = ac.currentTime;
+      var o = ac.createOscillator(); var g = ac.createGain();
+      o.type = 'square';
+      o.frequency.setValueAtTime(260, t);
+      o.frequency.setValueAtTime(390, t + 0.04);
+      o.frequency.setValueAtTime(520, t + 0.08);
+      o.frequency.setValueAtTime(310, t + 0.11);
+      g.gain.setValueAtTime(0.38, t); g.gain.setValueAtTime(0.38, t + 0.11);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+      var lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1400;
+      o.connect(lp); lp.connect(g); g.connect(ac.destination);
+      o.start(t); o.stop(t + 0.18);
+    }
+  },
+  {
+    name: 'GLIDE LAUNCH',
+    // Smooth airy launch — gentle tone sweep that floats upward
+    play: function() {
+      var ac = getAC(); var t = ac.currentTime;
+      // Soft triangle sweep
+      var o = ac.createOscillator(); var g = ac.createGain();
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(300, t);
+      o.frequency.exponentialRampToValueAtTime(900, t + 0.18);
+      g.gain.setValueAtTime(0.0, t); g.gain.linearRampToValueAtTime(0.42, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
+      // Chorus by layering a detuned twin
+      var o2 = ac.createOscillator(); var g2 = ac.createGain();
+      o2.type = 'triangle';
+      o2.frequency.setValueAtTime(306, t);
+      o2.frequency.exponentialRampToValueAtTime(912, t + 0.18);
+      g2.gain.setValueAtTime(0.0, t); g2.gain.linearRampToValueAtTime(0.28, t + 0.02);
+      g2.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
+      var lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3000;
+      o.connect(lp); o2.connect(lp); lp.connect(g); lp.connect(g2);
+      g.connect(ac.destination); g2.connect(ac.destination);
+      o.start(t); o2.start(t); o.stop(t + 0.35); o2.stop(t + 0.35);
+    }
+  },
+  {
+    name: 'TURBO BOOST',
+    // Explosive high-energy rocket-style jump — aggressive downward thrust noise + fast pitch spike
+    play: function() {
+      var ac = getAC(); var t = ac.currentTime;
+      // Fast pitch spike up then release
+      var o = ac.createOscillator(); var g = ac.createGain();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(80, t);
+      o.frequency.exponentialRampToValueAtTime(2200, t + 0.06);
+      o.frequency.exponentialRampToValueAtTime(600, t + 0.16);
+      g.gain.setValueAtTime(0.55, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+      var lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2800;
+      o.connect(lp); lp.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.22);
+      // Sub kick punch
+      var o2 = ac.createOscillator(); var g2 = ac.createGain();
+      o2.frequency.setValueAtTime(120, t); o2.frequency.exponentialRampToValueAtTime(28, t + 0.12);
+      g2.gain.setValueAtTime(0.8, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+      o2.connect(g2); g2.connect(ac.destination); o2.start(t); o2.stop(t + 0.17);
+      // Noise thrust burst
+      var ns = createNoise(ac, 0.15);
+      var hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 1800;
+      var ng = ac.createGain(); ng.gain.setValueAtTime(0.45, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+      ns.connect(hp); hp.connect(ng); ng.connect(ac.destination); ns.start(t); ns.stop(t + 0.14);
+    }
+  }
+];
+
+// Build buttons
+function buildButtons(variants, containerId, indexRef, setFn) {
+  var cont = document.getElementById(containerId);
+  variants.forEach(function(v, i) {
+    var btn = document.createElement('button');
+    btn.className = 'var-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = (i+1) + ': ' + v.name;
+    btn.dataset.i = i;
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('#'+containerId+' .var-btn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      setFn(i);
+    });
+    cont.appendChild(btn);
+  });
+}
+buildButtons(launchVariants,  'launch-btns',  launchIdx,  function(i){ launchIdx  = i; });
+buildButtons(travelVariants,  'travel-btns',  travelIdx,  function(i){ travelIdx  = i; });
+buildButtons(explodeVariants, 'explode-btns', explodeIdx, function(i){ explodeIdx = i; });
+buildButtons(jumpVariants,    'jump-btns',    jumpIdx,    function(i){ jumpIdx    = i; });
+
+// ═══════════════════════════════════════════════════════════
+// WAV EXPORTER — offline render + download
+// ═══════════════════════════════════════════════════════════
+
+// Encode Float32 PCM → WAV Blob
+function encodeWAV(samples, sampleRate) {
+  var numCh = 1, bitsPerSample = 16;
+  var byteRate = sampleRate * numCh * bitsPerSample / 8;
+  var blockAlign = numCh * bitsPerSample / 8;
+  var dataLen = samples.length * 2; // 16-bit = 2 bytes each
+  var buf = new ArrayBuffer(44 + dataLen);
+  var view = new DataView(buf);
+  function writeStr(o, s) { for (var i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); }
+  writeStr(0, 'RIFF');
+  view.setUint32(4, 36 + dataLen, true);
+  writeStr(8, 'WAVE');
+  writeStr(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);          // PCM
+  view.setUint16(22, numCh, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, byteRate, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, bitsPerSample, true);
+  writeStr(36, 'data');
+  view.setUint32(40, dataLen, true);
+  var offset = 44;
+  for (var i = 0; i < samples.length; i++) {
+    var s = Math.max(-1, Math.min(1, samples[i]));
+    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+    offset += 2;
+  }
+  return new Blob([buf], { type: 'audio/wav' });
+}
+
+function triggerDownload(blob, filename) {
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+}
+
+// Render a launch sound offline (short, ~0.5s)
+function renderLaunchVariant(variant, durationSec, callback) {
+  var SR = 44100;
+  var frames = Math.ceil(SR * durationSec);
+  var offCtx = new OfflineAudioContext(1, frames, SR);
+
+  // Re-implement the variant's play() using offCtx
+  // We pass offCtx as the "ac" — variants use getAC() so we temporarily override
+  var savedAC = audioCtx;
+  audioCtx = offCtx;
+  variant.play();
+  audioCtx = savedAC;
+
+  offCtx.startRendering().then(function(renderedBuf) {
+    callback(renderedBuf.getChannelData(0), SR);
+  }).catch(function(e){ console.error(e); });
+}
+
+// Render a travel sound offline (loop for duration)
+function renderTravelVariant(variant, durationSec, callback) {
+  var SR = 44100;
+  var frames = Math.ceil(SR * durationSec);
+  var offCtx = new OfflineAudioContext(1, frames, SR);
+
+  var savedAC = audioCtx;
+  audioCtx = offCtx;
+  var ts = variant.start(offCtx);
+  audioCtx = savedAC;
+
+  offCtx.startRendering().then(function(renderedBuf) {
+    // Fade out last 0.1s of the rendered audio to avoid click
+    var data = renderedBuf.getChannelData(0);
+    var fadeFrames = Math.floor(SR * 0.12);
+    for (var i = 0; i < fadeFrames; i++) {
+      data[frames - 1 - i] *= i / fadeFrames;
+    }
+    callback(data, SR);
+  }).catch(function(e){ console.error(e); });
+}
+
+// Build download buttons
+function buildDownloadButtons(variants, containerId, type) {
+  var cont = document.getElementById(containerId);
+  variants.forEach(function(v, i) {
+    var btn = document.createElement('button');
+    btn.className = 'dl-btn';
+    btn.innerHTML = '<span class="dl-icon">&#11015;</span>' + (i+1) + ':' + v.name.split(' ')[0];
+    btn.title = 'Download ' + v.name + ' as WAV';
+    btn.addEventListener('click', function() {
+      if (btn.classList.contains('rendering')) return;
+      btn.classList.add('rendering');
+      btn.innerHTML = '<span class="dl-icon">&#8987;</span>RENDERING…';
+
+      function onDone(samples, sr) {
+        var blob = encodeWAV(samples, sr);
+        var fname = type + '_' + (i+1) + '_' + v.name.replace(/\s+/g,'-').toLowerCase() + '.wav';
+        triggerDownload(blob, fname);
+        btn.classList.remove('rendering');
+        btn.classList.add('done');
+        btn.innerHTML = '<span class="dl-icon">&#10003;</span>SAVED!';
+        setTimeout(function(){
+          btn.classList.remove('done');
+          btn.innerHTML = '<span class="dl-icon">&#11015;</span>' + (i+1) + ':' + v.name.split(' ')[0];
+        }, 2200);
+      }
+
+      if (type === 'launch' || type === 'explode' || type === 'jump') {
+        renderLaunchVariant(v, 1.3, onDone);
+      } else {
+        renderTravelVariant(v, 2.5, onDone);
+      }
+    });
+    cont.appendChild(btn);
+  });
+}
+
+buildDownloadButtons(launchVariants,  'launch-dl-btns',  'launch');
+buildDownloadButtons(travelVariants,  'travel-dl-btns',  'travel');
+buildDownloadButtons(explodeVariants, 'explode-dl-btns', 'explode');
+buildDownloadButtons(jumpVariants,    'jump-dl-btns',    'jump');
+
+// ═══════════════════════════════════════════════════════════
+// GAME
+// ═══════════════════════════════════════════════════════════
+var canvas = document.getElementById('c');
+var ctx2 = canvas.getContext('2d');
+var W = canvas.width, H = canvas.height;
+
+var platforms = [
+  { x:0,   y:320, w:700, h:40 },
+  { x:80,  y:242, w:120, h:14 },
+  { x:260, y:185, w:100, h:14 },
+  { x:420, y:140, w:130, h:14 },
+  { x:560, y:222, w:100, h:14 },
+  { x:180, y:292, w:80,  h:14 },
+  { x:350, y:272, w:90,  h:14 },
+];
+var movingPlatforms = [
+  { x:130, y:118, w:90, h:14, dx:1.2, minX:60,  maxX:300 },
+  { x:450, y:88,  w:80, h:14, dx:-0.9, minX:380, maxX:580 },
+];
+
+var player = { x:60, y:270, w:30, h:30, vx:0, vy:0, onGround:false, facingRight:true };
+var GRAVITY=0.45, MOVE_SPEED=3.8, JUMP_FORCE=-10.2, FRICTION=0.82;
+
+var keys = {};
+window.addEventListener('keydown', function(e){ keys[e.code]=true; });
+window.addEventListener('keyup',   function(e){ keys[e.code]=false; });
+
+// ─── Missiles ────────────────────────────────────────────
+var missiles = [];
+var MISSILE_SPEED = 7;
+var fireCooldown = 0;
+var FIRE_COOLDOWN_MAX = 18; // frames
+
+function fireMissile() {
+  var ac = getAC();
+  // Launch sound
+  launchVariants[launchIdx].play();
+  // Travel sound
+  var ts = travelVariants[travelIdx].start(ac);
+  var tipX = player.x + player.w / 2;
+  var tipY = player.y;
+  // Direction: aim upward + slight horizontal bias from movement
+  var angle = -Math.PI/2 + (player.vx * 0.12);
+  missiles.push({
+    x: tipX, y: tipY,
+    vx: Math.cos(angle) * MISSILE_SPEED,
+    vy: Math.sin(angle) * MISSILE_SPEED,
+    life: 1,
+    age: 0,
+    trail: [],
+    travelSound: ts,
+    dead: false
+  });
+}
+
+function killMissile(m) {
+  if (m.dead) return;
+  m.dead = true;
+  // Fade travel sound
+  if (m.travelSound) {
+    var g = m.travelSound.gain;
+    var ac = getAC();
+    g.gain.setTargetAtTime(0, ac.currentTime, 0.05);
+    m.travelSound.nodes.forEach(function(n){ setTimeout(function(){ try{n.stop();}catch(e){} }, 200); });
+  }
+  // Explosion sound
+  explodeVariants[explodeIdx].play();
+  // Explosion particles
+  for (var i = 0; i < 22; i++) {
+    var ang = Math.random() * Math.PI * 2;
+    var spd = 1.5 + Math.random() * 4;
+    explosionParticles.push({
+      x: m.x, y: m.y,
+      vx: Math.cos(ang)*spd, vy: Math.sin(ang)*spd,
+      life: 1, decay: 0.025 + Math.random()*0.025,
+      size: 2 + Math.random()*4,
+      hot: Math.random() > 0.4
+    });
+  }
+}
+
+// ─── Particles ───────────────────────────────────────────
+var slideParticles = [];
+var explosionParticles = [];
+
+function spawnSlide(x, y, vx) {
+  slideParticles.push({ x:x, y:y, vx:(Math.random()-0.5)*1.5-vx*0.15, vy:-Math.random()*1.8-0.5, life:1, decay:0.045+Math.random()*0.03, size:2+Math.random()*2.5 });
+}
+
+// ─── Collision ───────────────────────────────────────────
+function resolve(p, plat) {
+  var pr=p.x+p.w, pb=p.y+p.h, platR=plat.x+plat.w, platB=plat.y+plat.h;
+  if(pr<=plat.x||p.x>=platR||pb<=plat.y||p.y>=platB) return;
+  var oL=pr-plat.x, oR=platR-p.x, oT=pb-plat.y, oB=platB-p.y;
+  var mn=Math.min(oL,oR,oT,oB);
+  if(mn===oT&&p.vy>=0){p.y=plat.y-p.h;p.vy=0;p.onGround=true;}
+  else if(mn===oB&&p.vy<0){p.y=platB;p.vy=0;}
+  else if(mn===oL){p.x=plat.x-p.w;p.vx=0;}
+  else if(mn===oR){p.x=platR;p.vx=0;}
+}
+
+// ─── Draw ────────────────────────────────────────────────
+function drawBG() {
+  ctx2.fillStyle='#07080f'; ctx2.fillRect(0,0,W,H);
+  ctx2.strokeStyle='rgba(0,70,110,0.12)'; ctx2.lineWidth=1;
+  for(var gx=0;gx<W;gx+=40){ctx2.beginPath();ctx2.moveTo(gx,0);ctx2.lineTo(gx,H);ctx2.stroke();}
+  for(var gy=0;gy<H;gy+=40){ctx2.beginPath();ctx2.moveTo(0,gy);ctx2.lineTo(W,gy);ctx2.stroke();}
+  for(var i=0;i<H;i+=4){ctx2.fillStyle='rgba(0,0,0,0.13)';ctx2.fillRect(0,i,W,2);}
+}
+
+function drawPlatform(x,y,w,h,moving) {
+  var gr=ctx2.createLinearGradient(x,y,x,y+h);
+  gr.addColorStop(0,moving?'#1a3a55':'#122030'); gr.addColorStop(1,moving?'#0d2035':'#0a1520');
+  ctx2.fillStyle=gr; ctx2.fillRect(x,y,w,h);
+  ctx2.fillStyle=moving?'rgba(0,200,255,0.5)':'rgba(0,255,200,0.3)'; ctx2.fillRect(x,y,w,2);
+}
+
+function drawTriangle(x,y,w,h,glow) {
+  var tipX=x+w/2, tipY=y, baseY=y+h;
+  ctx2.save();
+  if(glow>0){ctx2.shadowBlur=18+glow*14; ctx2.shadowColor='rgba(0,255,224,'+(0.4+glow*0.4)+')';}
+  ctx2.beginPath(); ctx2.moveTo(tipX,tipY); ctx2.lineTo(x+w,baseY); ctx2.lineTo(x,baseY); ctx2.closePath();
+  var gr=ctx2.createLinearGradient(x,y,x+w,y+h);
+  gr.addColorStop(0,'rgba(0,255,224,'+(0.9+glow*0.1)+')');
+  gr.addColorStop(1,'rgba(0,140,255,'+(0.7+glow*0.2)+')');
+  ctx2.fillStyle=gr; ctx2.fill();
+  ctx2.strokeStyle='rgba(180,255,255,'+(0.6+glow*0.3)+')'; ctx2.lineWidth=1.5; ctx2.stroke();
+  ctx2.restore();
+}
+
+function drawMissile(m) {
+  // Trail
+  m.trail.forEach(function(pt, i) {
+    var t = i / m.trail.length;
+    ctx2.save();
+    ctx2.globalAlpha = t * 0.55 * m.life;
+    ctx2.beginPath();
+    ctx2.arc(pt.x, pt.y, (1 + t * 3) * m.life, 0, Math.PI*2);
+    ctx2.fillStyle = t > 0.6 ? '#ff6020' : '#ffcc00';
+    ctx2.shadowBlur = 8; ctx2.shadowColor = '#ff6020';
+    ctx2.fill();
+    ctx2.restore();
+  });
+  // Body glow
+  ctx2.save();
+  ctx2.shadowBlur = 16; ctx2.shadowColor = '#ff8030';
+  // Missile body: small elongated shape along velocity
+  var spd = Math.sqrt(m.vx*m.vx+m.vy*m.vy);
+  var nx = m.vx/spd, ny = m.vy/spd;
+  var len = 9, rad = 3;
+  ctx2.beginPath();
+  ctx2.ellipse(m.x - nx*len*0.3, m.y - ny*len*0.3, rad, len/2, Math.atan2(m.vy, m.vx)+Math.PI/2, 0, Math.PI*2);
+  var gr = ctx2.createLinearGradient(m.x-nx*len, m.y-ny*len, m.x+nx*2, m.y+ny*2);
+  gr.addColorStop(0,'#ffee60'); gr.addColorStop(0.4,'#ff8020'); gr.addColorStop(1,'#cc2000');
+  ctx2.fillStyle = gr;
+  ctx2.fill();
+  ctx2.restore();
+}
+
+function drawExplosionParticles() {
+  explosionParticles.forEach(function(p) {
+    ctx2.save();
+    ctx2.globalAlpha = p.life * 0.85;
+    ctx2.shadowBlur = 10; ctx2.shadowColor = p.hot ? '#ff8020' : '#ffcc00';
+    ctx2.beginPath();
+    ctx2.arc(p.x, p.y, p.size * p.life, 0, Math.PI*2);
+    ctx2.fillStyle = p.hot ? '#ff5010' : '#ffdd20';
+    ctx2.fill();
+    ctx2.restore();
+  });
+}
+
+// ─── HUD ─────────────────────────────────────────────────
+var dotSlide   = document.getElementById('dot-slide');
+var dotMissile = document.getElementById('dot-missile');
+var bars = [1,2,3,4,5].map(function(i){ return document.getElementById('b'+i); });
+
+function updateHUD(isMoving, anyMissile, freqData) {
+  dotSlide.className   = 'dot' + (isMoving   ? ' slide-on'   : '');
+  dotMissile.className = 'dot' + (anyMissile ? ' missile-on' : '');
+  bars.forEach(function(b,i){
+    if ((isMoving||anyMissile) && freqData) {
+      var val = freqData[i*2]/255;
+      var hh = Math.max(3, val*14);
+      b.style.height = hh+'px';
+      b.style.background = anyMissile ? 'rgba(255,120,30,'+(0.4+val*0.6)+')' : 'rgba(0,255,224,'+(0.4+val*0.6)+')';
+    } else { b.style.height='3px'; b.style.background='#1e3040'; }
+  });
+}
+
+// ─── Main Loop ───────────────────────────────────────────
+var frame = 0;
+var prevMoving = false;
+
+function gameLoop() {
+  frame++;
+
+  // Moving platforms
+  movingPlatforms.forEach(function(mp){ mp.x+=mp.dx; if(mp.x<mp.minX||mp.x+mp.w>mp.maxX) mp.dx*=-1; });
+
+  // Input
+  var left  = keys['ArrowLeft']  || keys['KeyA'];
+  var right = keys['ArrowRight'] || keys['KeyD'];
+  var jump  = keys['Space'] || keys['ArrowUp'] || keys['KeyW'];
+  var fire  = keys['KeyF'] || keys['KeyZ'];
+
+  player.onGround = false;
+  if(left){player.vx-=1.4;} if(right){player.vx+=1.4;}
+  if(!left&&!right) player.vx*=FRICTION;
+  player.vx=Math.max(-MOVE_SPEED,Math.min(MOVE_SPEED,player.vx));
+  player.vy+=GRAVITY; player.x+=player.vx; player.y+=player.vy;
+
+  platforms.forEach(function(p){resolve(player,p);});
+  movingPlatforms.forEach(function(p){resolve(player,p);});
+
+  if(jump&&player.onGround) { player.vy=JUMP_FORCE; jumpVariants[jumpIdx].play(); }
+  if(player.x<0){player.x=0;player.vx=0;}
+  if(player.x+player.w>W){player.x=W-player.w;player.vx=0;}
+  if(player.y>H+50){player.y=260;player.x=60;player.vy=0;}
+
+  // Fire
+  if(fireCooldown>0) fireCooldown--;
+  if(fire && fireCooldown===0){ fireMissile(); fireCooldown=FIRE_COOLDOWN_MAX; }
+
+  // Update missiles
+  missiles.forEach(function(m){
+    if(m.dead) return;
+    m.trail.push({x:m.x, y:m.y});
+    if(m.trail.length>18) m.trail.shift();
+    m.x+=m.vx; m.y+=m.vy;
+    m.age++;
+    if(m.x<-10||m.x>W+10||m.y<-10||m.y>H+10||m.age>240) killMissile(m);
+  });
+  missiles = missiles.filter(function(m){ return !m.dead||m.trail.length>0; });
+
+  // Slide sound
+  var isMoving = player.onGround && Math.abs(player.vx)>0.5;
+  var speed = Math.abs(player.vx);
+  if(isMoving&&!prevMoving) slide.start(speed);
+  else if(!isMoving&&prevMoving) slide.stop();
+  else if(isMoving) slide.setSpeed(speed);
+  prevMoving = isMoving;
+
+  // Slide particles
+  if(isMoving&&frame%2===0){
+    var px=player.x+player.w/2+(Math.random()-0.5)*player.w*0.6;
+    spawnSlide(px, player.y+player.h, player.vx);
+  }
+  slideParticles.forEach(function(p){p.x+=p.vx;p.y+=p.vy;p.vy+=0.07;p.life-=p.decay;});
+  slideParticles=slideParticles.filter(function(p){return p.life>0;});
+  explosionParticles.forEach(function(p){p.x+=p.vx;p.y+=p.vy;p.vy+=0.06;p.vx*=0.93;p.life-=p.decay;});
+  explosionParticles=explosionParticles.filter(function(p){return p.life>0;});
+
+  // ── Render ──
+  drawBG();
+  platforms.forEach(function(p){drawPlatform(p.x,p.y,p.w,p.h,false);});
+  movingPlatforms.forEach(function(p){drawPlatform(p.x,p.y,p.w,p.h,true);});
+
+  // Slide particles
+  slideParticles.forEach(function(p){
+    ctx2.save(); ctx2.globalAlpha=p.life*0.7;
+    ctx2.fillStyle='rgba(0,255,200,1)';
+    ctx2.shadowBlur=6; ctx2.shadowColor='#00ffe0';
+    ctx2.beginPath(); ctx2.arc(p.x,p.y,p.size*p.life,0,Math.PI*2); ctx2.fill();
+    ctx2.restore();
+  });
+
+  drawExplosionParticles();
+
+  // Draw missiles (behind player)
+  missiles.forEach(function(m){ if(!m.dead) drawMissile(m); });
+
+  // Player
+  var glow = isMoving ? speed/MOVE_SPEED : 0;
+  drawTriangle(player.x, player.y, player.w, player.h, glow);
+
+  // Fire cooldown arc on player tip
+  if(fireCooldown>0){
+    var prog = 1 - fireCooldown/FIRE_COOLDOWN_MAX;
+    var tipX = player.x+player.w/2, tipY = player.y;
+    ctx2.save();
+    ctx2.strokeStyle='rgba(255,150,40,0.7)'; ctx2.lineWidth=2;
+    ctx2.beginPath(); ctx2.arc(tipX, tipY, 7, -Math.PI/2, -Math.PI/2 + prog*Math.PI*2);
+    ctx2.stroke(); ctx2.restore();
+  }
+
+  // Speed label
+  if(isMoving){
+    ctx2.save(); ctx2.globalAlpha=0.5; ctx2.font='9px Share Tech Mono';
+    ctx2.fillStyle='#00ffe0'; ctx2.fillText(speed.toFixed(1)+' u/s', player.x, player.y-6);
+    ctx2.restore();
+  }
+
+  var anyMissile = missiles.some(function(m){return !m.dead;});
+  document.getElementById('ammo-disp').textContent = 'MISSILES: ' + missiles.filter(function(m){return !m.dead;}).length + ' ACTIVE';
+  updateHUD(isMoving, anyMissile, slide.getFreqData());
+  requestAnimationFrame(gameLoop);
+}
+
+// ─── Start ───────────────────────────────────────────────
+var started = false;
+function initFrame() {
+  drawBG();
+  platforms.forEach(function(p){drawPlatform(p.x,p.y,p.w,p.h,false);});
+  movingPlatforms.forEach(function(p){drawPlatform(p.x,p.y,p.w,p.h,true);});
+  drawTriangle(60, 270, 30, 30, 0);
+  ctx2.save(); ctx2.font='14px Share Tech Mono'; ctx2.fillStyle='rgba(0,255,224,0.5)';
+  ctx2.textAlign='center';
+  ctx2.fillText('PRESS ANY KEY OR CLICK TO START', W/2, H/2-8);
+  ctx2.font='10px Share Tech Mono'; ctx2.fillStyle='rgba(255,120,40,0.45)';
+  ctx2.fillText('F / Z  TO FIRE MISSILES', W/2, H/2+12);
+  ctx2.restore();
+}
+function startGame() {
+  if(started) return; started=true; getAC(); gameLoop();
+}
+window.addEventListener('keydown', startGame, {once:true});
+canvas.addEventListener('click', startGame);
+initFrame();
+</script>
+</body>
+</html>

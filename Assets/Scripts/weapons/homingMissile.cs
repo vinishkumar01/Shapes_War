@@ -13,6 +13,9 @@ public class homingMissile : MonoBehaviour, IDamageable, IUpdateObserver, IFixed
     [SerializeField] private LayerMask playerLayer;
     private FlashEffect _flashEffect;
     private GameObject _ownerTracer;
+    private AudioSource _audioSource;
+
+    private Transform _cameraTransform;
 
     [Header("Missile Configs")]
     [SerializeField] int MissileSpeed = 10;
@@ -37,6 +40,9 @@ public class homingMissile : MonoBehaviour, IDamageable, IUpdateObserver, IFixed
 
     [Header("Explosion Effect")]
     [SerializeField] private GameObject explosionPrefab;
+
+    [Header("SFX")]
+    [SerializeField] private AudioClip _missileExplosionEffect;
 
     public int MaxHealth { get => MissileMaxHealth; set => MissileMaxHealth = value; }
     public int CurrentHealth { get => MissileCurrentHealth; set => MissileCurrentHealth = value; }
@@ -69,6 +75,7 @@ public class homingMissile : MonoBehaviour, IDamageable, IUpdateObserver, IFixed
     {
         rb = GetComponent<Rigidbody2D>();
         _flashEffect = GetComponent<FlashEffect>();
+        _audioSource = GetComponent<AudioSource>();
 
         if(playerTransform == null)
         {
@@ -93,6 +100,13 @@ public class homingMissile : MonoBehaviour, IDamageable, IUpdateObserver, IFixed
         if(playerTransform != null)
         {
             FollowPlayer();
+
+            //Applying missile travel sound effect
+            if(!_audioSource.isPlaying)
+            {
+                _audioSource.Play();
+            }
+            
         }
     }
 
@@ -114,7 +128,57 @@ public class homingMissile : MonoBehaviour, IDamageable, IUpdateObserver, IFixed
     public void Die()
     {
         ReturnToPoolOnce();
+
+        if(_audioSource.isPlaying)
+        {
+            _audioSource.Stop();
+        }
     }
+
+    #region Spatial Effect
+
+    bool isInsideCameraView()
+    {
+        Vector3 viewPortPos = Camera.main.WorldToViewportPoint(transform.position);
+
+        return viewPortPos.x >= 0 && viewPortPos.x <= 1 && viewPortPos.y >= 0 && viewPortPos.y <= 1;
+    }
+
+    private void UpdateMissileAudioSource()
+    {
+        if (_cameraTransform == null)
+        {
+            //getting the camera transform
+            _cameraTransform = Camera.main.transform;
+        }
+
+        if (_audioSource == null || !_audioSource.isPlaying)
+        { return; }
+
+        float dx = transform.position.x - _cameraTransform.position.x;
+        float distance = Mathf.Abs(dx);
+
+        //Volume based on distance
+        float maxDistance = 10f;
+
+        float volume = 1f - Mathf.Clamp01(distance / maxDistance);
+
+        if (isInsideCameraView())
+        {
+            volume = Mathf.Max(volume, 0.4f);
+            _audioSource.panStereo = 0f;
+        }
+
+
+        volume = Mathf.SmoothStep(0f, 1f, volume);
+        _audioSource.volume = volume;
+
+        // left right panning
+        float pan = Mathf.Clamp(dx / maxDistance, -1f, 1f);
+        _audioSource.panStereo = pan;
+    }
+
+    #endregion
 
     void FollowPlayer()
     {
@@ -130,6 +194,8 @@ public class homingMissile : MonoBehaviour, IDamageable, IUpdateObserver, IFixed
     public void ObservedUpdate()
     {
         DrawCircleAroundMissile();
+        UpdateMissileAudioSource();
+
     }
 
     void DrawCircleAroundMissile()
@@ -167,6 +233,8 @@ public class homingMissile : MonoBehaviour, IDamageable, IUpdateObserver, IFixed
     void ExplosionEffect()
     {
         GameObject explosion = PoolManager.SpawnObject(explosionPrefab, transform.position, Quaternion.identity, PoolManager.PoolType.GameObjects);
+
+        SFXManager._instance.playSFX(_missileExplosionEffect, transform.position, 1f, true, false);
     }
 
     void ReturnToPoolOnce()

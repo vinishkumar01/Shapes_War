@@ -5,11 +5,20 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
-    path: Assets/Scenes/Test Area -Scenes/Test_Area 2.unity
+  - enabled: 1
+    path: Assets/Scenes/Scenes/Menu Scene.unity
+    guid: 64c2a695b8bc75a409a6bb2ddebe7d5e
+  - enabled: 1
+    path: Assets/Scenes/Scenes/Loading Screen.unity
+    guid: 3045a44d4339e3343903fb7d47578aa3
+  - enabled: 1
+    path: Assets/Scenes/Scenes/Tutorial.unity
+    guid: 2e4505d67e195fe40b4c0c9ad9a8ce95
+  - enabled: 1
+    path: Assets/Scenes/Scenes/abandoned City.unity
     guid: a767439d3ea280b4587b7de3e5f37faa
   - enabled: 1
-    path: Assets/Scenes/Test Area -Scenes/UnderGround - Area.unity
+    path: Assets/Scenes/Scenes/UnderGround - Area.unity
     guid: 9bd913208d260054182d0d3f1c874e0a
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 967aeff9f7ab66a4dbd18b10aac3dbc0, type: 3}

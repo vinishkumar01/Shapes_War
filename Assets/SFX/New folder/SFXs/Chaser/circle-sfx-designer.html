@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Circle SFX Designer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --bg:         #0a0f1a;
+    --panel:      #111827;
+    --border:     #1f2d45;
+    --hurt:       #ffb347;
+    --hurt-glow:  #ff8c00;
+    --hurt-dim:   #3a2200;
+    --death:      #60efb0;
+    --death-glow: #00c875;
+    --death-dim:  #003a22;
+    --text:       #ccd6f6;
+    --muted:      #4a5578;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    padding: 30px 18px 50px;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, #1a2a4a44 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, #0a2a1a33 0%, transparent 50%);
+  }
+
+  /* ── Header ── */
+  header {
+    text-align: center;
+    margin-bottom: 38px;
+  }
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 8px;
+  }
+  .circle-icon {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: conic-gradient(var(--hurt), var(--death), var(--hurt));
+    animation: spin 4s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  header h1 {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+    background: linear-gradient(90deg, var(--hurt), var(--death));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  header p {
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 4px;
+    margin-top: 4px;
+  }
+
+  /* ── Section headers ── */
+  .section-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    max-width: 860px;
+    margin: 0 auto 12px;
+  }
+  .section-label {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 0.7rem;
+    letter-spacing: 5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-left: 4px;
+  }
+  .section-label .pip {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .hurt-label  { color: var(--hurt);  }
+  .hurt-label  .pip { background: var(--hurt);  box-shadow: 0 0 8px var(--hurt-glow); }
+  .death-label { color: var(--death); }
+  .death-label .pip { background: var(--death); box-shadow: 0 0 8px var(--death-glow); }
+
+  /* ── Grid ── */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .card::after {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .hurt-card::after  { background: radial-gradient(circle, var(--hurt) 0%, transparent 70%); }
+  .death-card::after { background: radial-gradient(circle, var(--death) 0%, transparent 70%); }
+  .card.playing::after { opacity: 0.12; }
+  .hurt-card.playing  { border-color: var(--hurt);  box-shadow: 0 0 20px #ffb34730; }
+  .death-card.playing { border-color: var(--death); box-shadow: 0 0 20px #60efb030; }
+
+  /* Card top row */
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .card-meta { display: flex; flex-direction: column; gap: 3px; }
+  .card-tag {
+    font-size: 0.58rem;
+    letter-spacing: 3px;
+    color: var(--muted);
+  }
+  .card-name {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 0.9rem;
+    line-height: 1.1;
+  }
+  .hurt-card  .card-name { color: var(--hurt); }
+  .death-card .card-name { color: var(--death); }
+
+  /* Bouncy ball icon per card */
+  .ball-icon {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: transform 0.1s;
+  }
+  .hurt-card  .ball-icon { background: radial-gradient(circle at 35% 35%, #ffd580, var(--hurt-glow)); }
+  .death-card .ball-icon { background: radial-gradient(circle at 35% 35%, #a0ffdc, var(--death-glow)); }
+  .card.playing .ball-icon { transform: scale(1.25); }
+
+  /* Waveform */
+  .waveform {
+    height: 32px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .wb {
+    flex: 1;
+    border-radius: 2px;
+    transition: height 0.06s;
+    min-height: 2px;
+  }
+  .hurt-card  .wb { background: var(--hurt);  opacity: 0.5; }
+  .death-card .wb { background: var(--death); opacity: 0.5; }
+  .card.playing .wb { opacity: 1; }
+
+  /* Desc */
+  .card-desc {
+    font-size: 0.63rem;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    line-height: 1.6;
+  }
+
+  /* Buttons */
+  .card-actions { display: flex; gap: 8px; }
+  .btn {
+    border: none; border-radius: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.15s;
+    padding: 9px 0;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+  }
+  .btn-play {
+    flex: 1;
+    background: transparent;
+    border: 1.5px solid currentColor;
+  }
+  .hurt-card  .btn-play { color: var(--hurt); }
+  .death-card .btn-play { color: var(--death); }
+  .hurt-card  .btn-play:hover { background: var(--hurt-dim); }
+  .death-card .btn-play:hover { background: var(--death-dim); }
+  .btn-play.active { font-weight: bold; }
+
+  .btn-dl {
+    flex: 0 0 42px;
+    background: var(--border);
+    color: var(--muted);
+    border: 1.5px solid transparent;
+  }
+  .btn-dl:hover { background: #2a3a55; color: var(--text); }
+
+  footer {
+    text-align: center;
+    margin-top: 32px;
+    font-size: 0.6rem;
+    color: var(--muted);
+    letter-spacing: 3px;
+  }
+
+  @media (max-width: 580px) {
+    .grid, .section-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="circle-icon"></div>
+    <h1>CIRCLE SFX DESIGNER</h1>
+    <div class="circle-icon" style="animation-direction:reverse"></div>
+  </div>
+  <p>HURT × 6 &nbsp;·&nbsp; DEATH × 6 &nbsp;·&nbsp; BOUNCY / ELASTIC STYLE</p>
+</header>
+
+<div class="section-row">
+  <div class="section-label hurt-label"><span class="pip"></span>HURT SOUNDS</div>
+  <div class="section-label death-label"><span class="pip"></span>DEATH SOUNDS</div>
+</div>
+
+<div class="grid" id="grid"></div>
+<footer>▶ PREVIEW &nbsp;|&nbsp; ⬇ DOWNLOAD WAV &nbsp;|&nbsp; CIRCLE CHARACTER · ELASTIC STYLE</footer>
+
+<script>
+// ─── Audio Context ───────────────────────────────────────────────────────────
+let actx = null;
+const getCtx = () => { if (!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); return actx; };
+
+// ─── WAV Encoder ─────────────────────────────────────────────────────────────
+function encodeWAV(buf) {
+  const sr=buf.sampleRate, s=buf.getChannelData(0), n=s.length;
+  const ab=new ArrayBuffer(44+n*2), v=new DataView(ab);
+  const ws=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i));};
+  ws(0,'RIFF');v.setUint32(4,36+n*2,true);ws(8,'WAVE');ws(12,'fmt ');
+  v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);
+  v.setUint16(32,2,true);v.setUint16(34,16,true);
+  ws(36,'data');v.setUint32(40,n*2,true);
+  let o=44;
+  for(let i=0;i<n;i++){const x=Math.max(-1,Math.min(1,s[i]));v.setInt16(o,x<0?x*0x8000:x*0x7FFF,true);o+=2;}
+  return ab;
+}
+
+function dlBuffer(buf, name) {
+  const blob=new Blob([encodeWAV(buf)],{type:'audio/wav'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=name;a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function noise(ctx, dur) {
+  const n=Math.ceil(ctx.sampleRate*dur), b=ctx.createBuffer(1,n,ctx.sampleRate);
+  const d=b.getChannelData(0); for(let i=0;i<n;i++) d[i]=Math.random()*2-1; return b;
+}
+
+// Sine with pitchEnv: [{t, freq}]
+function boingOsc(ctx, dest, type, pitchEnv, gainEnv, dur) {
+  const o=ctx.createOscillator(); o.type=type;
+  pitchEnv.forEach(({t,f})=> o.frequency.setValueAtTime(f, ctx.currentTime+t));
+  pitchEnv.forEach(({t,f,ramp},i)=> {
+    if(ramp==='exp' && i<pitchEnv.length-1) o.frequency.exponentialRampToValueAtTime(pitchEnv[i+1].f, ctx.currentTime+pitchEnv[i+1].t);
+    if(ramp==='lin' && i<pitchEnv.length-1) o.frequency.linearRampToValueAtTime(pitchEnv[i+1].f, ctx.currentTime+pitchEnv[i+1].t);
+  });
+  const g=ctx.createGain();
+  gainEnv.forEach(({t,v,ramp},i)=>{
+    g.gain.setValueAtTime(v, ctx.currentTime+t);
+    if(ramp==='exp'&&i<gainEnv.length-1) g.gain.exponentialRampToValueAtTime(Math.max(0.0001,gainEnv[i+1].v), ctx.currentTime+gainEnv[i+1].t);
+    if(ramp==='lin'&&i<gainEnv.length-1) g.gain.linearRampToValueAtTime(gainEnv[i+1].v, ctx.currentTime+gainEnv[i+1].t);
+  });
+  o.connect(g); g.connect(dest||ctx.destination);
+  o.start(ctx.currentTime); o.stop(ctx.currentTime+dur+0.05);
+}
+
+function chain(ctx, nodes, dest) {
+  for(let i=0;i<nodes.length-1;i++) nodes[i].connect(nodes[i+1]);
+  nodes[nodes.length-1].connect(dest||ctx.destination);
+}
+
+// ─── HURT SOUNDS — Bouncy/Elastic style ──────────────────────────────────────
+// Reference: boing is tonal 162→658Hz rising, roll is low 54–110Hz rumble
+// Hurt = quick elastic squish impact — springy bounce interrupted/cut short
+
+const hurtDefs = [
+  {
+    name: 'SQUISH SMACK',
+    file: 'hurt-squish-smack.wav',
+    desc: 'Rubbery slap + pitch drop. Like the circle getting squashed flat.',
+    gen(ctx, dest) {
+      const d = dest || ctx.destination;
+      // Boing going DOWN (reverse of the jump boing: starts high, drops)
+      boingOsc(ctx, d, 'sine',
+        [{t:0,f:520,ramp:'exp'},{t:0.0001,f:520},{t:0.18,f:95}],
+        [{t:0,v:0.85,ramp:'exp'},{t:0.001,v:0.85},{t:0.22,v:0.001}],
+        0.24
+      );
+      // Flesh-slap noise transient
+      const nb=ctx.createBufferSource(); nb.buffer=noise(ctx,0.04);
+      const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=800;
+      const ng=ctx.createGain();
+      ng.gain.setValueAtTime(0.7,ctx.currentTime);
+      ng.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.04);
+      chain(ctx,[nb,lp,ng],d); nb.start(); nb.stop(ctx.currentTime+0.04);
+      return 0.26;
+    }
+  },
+  {
+    name: 'BOING OW',
+    file: 'hurt-boing-ow.wav',
+    desc: 'Spring boing cut short mid-bounce. Interrupted elastic recoil.',
+    gen(ctx, dest) {
+      const d = dest || ctx.destination;
+      // Rising boing that gets cut with a dull thud
+      boingOsc(ctx, d, 'triangle',
+        [{t:0,f:160,ramp:'exp'},{t:0.12,f:480},{t:0.15,f:200}],
+        [{t:0,v:0.9,ramp:'exp'},{t:0.12,v:0.7},{t:0.22,v:0.001}],
+        0.24
+      );
+      // Thud cut
+      const o2=ctx.createOscillator(); o2.type='sine'; o2.frequency.value=80;
+      o2.frequency.exponentialRampToValueAtTime(35,ctx.currentTime+0.08);
+      const g2=ctx.createGain();
+      g2.gain.setValueAtTime(0,ctx.currentTime+0.13);
+      g2.gain.setValueAtTime(0.6,ctx.currentTime+0.135);
+      g2.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.22);
+      o2.connect(g2); g2.connect(d);
+      o2.start(ctx.currentTime+0.13); o2.stop(ctx.currentTime+0.25);
+      return 0.28;
+    }
+  },
+  {
+    name: 'RUBBER BONK',
+    file: 'hurt-rubber-bonk.wav',
+    desc: 'Hollow knock with elastic wobble. Cartoon rubbery pain.',
+    gen(ctx, dest) {
+      const d = dest || ctx.destination;
+      // Main bonk — mid-freq with quick pitch drop
+      boingOsc(ctx, d, 'sine',
+        [{t:0,f:380,ramp:'exp'},{t:0.001,f:380},{t:0.10,f:140},{t:0.20,f:90}],
+        [{t:0,v:0.9,ramp:'exp'},{t:0.001,v:0.9},{t:0.25,v:0.001}],
+        0.27
+      );
+      // Hollow wood-like noise
+      const nb=ctx.createBufferSource(); nb.buffer=noise(ctx,0.03);
+      const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=600; bp.Q.value=4;
+      const ng=ctx.createGain();
+      ng.gain.setValueAtTime(0.5,ctx.currentTime); ng.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.04);
+      chain(ctx,[nb,bp,ng],d); nb.start(); nb.stop(ctx.currentTime+0.04);
+      // Wobble after impact (amplitude modulation simulation)
+      const wob=ctx.createOscillator(); wob.type='sine'; wob.frequency.value=200;
+      wob.frequency.setValueAtTime(200,ctx.currentTime+0.06);
+      wob.frequency.linearRampToValueAtTime(140,ctx.currentTime+0.22);
+      const wg=ctx.createGain();
+      wg.gain.setValueAtTime(0,ctx.currentTime+0.05);
+      wg.gain.linearRampToValueAtTime(0.25,ctx.currentTime+0.09);
+      wg.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.26);
+      wob.connect(wg); wg.connect(d); wob.start(ctx.currentTime+0.05); wob.stop(ctx.currentTime+0.28);
+      return 0.30;
+    }
+  },
+  {
+    name: 'SPRING CRACK',
+    file: 'hurt-spring-crack.wav',
+    desc: 'High-pitched spring snap. Sharp, stinging hit.',
+    gen(ctx, dest) {
+      const d = dest || ctx.destination;
+      // High crack noise
+      const nb=ctx.createBufferSource(); nb.buffer=noise(ctx,0.05);
+      const hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=2400;
+      const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=3200; bp.Q.value=2;
+      const ng=ctx.createGain();
+      ng.gain.setValueAtTime(1.0,ctx.currentTime); ng.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.05);
+      chain(ctx,[nb,hp,bp,ng],d); nb.start(); nb.stop(ctx.currentTime+0.06);
+      // Spring ringing overtone
+      boingOsc(ctx, d, 'sine',
+        [{t:0,f:900,ramp:'exp'},{t:0.001,f:900},{t:0.15,f:320}],
+        [{t:0,v:0.5,ramp:'exp'},{t:0.001,v:0.5},{t:0.20,v:0.001}],
+        0.22
+      );
+      // Low body thud
+      const o2=ctx.createOscillator(); o2.type='sine'; o2.frequency.value=100;
+      o2.frequency.exponentialRampToValueAtTime(40,ctx.currentTime+0.07);
+      const g2=ctx.createGain();
+      g2.gain.setValueAtTime(0.55,ctx.currentTime); g2.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.1);
+      o2.connect(g2); g2.connect(d); o2.start(); o2.stop(ctx.currentTime+0.12);
+      return 0.24;
+    }
+  },
+  {
+    name: 'SPLAT BOUNCE',
+    file: 'hurt-splat-bounce.wav',
+    desc: 'Wet splat + quick bounce recoil. Like hitting a wall face-first.',
+    gen(ctx, dest) {
+      const d = dest || ctx.destination;
+      // Splat — low mid noise
+      const nb=ctx.createBufferSource(); nb.buffer=noise(ctx,0.06);
+      const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=500;
+      const ng=ctx.createGain();
+      ng.gain.setValueAtTime(0.8,ctx.currentTime); ng.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.07);
+      chain(ctx,[nb,lp,ng],d); nb.start(); nb.stop(ctx.currentTime+0.08);
+      // Bounce recoil boing
+      const t2=ctx.currentTime+0.06;
+      boingOsc(ctx, d, 'triangle',
+        [{t:0.06,f:180,ramp:'exp'},{t:0.12,f:340},{t:0.22,f:160}],
+        [{t:0.06,v:0,ramp:'lin'},{t:0.065,v:0.55},{t:0.26,v:0.001}],
+        0.28
+      );
+      return 0.30;
+    }
+  },
+  {
+    name: 'PING STING',
+    file: 'hurt-ping-sting.wav',
+    desc: 'Bright high ping + low thud. Quick double-hit elastic sting.',
+    gen(ctx, dest) {
+      const d = dest || ctx.destination;
+      // High ping
+      boingOsc(ctx, d, 'sine',
+        [{t:0,f:1100,ramp:'exp'},{t:0.001,f:1100},{t:0.12,f:400}],
+        [{t:0,v:0.55,ramp:'exp'},{t:0.001,v:0.55},{t:0.16,v:0.001}],
+        0.18
+      );
+      // Low belly thud
+      boingOsc(ctx, d, 'sine',
+        [{t:0,f:90,ramp:'exp'},{t:0.001,f:90},{t:0.10,f:32}],
+        [{t:0,v:0.85,ramp:'exp'},{t:0.001,v:0.85},{t:0.14,v:0.001}],
+        0.16
+      );
+      // Noise transient
+      const nb=ctx.createBufferSource(); nb.buffer=noise(ctx,0.025);
+      const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1800; bp.Q.value=1.5;
+      const ng=ctx.createGain();
+      ng.gain.setValueAtTime(0.6,ctx.currentTime); ng.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.03);
+      chain(ctx,[nb,bp,ng],d); nb.start(); nb.stop(ctx.currentTime+0.03);
+      return 0.20;
+    }
+  }
+];
+
+// ─── DEATH SOUNDS — Bouncy circle breaks into pieces ─────────────────────────
+// Reference: rising boing 162→658Hz, light rolling rumble
+// Death = POP / burst + multiple bouncing fragments scattering
+
+const deathDefs = [
+  {
+    name: 'POP SCATTER',
+    file: 'death-pop-scatter.wav',
+    desc: 'Big rubber pop then 8 tiny boing fragments bouncing away.',
+    gen(ctx, dest) {
+      const d = dest || ctx.destination;
+      const dur = 1.1;
+      // Main POP — like a balloon
+      boingOsc(ctx, d, 'sine',
+        [{t:0,f:240,ramp:'exp'},{t:0.001,f:240},{t:0.04,f:60}],
+        [{t:0,v:1.0,ramp:'exp'},{t:0.001,v:1.0},{t:0.06,v:0.001}],
+        0.08
+      );
+      // Pop noise burst
+      const nb=ctx.createBufferSource(); nb.buffer=noise(ctx,0.04);
+      const ng=ctx.createGain();
+      ng.gain.setValueAtTime(0.9,ctx.currentTime); ng.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.04);
+      nb.connect(ng); ng.connect(d); nb.start(); nb.stop(ctx.currentTime+0.05);
+      // 8 fragment boings — each a tiny rising boing like the reference
+      for (let i=0;i<8;i++) {
+        const t=0.05+Math.random()*0.5;
+        const fBase=120+Math.random()*500;
+        boingOsc(ctx, d, 'sine',
+          [{t,f:fBase,ramp:'exp'},{t:t+0.001,f:fBase},{t:t+0.12,f:fBase*2.8}],
+          [{t,v:0,ramp:'lin'},{t:t+0.005,v:0.18-i*0.015},{t:t+0.18,v:0.001}],
+          t+0.22
+        );
+      }
+      return dur;
+    }
+  },
+  {
+    name: 'BURST BOING',
+    file: 'death-burst-boing.wav',
+    desc: 'Explosive stretch squeal then fragments ring out like springs.',
+    gen(ctx, dest) {
+      const d = dest || ctx.destination;
+      const dur = 1.2;
+      // Stretched squeal — rapid rising pitch
+      boingOsc(ctx, d, 'sawtooth',
+        [{t:0,f:100,ramp:'exp'},{t:0.001,f:100},{t:0.3,f:1200}],
+        [{t:0,v:0.6,ramp:'exp'},{t:0.001,v:0.6},{t:0.28,v:0.001}],
+        0.32
+      );
+      // Distort it slightly
+      // 6 spring ring fragments
+      const springFreqs=[520,380,640,290,720,450];
+      springFreqs.forEach((f,i)=>{
+        const t=0.25+i*0.1+Math.random()*0.05;
+        boingOsc(ctx, d, 'triangle',
+          [{t,f:f*0.6,ramp:'exp'},{t:t+0.001,f:f*0.6},{t:t+0.2,f:f*2.2}],
+          [{t,v:0,ramp:'lin'},{t:t+0.005,v:0.2},{t:t+0.28,v:0.001}],
+          t+0.32
+        );
+      });
+      return dur;
+    }
+  },
+  {
+    name: 'SHATTER ROLL',
+    file: 'death-shatter-roll.wav',
+    desc: 'Circle cracks open. Rolling rumble breaks into tumbling pieces.',
+    gen(ctx, dest) {
+      const d = dest || ctx.destination;
+      const dur = 1.3;
+      // Rolling rumble base (like roll_v2 sound character: 54-110Hz)
+      const nb=ctx.createBufferSource(); nb.buffer=noise(ctx,0.4);
+      const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=160;
+      const ng=ctx.createGain();
+      ng.gain.setValueAtTime(0.7,ctx.currentTime);
+      ng.gain.setValueAtTime(0.7,ctx.currentTime+0.1);
+      ng.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.45);
+      chain(ctx,[nb,lp,ng],d); nb.start(); nb.stop(ctx.currentTime+0.46);
+      // Crack
+      const t2=ctx.currentTime+0.2;
+      const cnb=ctx.createBufferSource(); cnb.buffer=noise(ctx,0.06);
+      const chp=ctx.createBiquadFilter(); chp.type='highpass'; chp.frequency.value=2000;
+      const cg=ctx.createGain();
+      cg.gain.setValueAtTime(1.1,t2); cg.gain.exponentialRampToValueAtTime(0.001,t2+0.07);
+      chain(ctx,[cnb,chp,cg],d); cnb.start(t2); cnb.stop(t2+0.08);
+      // Tumbling piece boings
+      for(let i=0;i<7;i++){
+        const t=0.22+Math.random()*0.7;
+        const f=80+Math.random()*300;
+        boingOsc(ctx,d,'sine',
+          [{t,f:f,ramp:'exp'},{t:t+0.001,f:f},{t:t+0.15,f:f*2.5+50}],
+          [{t,v:0,ramp:'lin'},{t:t+0.005,v:0.14},{t:t+0.22,v:0.001}],
+          t+0.25
+        );
+      }
+      return dur;
+    }
+  },
+  {
+    name: 'SPRING EXPLOSION',
+    file: 'death-spring-explosion.wav',
+    desc: 'All the spring energy releases at once. Chaotic boing storm.',
+    gen(ctx, dest) {
+      const d = dest || ctx.destination;
+      const dur = 1.0;
+      // Central impact
+      boingOsc(ctx, d, 'triangle',
+        [{t:0,f:200,ramp:'exp'},{t:0.001,f:200},{t:0.08,f:40}],
+        [{t:0,v:1.0,ramp:'exp'},{t:0.001,v:1.0},{t:0.12,v:0.001}],
+        0.14
+      );
+      // Noise hit
+      const nb=ctx.createBufferSource(); nb.buffer=noise(ctx,0.08);
+      const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=500; bp.Q.value=0.8;
+      const ng=ctx.createGain();
+      ng.gain.setValueAtTime(0.8,ctx.currentTime); ng.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.09);
+      chain(ctx,[nb,bp,ng],d); nb.start(); nb.stop(ctx.currentTime+0.1);
+      // Storm of 10 boings in rapid succession
+      for(let i=0;i<10;i++){
+        const t=0.04+Math.random()*0.55;
+        const f=150+Math.random()*600;
+        const type=['sine','triangle','sine'][Math.floor(Math.random()*3)];
+        boingOsc(ctx,d,type,
+          [{t,f:f,ramp:'exp'},{t:t+0.001,f:f},{t:t+0.08+Math.random()*0.1,f:f*(1.8+Math.random())}],
+          [{t,v:0,ramp:'lin'},{t:t+0.004,v:0.22-i*0.015},{t:t+0.15,v:0.001}],
+          t+0.18
+        );
+      }
+      return dur;
+    }
+  },
+  {
+    name: 'DEFLATE DEATH',
+    file: 'death-deflate-death.wav',
+    desc: 'Circle deflates with a long wheezing squeal. Sad, airy ending.',
+    gen(ctx, dest) {
+      const d = dest || ctx.destination;
+      const dur = 1.4;
+      // Deflating air — descending pitch with noise
+      boingOsc(ctx, d, 'sawtooth',
+        [{t:0,f:800,ramp:'exp'},{t:0.001,f:800},{t:1.0,f:40}],
+        [{t:0,v:0.5,ramp:'exp'},{t:0.001,v:0.5},{t:1.05,v:0.001}],
+        1.1
+      );
+      // Air hiss
+      const nh=ctx.createBufferSource(); nh.buffer=noise(ctx,1.1);
+      const nhp=ctx.createBiquadFilter(); nhp.type='bandpass'; nhp.frequency.value=2000; nhp.Q.value=0.6;
+      nhp.frequency.exponentialRampToValueAtTime(300,ctx.currentTime+1.0);
+      const nhg=ctx.createGain();
+      nhg.gain.setValueAtTime(0.35,ctx.currentTime); nhg.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+1.1);
+      chain(ctx,[nh,nhp,nhg],d); nh.start(); nh.stop(ctx.currentTime+1.15);
+      // Final tiny boing from last fragment
+      boingOsc(ctx, d, 'sine',
+        [{t:1.0,f:280,ramp:'exp'},{t:1.001,f:280},{t:1.2,f:560}],
+        [{t:1.0,v:0,ramp:'lin'},{t:1.005,v:0.12},{t:1.35,v:0.001}],
+        1.38
+      );
+      return dur;
+    }
+  },
+  {
+    name: 'GLASSY BURST',
+    file: 'death-glassy-burst.wav',
+    desc: 'Bright crystal shatter. High-freq pieces tinkle & fade.',
+    gen(ctx, dest) {
+      const d = dest || ctx.destination;
+      const dur = 1.15;
+      // Initial high crack
+      const nb=ctx.createBufferSource(); nb.buffer=noise(ctx,0.05);
+      const hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=3500;
+      const ng=ctx.createGain();
+      ng.gain.setValueAtTime(1.0,ctx.currentTime); ng.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.05);
+      chain(ctx,[nb,hp,ng],d); nb.start(); nb.stop(ctx.currentTime+0.06);
+      // Rising boing sweep (like the jump boing reference)
+      boingOsc(ctx, d, 'sine',
+        [{t:0,f:162,ramp:'exp'},{t:0.001,f:162},{t:0.25,f:658}],
+        [{t:0,v:0.7,ramp:'exp'},{t:0.001,v:0.7},{t:0.28,v:0.001}],
+        0.30
+      );
+      // 9 high-freq tinkle pieces
+      for(let i=0;i<9;i++){
+        const t=0.03+Math.random()*0.6;
+        const f=700+Math.random()*1800;
+        boingOsc(ctx,d,'sine',
+          [{t,f:f,ramp:'exp'},{t:t+0.001,f:f},{t:t+0.15,f:f*0.7}],
+          [{t,v:0,ramp:'lin'},{t:t+0.003,v:0.15-i*0.01},{t:t+0.2,v:0.001}],
+          t+0.22
+        );
+      }
+      return dur;
+    }
+  }
+];
+
+// ─── Offline render & download ────────────────────────────────────────────────
+function renderAndDownload(def) {
+  // Measure duration
+  const tmpCtx = new (window.AudioContext||window.webkitAudioContext)();
+  const dur = def.gen(tmpCtx, null);
+  tmpCtx.close();
+
+  const sr = 44100;
+  const offCtx = new OfflineAudioContext(1, Math.ceil(sr*(dur+0.3)), sr);
+  def.gen(offCtx, offCtx.destination);
+  offCtx.startRendering().then(buf => dlBuffer(buf, def.file));
+}
+
+// ─── Build UI ─────────────────────────────────────────────────────────────────
+const grid = document.getElementById('grid');
+const BAR_COUNT = 22;
+
+for (let i = 0; i < 6; i++) {
+  ['hurt','death'].forEach(type => {
+    const def = type==='hurt' ? hurtDefs[i] : deathDefs[i];
+    const card = document.createElement('div');
+    card.className = `card ${type}-card`;
+    card.id = `card-${type}-${i}`;
+
+    const bars = Array.from({length:BAR_COUNT},()=>{
+      const h=3+Math.random()*26;
+      return `<div class="wb" style="height:${h}px" data-h="${h}"></div>`;
+    }).join('');
+
+    card.innerHTML=`
+      <div class="card-top">
+        <div class="card-meta">
+          <span class="card-tag">VAR ${String(i+1).padStart(2,'0')} · ${type.toUpperCase()}</span>
+          <span class="card-name">${def.name}</span>
+        </div>
+        <div class="ball-icon"></div>
+      </div>
+      <div class="waveform">${bars}</div>
+      <div class="card-desc">${def.desc}</div>
+      <div class="card-actions">
+        <button class="btn btn-play" onclick="preview('${type}',${i},this)">▶ PREVIEW</button>
+        <button class="btn btn-dl" title="Download WAV" onclick="renderAndDownload(${type==='hurt'?'hurtDefs':'deathDefs'}[${i}])">⬇</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ─── Preview playback ─────────────────────────────────────────────────────────
+const timers = {};
+
+function preview(type, idx, btn) {
+  const ctx = getCtx();
+  const def = type==='hurt' ? hurtDefs[idx] : deathDefs[idx];
+  const card = document.getElementById(`card-${type}-${idx}`);
+  const bars = card.querySelectorAll('.wb');
+  const key = `${type}-${idx}`;
+
+  if (timers[key]) { clearInterval(timers[key].anim); clearTimeout(timers[key].stop); }
+
+  card.classList.add('playing');
+  btn.textContent = '■ PLAYING';
+
+  timers[key] = {};
+  timers[key].anim = setInterval(()=>{
+    bars.forEach(b=>{
+      const base=parseFloat(b.dataset.h);
+      b.style.height=(base*(0.3+Math.random()*1.6))+'px';
+    });
+  }, 70);
+
+  const dur = def.gen(ctx, ctx.destination);
+
+  timers[key].stop = setTimeout(()=>{
+    clearInterval(timers[key].anim);
+    bars.forEach(b=>{ b.style.height=b.dataset.h+'px'; });
+    card.classList.remove('playing');
+    btn.textContent = '▶ PREVIEW';
+  }, dur*1000+150);
+}
+</script>
+</body>
+</html>

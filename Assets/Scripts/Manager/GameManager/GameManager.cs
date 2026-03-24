@@ -9,8 +9,10 @@ using Random = UnityEngine.Random;
 
 public class GameManager : MonoBehaviour, IUpdateObserver
 {
+    [Header("Reference")]
     public static GameManager _instance;
-    private Transform _player;
+    private Transform _playerTransform;
+    private GameObject _playerPrefab;
     [SerializeField] private List<Node> _allNodesInTheScene = new List<Node>();
 
     [Header("SO's")]
@@ -36,8 +38,10 @@ public class GameManager : MonoBehaviour, IUpdateObserver
     [SerializeField] private float _powerUpSpawnInterval;
 
     [SerializeField] private List<SmasherSpawnZone> _smasherSpawnZones;
+    private List<Node> _cachedSmasherZone = new List<Node> ();
 
     [Header("Wave System Attributes")]
+    [SerializeField] private bool _activateWave = false;
     private int _spawnLimitPerWave = 5;
     [SerializeField] private float _timeBetweenWave = 5f;
     [SerializeField] private float _enemySpawnScalingFactor = 0.03f;
@@ -50,7 +54,10 @@ public class GameManager : MonoBehaviour, IUpdateObserver
     [SerializeField] private int _enemiesAlive = 0;
     [SerializeField] public bool _waveActive = false;
     [SerializeField] private bool _spawningCompleted = false;
+    [SerializeField] private bool _waveCompletedTriggered = false;
     [SerializeField] private bool _healthUpdatedInWave;
+    [SerializeField] private bool _isTransitioning = false;
+    private Coroutine _spawnCoroutine;
 
     [Header("Score")]
     private int _score;
@@ -62,6 +69,7 @@ public class GameManager : MonoBehaviour, IUpdateObserver
     [Header("Missile Lists for TargetIndicators")]
     public List<GameObject> _missilesList = new List<GameObject>();
 
+    #region Custom Enemy Data
     public struct EnemySpawnData
     {
         public float _distanceFromPlayer;
@@ -87,7 +95,9 @@ public class GameManager : MonoBehaviour, IUpdateObserver
         public int _playerDetectionDistance;
         public int _smasherWaveAttack;
     }
+    #endregion
 
+    #region Custom Player Data
     public struct PlayerSpawnData
     {
         public int playerMaxHealth;
@@ -99,6 +109,8 @@ public class GameManager : MonoBehaviour, IUpdateObserver
         public int grappleAmmo;
         public int healthPack;
     }
+
+    #endregion
 
     private void OnEnable()
     {
@@ -137,6 +149,8 @@ public class GameManager : MonoBehaviour, IUpdateObserver
 
         _instance = this;
         DontDestroyOnLoad(gameObject);
+
+        #region Data Initialization
 
         //Add the Enemies to the list
         if (_gameManagerSpawnListSO != null)
@@ -217,16 +231,19 @@ public class GameManager : MonoBehaviour, IUpdateObserver
             });
         }
 
+        #endregion
     }
 
     private void Start()
     {
         //Find the player
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        _player = player?.GetComponent<Transform>();
-        if(player == null)
+         _playerPrefab = GameObject.FindGameObjectWithTag("Player");
+        _playerTransform = _playerPrefab?.GetComponent<Transform>();
+        if(_playerPrefab == null)
         {
             Debug.Log("Player Not found");
+            GameObject.FindGameObjectWithTag("Player");
+            _playerTransform = _playerPrefab?.transform;
         }
 
         //Get all the Nodes from the Scene to this list 
@@ -235,36 +252,46 @@ public class GameManager : MonoBehaviour, IUpdateObserver
             _allNodesInTheScene = AStarManager.instance.AllNodesInTheScene;
         }
 
+        //We are caching the selected zones here for the smasher
+        cachedZone();
+
         //GetNearestNode(_player.position);
         //Debug.Log(GetNearestNode(_player.position));
 
         //GetRandomNode(_player.position);
 
-        if (player != null && player.gameObject.activeInHierarchy)
-        {
-            StartWave();
-        }
-
     }
 
     public void ObservedUpdate()
     {
-
+        if (!_waveActive && !_isTransitioning &&_activateWave && _playerPrefab != null && _playerPrefab.gameObject.activeInHierarchy)
+        {
+            if (_activateWave)
+            {
+                _isTransitioning = true;
+                StartWave();
+            }
+        }
     }
 	
 #region Spawn Manager-------------------
 	 
 	IEnumerator SpawnWaveCoroutine()
     {
-        _waveActive = true;
+        _spawningCompleted = false;
 
         while (_enemiesSpawnedCount < _enemiesToSpawn)
         {
-            _spawningCompleted = false;
             GameObject enemyPrefab = GetRandomEnemyByChances();
             if (enemyPrefab != null)
             {
-                Node node = GetRandomNode(_player.position, enemyPrefab);
+                Node node = GetRandomNode(_playerTransform.position, enemyPrefab);
+
+                if(node == null)
+                {
+                    yield return null;
+                    continue;
+                }
 
                 if (node != null)
                 {
@@ -283,7 +310,7 @@ public class GameManager : MonoBehaviour, IUpdateObserver
                     _enemiesSpawnedCount++;
                     _enemiesAlive++;
 
-                    if(_enemiesSpawnedCount == _enemiesToSpawn)
+                    if(_enemiesSpawnedCount >= _enemiesToSpawn)
                     {
                         _spawningCompleted = true;
                     }
@@ -295,6 +322,19 @@ public class GameManager : MonoBehaviour, IUpdateObserver
  
     private void StartWave()
     {
+        _isTransitioning = true;
+
+        if (_spawnCoroutine != null)
+        {
+            StopCoroutine(_spawnCoroutine);
+            _spawnCoroutine = null;
+        }
+
+        _enemiesGeneralList.Clear();
+        _spawningCompleted = false;
+        _waveCompletedTriggered = false;
+        _enemiesSpawnedCount = 0;
+        _enemiesAlive = 0;
 
         if (_currentWave <= 1)
         {
@@ -316,15 +356,19 @@ public class GameManager : MonoBehaviour, IUpdateObserver
             ApplyWaveScalingToEnemyData();
             ApplyWaveScalingToPlayerData();
         }
-        StartCoroutine(SpawnWaveCoroutine());
-        StartCoroutine(PowerUpsSpawnCoroutine());
 
-       
+        _waveActive = true;
+        _isTransitioning = false;
+
+        _spawnCoroutine = StartCoroutine(SpawnWaveCoroutine());
+
+        StartCoroutine(PowerUpsSpawnCoroutine());
     }
 
     private void OnWaveComplete()
     {
         _waveActive = false;
+        _isTransitioning = true;
         Debug.Log($"Wave {_currentWave} Complete!");
 
         StartCoroutine(WaveCompleteCoroutine());
@@ -333,7 +377,6 @@ public class GameManager : MonoBehaviour, IUpdateObserver
     private IEnumerator WaveCompleteCoroutine()
     {
         yield return new WaitForSeconds(_timeBetweenWave);
-
         //Start next Wave
         StartWave();
     }
@@ -351,7 +394,7 @@ public class GameManager : MonoBehaviour, IUpdateObserver
 
             if(powerUpPrefab != null)
             {
-                Node node = GetRandomNodeForPowerUps(_player.position, powerUpPrefab);
+                Node node = GetRandomNodeForPowerUps(_playerTransform.position, powerUpPrefab);
 
                 //Debug.Log("[PowerUp] Spawning " + powerUpPrefab.name + " at " + node.transform.position);
 
@@ -413,6 +456,44 @@ public class GameManager : MonoBehaviour, IUpdateObserver
 
     #region Enemy spawn Configs
 
+    private void cachedZone()
+    {
+        foreach(var node in _allNodesInTheScene)
+        {
+            foreach(var zone in _smasherSpawnZones)
+            {
+                if(zone.containsNode(node.transform.position))
+                {
+                    _cachedSmasherZone.Add(node);
+                    break;
+                }
+            }
+        }
+
+        Debug.Log($"Cached Smasher Zone Node : {_cachedSmasherZone.Count}");
+    }
+
+    //Get Nodes from specified area for Smasher to Spawn
+    Node GetNodesInsideTheZone(Vector3 playerPosition, float distanceFromPlayer)
+    {
+        List<Node> validNodes = new List<Node>();
+
+        foreach (var node in _cachedSmasherZone)
+        {
+            if (node.connectionType == Node.ConnectionType.walkable)
+            {
+                validNodes.Add(node);
+            }
+        }
+
+        if (validNodes.Count == 0)
+            return null;
+
+        int index = Random.Range(0, validNodes.Count);
+
+        return validNodes[index];
+    }
+
     Node GetRandomNode(Vector3 Pos, GameObject enemyPrefab)
     {
         if (!_enemies.TryGetValue(enemyPrefab, out EnemySpawnData data))
@@ -429,9 +510,17 @@ public class GameManager : MonoBehaviour, IUpdateObserver
         {
             //Debug.Log($"Zones Count: {_smasherSpawnZones.Count}");
 
-            Node zoneNodes = GetNodesInsideTheZone(_smasherSpawnZones, Pos, distanceFromPlayer);
+            Node zoneNodes = GetNodesInsideTheZone(Pos, distanceFromPlayer);
 
-            nodeCandidates.Add(zoneNodes);
+            if(zoneNodes == null)
+            {
+                return null;
+            }
+
+            if(zoneNodes != null)
+            {
+                nodeCandidates.Add(zoneNodes);
+            }
         }
         else
         {
@@ -453,36 +542,6 @@ public class GameManager : MonoBehaviour, IUpdateObserver
         int index = Random.Range(0, nodeCandidates.Count);
         //Debug.Log($"Random Node {nodeCandidates.Count}");
         return nodeCandidates[index];
-    }
-
-    //Get Nodes from specified area for Smasher to Spawn
-    Node GetNodesInsideTheZone(List<SmasherSpawnZone> spawnZone, Vector3 playerPosition, float distanceFromPlayer)
-    {
-        List<Node> validNodes = new List<Node>();
-
-        foreach(var node in _allNodesInTheScene)
-        {
-            foreach(var zone in spawnZone)
-            {
-                if (zone.containsNode(node.transform.position))
-                {
-                    float distance = Vector2.Distance(node.transform.position, playerPosition);
-
-                    if(distance <= distanceFromPlayer && node.connectionType == Node.ConnectionType.walkable)
-                    {
-                        validNodes.Add(node);
-                    }
-                    break;
-                }
-            }
-        }
-
-        if (validNodes.Count == 0)
-            return null;
-
-        int index = Random.Range(0, validNodes.Count);
-
-        return validNodes[index];
     }
 
     //Get the Enemy prefab and other details
@@ -530,13 +589,22 @@ public class GameManager : MonoBehaviour, IUpdateObserver
 
     public void EnemyDestroyed(GameObject enemy)
     {
-        _enemiesAlive = Mathf.Max(0, _enemiesAlive - 1);
         //Removing that specific Enemy from the list
         _enemiesGeneralList.Remove(enemy);
-        if (_enemiesAlive <= 0 && _enemiesSpawnedCount >= _enemiesToSpawn)
+        if (_waveActive && _spawningCompleted && _enemiesSpawnedCount >= _enemiesToSpawn && _enemiesGeneralList.Count == 0 && !_waveCompletedTriggered)
         {
+            _waveCompletedTriggered = true; 
             OnWaveComplete();
         }
+
+        if(_enemiesGeneralList.Count == 0)
+        {
+            _enemiesAlive = 0;
+        }
+
+        Debug.Log($"[WaveCheck] Spawned: {_enemiesSpawnedCount}/{_enemiesToSpawn}, " +
+          $"Alive: {_enemiesGeneralList.Count}, " +
+          $"SpawningDone: {_spawningCompleted}");
     }
 
 #region Enemy Spawn Chances manual Configs:
@@ -962,11 +1030,15 @@ public class GameManager : MonoBehaviour, IUpdateObserver
 
     public bool IfRemainingEnemies()
     {
-        if(_spawningCompleted && _enemiesAlive <= 2 && _enemiesGeneralList != null)
+        if(_spawningCompleted && _enemiesGeneralList != null && _enemiesGeneralList.Count <= 2)
             return true;
 
         return false;
     }
+
+    #endregion
+
+    #region Tutorial
 
     #endregion
 }

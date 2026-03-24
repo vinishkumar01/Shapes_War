@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bullet Collision SFX</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Share+Tech+Mono&display=swap');
+
+  :root {
+    --bg:          #07080f;
+    --panel:       #0d0f1a;
+    --border:      #171a2e;
+    --pistol:      #f0c040;
+    --pistol-dim:  #2a1f00;
+    --pistol-glow: #c09020;
+    --rifle:       #50c8ff;
+    --rifle-dim:   #002a40;
+    --rifle-glow:  #2090cc;
+    --text:        #b8c8d8;
+    --muted:       #30384a;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    padding: 28px 18px 50px;
+    background-image:
+      radial-gradient(ellipse at 15% 10%, #1a1800 0%, transparent 45%),
+      radial-gradient(ellipse at 85% 90%, #001520 0%, transparent 45%);
+  }
+
+  /* ── Header ── */
+  header { text-align:center; margin-bottom:32px; }
+
+  .gun-row { display:flex; align-items:center; justify-content:center; gap:22px; margin-bottom:10px; }
+
+  /* Pistol silhouette (small) */
+  .pistol-icon {
+    width:42px; height:28px; position:relative; flex-shrink:0;
+    filter: drop-shadow(0 0 6px var(--pistol-glow));
+  }
+  .pistol-icon::before {
+    content:''; position:absolute; top:4px; left:0;
+    width:30px; height:12px; border-radius:2px;
+    background: linear-gradient(180deg, #3a2a00, #1a1200);
+    border:1.5px solid var(--pistol);
+  }
+  .pistol-icon::after {
+    content:''; position:absolute; top:14px; left:6px;
+    width:10px; height:14px; border-radius:0 0 2px 2px;
+    background: linear-gradient(180deg, #3a2a00, #1a1200);
+    border:1.5px solid var(--pistol); border-top:none;
+  }
+
+  /* Rifle silhouette (long) */
+  .rifle-icon {
+    width:70px; height:22px; position:relative; flex-shrink:0;
+    filter: drop-shadow(0 0 6px var(--rifle-glow));
+  }
+  .rifle-icon::before {
+    content:''; position:absolute; top:5px; left:0;
+    width:60px; height:10px; border-radius:2px;
+    background: linear-gradient(180deg, #001e30, #000e18);
+    border:1.5px solid var(--rifle);
+  }
+  .rifle-icon::after {
+    content:''; position:absolute; top:2px; left:44px;
+    width:24px; height:4px; border-radius:2px 2px 0 0;
+    background:#001e30; border:1.5px solid var(--rifle); border-bottom:none;
+  }
+
+  header h1 {
+    font-family:'Rajdhani',sans-serif; font-weight:700;
+    font-size:2rem; letter-spacing:8px; text-transform:uppercase;
+    background:linear-gradient(90deg,var(--pistol),#fff,var(--rifle));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  }
+  header p { font-size:0.62rem; color:var(--muted); letter-spacing:5px; margin-top:5px; }
+  .header-line {
+    height:1px; max-width:600px; margin:12px auto 0;
+    background:linear-gradient(90deg,transparent,var(--pistol),var(--rifle),transparent);
+  }
+
+  /* ── Tabs ── */
+  .tabs { display:flex; gap:0; max-width:880px; margin:0 auto 0; border-bottom:1px solid var(--border); }
+  .tab {
+    flex:1; padding:13px 0; text-align:center; cursor:pointer;
+    font-family:'Rajdhani',sans-serif; font-weight:700;
+    font-size:0.9rem; letter-spacing:5px; text-transform:uppercase;
+    border-bottom:3px solid transparent; margin-bottom:-1px;
+    transition:all 0.15s; color:var(--muted);
+  }
+  .tab.active.pistol-tab { color:var(--pistol); border-bottom-color:var(--pistol); }
+  .tab.active.rifle-tab  { color:var(--rifle);  border-bottom-color:var(--rifle); }
+  .tab:not(.active):hover { color:var(--text); }
+
+  /* ── Grid ── */
+  .panel { display:none; max-width:880px; margin:0 auto; padding-top:16px; }
+  .panel.active { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+  /* ── Card ── */
+  .card {
+    background:var(--panel); border:1px solid var(--border);
+    border-radius:8px; padding:15px 15px 12px;
+    display:flex; flex-direction:column; gap:9px;
+    position:relative; overflow:hidden;
+    transition:border-color 0.15s, box-shadow 0.15s;
+  }
+  .card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    opacity:0; transition:opacity 0.2s;
+  }
+  .pistol-card::before { background:linear-gradient(90deg,transparent,var(--pistol),transparent); }
+  .rifle-card::before  { background:linear-gradient(90deg,transparent,var(--rifle),transparent); }
+  .card.playing::before { opacity:1; }
+  .pistol-card.playing { border-color:var(--pistol); box-shadow:0 0 20px #f0c04018; }
+  .rifle-card.playing  { border-color:var(--rifle);  box-shadow:0 0 20px #50c8ff18; }
+
+  /* impact flash overlay */
+  .flash {
+    position:absolute; inset:0; opacity:0; pointer-events:none;
+    transition:opacity 0.05s; border-radius:8px;
+  }
+  .pistol-card .flash { background:radial-gradient(ellipse at 50% 50%, #f0c04010, transparent 70%); }
+  .rifle-card  .flash { background:radial-gradient(ellipse at 50% 50%, #50c8ff10, transparent 70%); }
+  .card.playing .flash { opacity:1; }
+
+  .card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+  .card-meta { display:flex; flex-direction:column; gap:2px; }
+  .card-tag  { font-size:0.57rem; letter-spacing:3px; color:var(--muted); }
+  .card-name { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:1.05rem; letter-spacing:1px; }
+  .pistol-card .card-name { color:var(--pistol); }
+  .rifle-card  .card-name { color:var(--rifle); }
+
+  /* bullet icon */
+  .bullet {
+    width:8px; height:20px; border-radius:4px 4px 2px 2px;
+    flex-shrink:0; margin-top:2px;
+    transition:transform 0.08s;
+  }
+  .pistol-card .bullet { background:linear-gradient(180deg, #ffe080, var(--pistol)); }
+  .rifle-card  .bullet { background:linear-gradient(180deg, #a0e8ff, var(--rifle)); }
+  .card.playing .bullet { transform:scaleY(0.6) translateY(4px); }
+
+  /* waveform */
+  .waveform { height:28px; display:flex; align-items:center; gap:2px; }
+  .wb { flex:1; border-radius:1px; min-height:1px; transition:height 0.05s; }
+  .pistol-card .wb { background:var(--pistol); opacity:0.3; }
+  .rifle-card  .wb { background:var(--rifle);  opacity:0.3; }
+  .card.playing .wb { opacity:1; }
+
+  .card-desc { font-size:0.62rem; color:var(--muted); line-height:1.65; }
+
+  /* buttons */
+  .card-actions { display:flex; gap:7px; }
+  .btn {
+    border:none; border-radius:5px; cursor:pointer;
+    font-family:'Share Tech Mono',monospace; font-size:0.62rem; letter-spacing:2px;
+    padding:9px 0; display:flex; align-items:center; justify-content:center; gap:5px;
+    transition:all 0.13s;
+  }
+  .btn-play { flex:1; background:transparent; border:1.5px solid currentColor; }
+  .pistol-card .btn-play { color:var(--pistol); }
+  .rifle-card  .btn-play { color:var(--rifle); }
+  .pistol-card .btn-play:hover { background:var(--pistol-dim); }
+  .rifle-card  .btn-play:hover { background:var(--rifle-dim); }
+  .btn-dl { flex:0 0 42px; background:var(--border); color:var(--muted); border:1.5px solid transparent; }
+  .btn-dl:hover { background:#1e2238; color:var(--text); }
+
+  footer { text-align:center; margin-top:28px; font-size:0.58rem; color:var(--muted); letter-spacing:4px; }
+
+  @media(max-width:560px){ .panel.active { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="gun-row">
+    <div class="pistol-icon"></div>
+    <h1>BULLET COLLISION SFX</h1>
+    <div class="rifle-icon"></div>
+  </div>
+  <p>PISTOL × 6 &nbsp;·&nbsp; RIFLE × 6 &nbsp;·&nbsp; COLLISION IMPACT SOUNDS</p>
+  <div class="header-line"></div>
+</header>
+
+<div class="tabs">
+  <div class="tab pistol-tab active" onclick="switchTab('pistol')">🔫 PISTOL IMPACTS</div>
+  <div class="tab rifle-tab"         onclick="switchTab('rifle')">🎯 RIFLE IMPACTS</div>
+</div>
+
+<div class="panel pistol-panel active" id="pistolPanel"></div>
+<div class="panel rifle-panel"         id="riflePanel"></div>
+
+<footer>▶ PREVIEW &nbsp;|&nbsp; ⬇ DOWNLOAD WAV &nbsp;|&nbsp; BULLET COLLISION SOUNDS</footer>
+
+<script>
+// ─── Audio ────────────────────────────────────────────────────────────────────
+let actx=null;
+const getCtx=()=>{if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();return actx;};
+
+// ─── WAV Encoder ──────────────────────────────────────────────────────────────
+function encodeWAV(buf){
+  const sr=buf.sampleRate,s=buf.getChannelData(0),n=s.length;
+  const ab=new ArrayBuffer(44+n*2),v=new DataView(ab);
+  const ws=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i));};
+  ws(0,'RIFF');v.setUint32(4,36+n*2,true);ws(8,'WAVE');ws(12,'fmt ');
+  v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);
+  v.setUint16(32,2,true);v.setUint16(34,16,true);
+  ws(36,'data');v.setUint32(40,n*2,true);
+  let o=44;for(let i=0;i<n;i++){const x=Math.max(-1,Math.min(1,s[i]));v.setInt16(o,x<0?x*0x8000:x*0x7FFF,true);o+=2;}
+  return ab;
+}
+function dlBuf(buf,name){
+  const blob=new Blob([encodeWAV(buf)],{type:'audio/wav'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);
+}
+
+// ─── DSP Helpers ──────────────────────────────────────────────────────────────
+function mkNoise(ctx,dur){
+  const n=Math.ceil(ctx.sampleRate*dur),b=ctx.createBuffer(1,n,ctx.sampleRate);
+  const d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;return b;
+}
+function mkBrown(ctx,dur){
+  const n=Math.ceil(ctx.sampleRate*dur),b=ctx.createBuffer(1,n,ctx.sampleRate);
+  const d=b.getChannelData(0);let last=0;
+  for(let i=0;i<n;i++){last+=(Math.random()*2-1)*0.04;last=Math.max(-1,Math.min(1,last));d[i]=last;}
+  return b;
+}
+function mkPink(ctx,dur){
+  const n=Math.ceil(ctx.sampleRate*dur),b=ctx.createBuffer(1,n,ctx.sampleRate);
+  const d=b.getChannelData(0);
+  let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+  for(let i=0;i<n;i++){
+    const w=Math.random()*2-1;
+    b0=0.99886*b0+w*0.0555179;b1=0.99332*b1+w*0.0750759;
+    b2=0.96900*b2+w*0.1538520;b3=0.86650*b3+w*0.3104856;
+    b4=0.55000*b4+w*0.5329522;b5=-0.7616*b5-w*0.0168980;
+    d[i]=Math.max(-1,Math.min(1,(b0+b1+b2+b3+b4+b5+b6+w*0.5362)*(1/6.5)));b6=w*0.115926;
+  }
+  return b;
+}
+
+function chain(ctx,nodes,dest){
+  for(let i=0;i<nodes.length-1;i++)nodes[i].connect(nodes[i+1]);
+  nodes[nodes.length-1].connect(dest||ctx.destination);
+}
+function distCurve(amt){
+  const c=new Float32Array(512);
+  for(let i=0;i<512;i++){const x=i/256-1;c[i]=Math.tanh(x*amt);}return c;
+}
+
+// Simple pitched oscillator
+function pOsc(ctx,dest,type,f0,f1,g0,dur,delay=0){
+  const now=ctx.currentTime+delay;
+  const o=ctx.createOscillator();o.type=type;
+  o.frequency.setValueAtTime(f0,now);
+  if(f1!==f0)o.frequency.exponentialRampToValueAtTime(Math.max(f1,0.01),now+dur*0.85);
+  const g=ctx.createGain();
+  g.gain.setValueAtTime(g0,now);g.gain.exponentialRampToValueAtTime(0.0001,now+dur);
+  o.connect(g);g.connect(dest||ctx.destination);
+  o.start(now);o.stop(now+dur+0.04);
+}
+
+// Filtered noise burst
+function nBurst(ctx,dest,{buf,lpF=null,hpF=null,bpF=null,bpQ=1,g0=1.0,dur=0.1,delay=0}){
+  const now=ctx.currentTime+delay;
+  const src=ctx.createBufferSource();src.buffer=buf;
+  const nodes=[src];
+  if(lpF){const f=ctx.createBiquadFilter();f.type='lowpass';f.frequency.value=lpF;nodes.push(f);}
+  if(hpF){const f=ctx.createBiquadFilter();f.type='highpass';f.frequency.value=hpF;nodes.push(f);}
+  if(bpF){const f=ctx.createBiquadFilter();f.type='bandpass';f.frequency.value=bpF;f.Q.value=bpQ;nodes.push(f);}
+  const g=ctx.createGain();
+  g.gain.setValueAtTime(g0,now);g.gain.exponentialRampToValueAtTime(0.0001,now+dur);
+  nodes.push(g);chain(ctx,nodes,dest);
+  src.start(now);src.stop(now+dur+0.02);
+}
+
+// ─── PISTOL COLLISION SOUNDS ─────────────────────────────────────────────────
+// Pistol DNA: MID dominant (3.4kHz), 0.37s, peak=1.0, noisy ZCvar=3760
+// → Collision = sharp mid-crack, light, fast decay, possible metallic ricochet ring
+
+const pistolDefs = [
+  {
+    name: 'CONCRETE CRACK',
+    file: 'pistol-collision-concrete.wav',
+    desc: 'Bullet punches into concrete. Sharp mid-crack + dust puff.',
+    gen(ctx,dest){
+      const d=dest||ctx.destination;
+      // Sharp mid crack (pistol MID 3.4kHz dominant)
+      nBurst(ctx,d,{buf:mkNoise(ctx,0.04),bpF:3200,bpQ:1.2,g0:1.1,dur:0.04});
+      // Body thud — mid stone
+      pOsc(ctx,d,'sine',280,60,0.7,0.12);
+      // Dust puff — low soft noise
+      nBurst(ctx,d,{buf:mkPink(ctx,0.18),lpF:350,g0:0.5,dur:0.18,delay:0.02});
+      // Chip high click
+      nBurst(ctx,d,{buf:mkNoise(ctx,0.02),hpF:5000,g0:0.4,dur:0.02,delay:0.005});
+      return 0.26;
+    }
+  },
+  {
+    name: 'METAL RICOCHET',
+    file: 'pistol-collision-metal.wav',
+    desc: 'Bullet skips off metal. Sharp whip + bright ringing tail.',
+    gen(ctx,dest){
+      const d=dest||ctx.destination;
+      // Metal impact crack
+      nBurst(ctx,d,{buf:mkNoise(ctx,0.03),bpF:4000,bpQ:1.5,g0:1.0,dur:0.03});
+      // Ricochet ring — bright descending tone
+      pOsc(ctx,d,'sine',3800,800,0.55,0.28);
+      pOsc(ctx,d,'sine',2200,500,0.3,0.22);
+      // Light body thud
+      pOsc(ctx,d,'sine',220,55,0.5,0.10);
+      // Spark noise
+      nBurst(ctx,d,{buf:mkNoise(ctx,0.025),hpF:4500,g0:0.5,dur:0.025,delay:0.005});
+      return 0.32;
+    }
+  },
+  {
+    name: 'WOOD THUNK',
+    file: 'pistol-collision-wood.wav',
+    desc: 'Bullet embeds in wood. Hollow mid thunk, soft decay.',
+    gen(ctx,dest){
+      const d=dest||ctx.destination;
+      // Hollow wooden thunk
+      pOsc(ctx,d,'triangle',480,80,0.85,0.16);
+      pOsc(ctx,d,'sine',220,45,0.6,0.18);
+      // Wood crack noise burst
+      nBurst(ctx,d,{buf:mkPink(ctx,0.08),bpF:900,bpQ:0.8,g0:0.75,dur:0.08});
+      // Splinter high
+      nBurst(ctx,d,{buf:mkNoise(ctx,0.025),bpF:3500,bpQ:2,g0:0.35,dur:0.025,delay:0.008});
+      return 0.24;
+    }
+  },
+  {
+    name: 'DIRT HIT',
+    file: 'pistol-collision-dirt.wav',
+    desc: 'Bullet thuds into earth. Soft low thud, dust scatter.',
+    gen(ctx,dest){
+      const d=dest||ctx.destination;
+      // Soft earth thud
+      pOsc(ctx,d,'sine',160,28,0.9,0.16);
+      pOsc(ctx,d,'triangle',280,50,0.5,0.12);
+      // Earth noise — low soft
+      nBurst(ctx,d,{buf:mkBrown(ctx,0.18),lpF:280,g0:0.8,dur:0.18});
+      // Fine dirt spray
+      nBurst(ctx,d,{buf:mkPink(ctx,0.20),bpF:500,bpQ:0.5,g0:0.35,dur:0.20,delay:0.02});
+      return 0.28;
+    }
+  },
+  {
+    name: 'GLASS SHATTER',
+    file: 'pistol-collision-glass.wav',
+    desc: 'Bullet shatters glass. Bright crack + cascading high-freq shards.',
+    gen(ctx,dest){
+      const d=dest||ctx.destination;
+      // Initial crack — bright (pistol 3.4kHz character)
+      nBurst(ctx,d,{buf:mkNoise(ctx,0.025),hpF:3000,g0:1.1,dur:0.025});
+      // 7 glass shard rings
+      const shards=[4200,3100,5800,2600,4900,3700,6200];
+      const times= [0.01,0.025,0.018,0.04,0.032,0.055,0.048];
+      shards.forEach((f,i)=>{
+        pOsc(ctx,d,'sine',f,f*0.6,0.22-i*0.025,0.20-i*0.02,times[i]);
+        if(i<4) nBurst(ctx,d,{buf:mkNoise(ctx,0.01),hpF:f*0.7,g0:0.18-i*0.03,dur:0.012,delay:times[i]});
+      });
+      // Fine glass dust hiss
+      nBurst(ctx,d,{buf:mkNoise(ctx,0.22),hpF:5000,g0:0.2,dur:0.22,delay:0.02});
+      return 0.38;
+    }
+  },
+  {
+    name: 'WATER SPLASH',
+    file: 'pistol-collision-water.wav',
+    desc: 'Bullet hits water surface. Sharp plop + splash spray.',
+    gen(ctx,dest){
+      const d=dest||ctx.destination;
+      // Plop impact — low mid
+      pOsc(ctx,d,'sine',320,45,0.85,0.14);
+      pOsc(ctx,d,'sine',180,30,0.6,0.16);
+      // Splash noise — bandpass pink
+      nBurst(ctx,d,{buf:mkPink(ctx,0.24),bpF:800,bpQ:0.5,g0:0.7,dur:0.24,delay:0.01});
+      // Fine spray high
+      nBurst(ctx,d,{buf:mkNoise(ctx,0.20),bpF:3000,bpQ:0.4,g0:0.3,dur:0.20,delay:0.03});
+      // Ripple sub
+      pOsc(ctx,d,'sine',80,20,0.4,0.22,0.02);
+      return 0.32;
+    }
+  }
+];
+
+// ─── RIFLE COLLISION SOUNDS ───────────────────────────────────────────────────
+// Rifle DNA: LOW dominant (0.63 band), RMS=0.20 (nearly 2× pistol), ZCvar=17032 (extreme noisy),
+//            0.52s duration, deeper, heavier, more complex noise texture
+// → Collision = heavier impact, more sub-bass, longer rumble/debris, bigger shockwave
+
+const rifleDefs = [
+  {
+    name: 'CONCRETE BLAST',
+    file: 'rifle-collision-concrete.wav',
+    desc: 'High-powered round blows concrete chunk out. Heavy crack + sub shockwave.',
+    gen(ctx,dest){
+      const d=dest||ctx.destination;
+      // Heavy low impact (rifle LOW dominant)
+      pOsc(ctx,d,'sine',85,18,1.1,0.22);
+      pOsc(ctx,d,'sine',140,32,0.75,0.18);
+      // Dense distorted noise — extreme noisy texture (ZCvar 17k)
+      const nb=mkPink(ctx,0.14);
+      const ns=ctx.createBufferSource();ns.buffer=nb;
+      const dist=ctx.createWaveShaper();dist.curve=distCurve(8);
+      const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=700;
+      const ng=ctx.createGain();
+      ng.gain.setValueAtTime(1.1,ctx.currentTime);ng.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.16);
+      chain(ctx,[ns,dist,lp,ng],d);ns.start();ns.stop(ctx.currentTime+0.17);
+      // Debris chunks
+      [0.06,0.12,0.20].forEach((t,i)=>{
+        pOsc(ctx,d,'sine',70-i*12,18-i*3,0.4-i*0.1,0.12,t);
+        nBurst(ctx,d,{buf:mkPink(ctx,0.07),bpF:380-i*40,bpQ:0.8,g0:0.35-i*0.08,dur:0.07,delay:t});
+      });
+      // Dust cloud
+      nBurst(ctx,d,{buf:mkBrown(ctx,0.30),lpF:220,g0:0.4,dur:0.30,delay:0.05});
+      return 0.45;
+    }
+  },
+  {
+    name: 'METAL PUNCH',
+    file: 'rifle-collision-metal.wav',
+    desc: 'Round punches clean through metal. Heavy impact + deep resonant ring.',
+    gen(ctx,dest){
+      const d=dest||ctx.destination;
+      // Heavy metal punch (rifle: 2× RMS of pistol, LOW dominant)
+      nBurst(ctx,d,{buf:mkNoise(ctx,0.04),bpF:2800,bpQ:1.0,g0:1.2,dur:0.04});
+      pOsc(ctx,d,'sine',65,16,1.0,0.20);
+      // Deep metallic ring — lower than pistol ricochet
+      pOsc(ctx,d,'sine',1200,280,0.7,0.50);
+      pOsc(ctx,d,'sine',650,160,0.45,0.40);
+      pOsc(ctx,d,'sine',340,90,0.3,0.35);
+      // Low body thud
+      const bb=mkBrown(ctx,0.18);
+      nBurst(ctx,d,{buf:bb,lpF:250,g0:0.9,dur:0.18});
+      // Metal flex noise
+      nBurst(ctx,d,{buf:mkPink(ctx,0.12),bpF:1500,bpQ:0.6,g0:0.4,dur:0.12,delay:0.02});
+      return 0.55;
+    }
+  },
+  {
+    name: 'WOOD BLAST',
+    file: 'rifle-collision-wood.wav',
+    desc: 'Round blows through wood plank. Deep thunk + exploding splinters.',
+    gen(ctx,dest){
+      const d=dest||ctx.destination;
+      // Deep wood thunk (heavier than pistol — LOW dominant)
+      pOsc(ctx,d,'triangle',320,55,1.0,0.22);
+      pOsc(ctx,d,'sine',150,30,0.8,0.26);
+      // Wood crack — distorted (extreme ZCvar texture)
+      const nb=mkPink(ctx,0.12);
+      const ns=ctx.createBufferSource();ns.buffer=nb;
+      const dist=ctx.createWaveShaper();dist.curve=distCurve(6);
+      const bp=ctx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=700;bp.Q.value=0.7;
+      const ng=ctx.createGain();
+      ng.gain.setValueAtTime(1.0,ctx.currentTime);ng.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.13);
+      chain(ctx,[ns,dist,bp,ng],d);ns.start();ns.stop(ctx.currentTime+0.14);
+      // Splinter spray — multiple high fragments
+      [0.02,0.04,0.07,0.10,0.15].forEach((t,i)=>{
+        nBurst(ctx,d,{buf:mkNoise(ctx,0.025),bpF:2500+i*400,bpQ:1.5,g0:0.35-i*0.05,dur:0.025,delay:t});
+      });
+      // Wood dust
+      nBurst(ctx,d,{buf:mkPink(ctx,0.28),lpF:400,g0:0.35,dur:0.28,delay:0.05});
+      return 0.42;
+    }
+  },
+  {
+    name: 'DIRT EXPLOSION',
+    file: 'rifle-collision-dirt.wav',
+    desc: 'Round detonates in earth. Massive dirt plume + sub-bass shockwave.',
+    gen(ctx,dest){
+      const d=dest||ctx.destination;
+      // Sub shockwave (rifle LOW 0.63 energy band)
+      pOsc(ctx,d,'sine',55,12,1.1,0.30);
+      pOsc(ctx,d,'sine',90,20,0.85,0.25);
+      pOsc(ctx,d,'triangle',130,28,0.6,0.20);
+      // Brown noise earth (sustained, heavy)
+      const bb=mkBrown(ctx,0.35);
+      const bs=ctx.createBufferSource();bs.buffer=bb;
+      const blp=ctx.createBiquadFilter();blp.type='lowpass';blp.frequency.value=200;
+      const bg=ctx.createGain();
+      bg.gain.setValueAtTime(1.0,ctx.currentTime);bg.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.38);
+      chain(ctx,[bs,blp,bg],d);bs.start();bs.stop(ctx.currentTime+0.39);
+      // Dirt plume — slow swell mid noise
+      const dn=mkPink(ctx,0.40);
+      const ds=ctx.createBufferSource();ds.buffer=dn;
+      const dlp=ctx.createBiquadFilter();dlp.type='lowpass';dlp.frequency.value=320;
+      const dg=ctx.createGain();
+      dg.gain.setValueAtTime(0.0001,ctx.currentTime+0.04);
+      dg.gain.linearRampToValueAtTime(0.6,ctx.currentTime+0.14);
+      dg.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.48);
+      chain(ctx,[ds,dlp,dg],d);ds.start(ctx.currentTime+0.04);ds.stop(ctx.currentTime+0.49);
+      // Rock debris
+      [0.08,0.16,0.26].forEach((t,i)=>{
+        pOsc(ctx,d,'sine',75-i*10,18,0.4-i*0.08,0.12,t);
+      });
+      return 0.55;
+    }
+  },
+  {
+    name: 'STEEL PENETRATE',
+    file: 'rifle-collision-steel.wav',
+    desc: 'AP round tears through steel plate. Entry crack + deep structural ring.',
+    gen(ctx,dest){
+      const d=dest||ctx.destination;
+      // Entry impact — sharp and powerful
+      nBurst(ctx,d,{buf:mkNoise(ctx,0.035),bpF:3500,bpQ:1.2,g0:1.3,dur:0.035});
+      pOsc(ctx,d,'sine',75,18,1.1,0.18);
+      // Steel plate structural resonance — very low deep ring
+      pOsc(ctx,d,'sine',85,45,0.8,0.60);   // plate fundamental
+      pOsc(ctx,d,'sine',170,90,0.5,0.50);  // 2nd harmonic
+      pOsc(ctx,d,'sine',255,130,0.3,0.40); // 3rd harmonic
+      // Tearing metal noise (distorted, complex — ZCvar 17k texture)
+      const nb=mkPink(ctx,0.10);
+      const ns=ctx.createBufferSource();ns.buffer=nb;
+      const dist=ctx.createWaveShaper();dist.curve=distCurve(10);
+      const hp=ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=800;
+      const ng=ctx.createGain();
+      ng.gain.setValueAtTime(0.9,ctx.currentTime);ng.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.12);
+      chain(ctx,[ns,dist,hp,ng],d);ns.start();ns.stop(ctx.currentTime+0.13);
+      // Exit debris sparks
+      [0.03,0.055,0.08].forEach((t,i)=>{
+        nBurst(ctx,d,{buf:mkNoise(ctx,0.018),hpF:4000+i*500,g0:0.28-i*0.07,dur:0.018,delay:t});
+      });
+      return 0.68;
+    }
+  },
+  {
+    name: 'WATER CANNON',
+    file: 'rifle-collision-water.wav',
+    desc: 'High-velocity round hits water. Deep explosive splash + heavy spray.',
+    gen(ctx,dest){
+      const d=dest||ctx.destination;
+      // Deep underwater shockwave (LOW dominant, heavy RMS)
+      pOsc(ctx,d,'sine',60,14,1.1,0.24);
+      pOsc(ctx,d,'sine',110,25,0.75,0.20);
+      // Entry crack
+      nBurst(ctx,d,{buf:mkNoise(ctx,0.03),bpF:2500,bpQ:1.0,g0:1.0,dur:0.03});
+      // Massive splash — wide bandpass pink, sustained
+      const sp=mkPink(ctx,0.45);
+      const ss=ctx.createBufferSource();ss.buffer=sp;
+      const sbp=ctx.createBiquadFilter();sbp.type='bandpass';sbp.frequency.value=600;sbp.Q.value=0.4;
+      const sg=ctx.createGain();
+      sg.gain.setValueAtTime(0.0001,ctx.currentTime+0.02);
+      sg.gain.linearRampToValueAtTime(0.85,ctx.currentTime+0.06);
+      sg.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.52);
+      chain(ctx,[ss,sbp,sg],d);ss.start(ctx.currentTime+0.02);ss.stop(ctx.currentTime+0.53);
+      // High spray mist
+      nBurst(ctx,d,{buf:mkNoise(ctx,0.38),hpF:3500,g0:0.25,dur:0.38,delay:0.04});
+      // Sub ripple
+      pOsc(ctx,d,'sine',40,10,0.5,0.38,0.05);
+      return 0.58;
+    }
+  }
+];
+
+// ─── Offline render ────────────────────────────────────────────────────────────
+function renderAndDownload(def){
+  const sr=44100;
+  const tmp=new(window.AudioContext||window.webkitAudioContext)();
+  const dur=def.gen(tmp,null);tmp.close();
+  const off=new OfflineAudioContext(1,Math.ceil(sr*(dur+0.3)),sr);
+  def.gen(off,off.destination);
+  off.startRendering().then(buf=>dlBuf(buf,def.file));
+}
+
+// ─── Build UI ─────────────────────────────────────────────────────────────────
+const BARS=24;
+
+function buildPanel(defs, panelId, type) {
+  const panel=document.getElementById(panelId);
+  defs.forEach((def,i)=>{
+    const card=document.createElement('div');
+    card.className=`card ${type}-card`; card.id=`card-${type}-${i}`;
+    const bars=Array.from({length:BARS},()=>{
+      const h=1+Math.random()*24;
+      return `<div class="wb" style="height:${h}px" data-h="${h}"></div>`;
+    }).join('');
+    card.innerHTML=`
+      <div class="flash"></div>
+      <div class="card-top">
+        <div class="card-meta">
+          <span class="card-tag">VAR ${String(i+1).padStart(2,'0')} · ${type.toUpperCase()}</span>
+          <span class="card-name">${def.name}</span>
+        </div>
+        <div class="bullet"></div>
+      </div>
+      <div class="waveform">${bars}</div>
+      <div class="card-desc">${def.desc}</div>
+      <div class="card-actions">
+        <button class="btn btn-play" onclick="preview('${type}',${i},this)">▶ PREVIEW</button>
+        <button class="btn btn-dl" title="Download WAV" onclick="renderAndDownload(${type==='pistol'?'pistolDefs':'rifleDefs'}[${i}])">⬇</button>
+      </div>
+    `;
+    panel.appendChild(card);
+  });
+}
+
+buildPanel(pistolDefs,'pistolPanel','pistol');
+buildPanel(rifleDefs, 'riflePanel', 'rifle');
+
+// ─── Tab switching ─────────────────────────────────────────────────────────────
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelector(`.${tab}-tab`).classList.add('active');
+  document.querySelector(`.${tab}-panel`).classList.add('active');
+}
+
+// ─── Preview ──────────────────────────────────────────────────────────────────
+const timers={};
+function preview(type,idx,btn){
+  const ctx=getCtx();
+  const def=type==='pistol'?pistolDefs[idx]:rifleDefs[idx];
+  const card=document.getElementById(`card-${type}-${idx}`);
+  const bars=card.querySelectorAll('.wb');
+  const key=`${type}-${idx}`;
+  if(timers[key]){clearInterval(timers[key].a);clearTimeout(timers[key].s);}
+  card.classList.add('playing'); btn.textContent='■ IMPACT';
+  timers[key]={};
+  timers[key].a=setInterval(()=>{
+    bars.forEach(b=>{
+      const h=parseFloat(b.dataset.h);
+      b.style.height=(h*(0.2+Math.random()*2.2))+'px';
+    });
+  },55);
+  const dur=def.gen(ctx,ctx.destination);
+  timers[key].s=setTimeout(()=>{
+    clearInterval(timers[key].a);
+    bars.forEach(b=>{b.style.height=b.dataset.h+'px';});
+    card.classList.remove('playing'); btn.textContent='▶ PREVIEW';
+  },dur*1000+200);
+}
+</script>
+</body>
+</html>

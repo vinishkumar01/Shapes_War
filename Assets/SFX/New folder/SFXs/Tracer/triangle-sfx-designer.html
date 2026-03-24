@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Triangle SFX Designer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap');
+
+  :root {
+    --bg:         #060810;
+    --panel:      #0c0e1c;
+    --border:     #181e38;
+    --hurt:       #ff3c6e;
+    --hurt-dim:   #3a0018;
+    --hurt-glow:  #ff003c;
+    --death:      #00e5ff;
+    --death-dim:  #002a30;
+    --death-glow: #00aacc;
+    --text:       #c8d8f0;
+    --muted:      #3a4268;
+    --scan: rgba(0,200,255,0.03);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    padding: 28px 18px 50px;
+    overflow-x: hidden;
+  }
+
+  /* scanline overlay */
+  body::before {
+    content:''; pointer-events:none;
+    position:fixed; inset:0; z-index:999;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, var(--scan) 2px, var(--scan) 4px);
+  }
+
+  /* ── Header ── */
+  header { text-align:center; margin-bottom:36px; position:relative; }
+
+  .tri-row {
+    display: flex; align-items:center; justify-content:center; gap:18px; margin-bottom:10px;
+  }
+  .tri {
+    width:0; height:0;
+    border-left:18px solid transparent;
+    border-right:18px solid transparent;
+    border-bottom:32px solid var(--hurt);
+    filter: drop-shadow(0 0 8px var(--hurt-glow));
+    animation: triPulse 1.8s ease-in-out infinite alternate;
+    flex-shrink:0;
+  }
+  .tri.t2 {
+    border-bottom-color: var(--death);
+    filter: drop-shadow(0 0 8px var(--death-glow));
+    animation-delay: 0.9s;
+  }
+  @keyframes triPulse {
+    from { transform: translateY(0) scale(1); opacity:0.7; }
+    to   { transform: translateY(-5px) scale(1.12); opacity:1; }
+  }
+
+  header h1 {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 1.8rem;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, var(--hurt) 0%, #ff88aa 40%, var(--death) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  header p {
+    font-size: 0.62rem; color: var(--muted); letter-spacing: 5px; margin-top:5px;
+  }
+  .header-line {
+    height:1px; max-width:600px; margin:14px auto 0;
+    background: linear-gradient(90deg, transparent, var(--hurt), var(--death), transparent);
+  }
+
+  /* ── Section labels ── */
+  .section-row {
+    display:grid; grid-template-columns:1fr 1fr; gap:20px;
+    max-width:880px; margin:0 auto 10px;
+  }
+  .slabel {
+    font-family:'Rajdhani',sans-serif; font-weight:700;
+    font-size:0.72rem; letter-spacing:5px;
+    display:flex; align-items:center; gap:8px; padding-left:4px;
+  }
+  .slabel .bar { width:3px; height:16px; border-radius:2px; flex-shrink:0; }
+  .hurt-label  { color:var(--hurt);  } .hurt-label  .bar { background:var(--hurt);  box-shadow:0 0 6px var(--hurt-glow); }
+  .death-label { color:var(--death); } .death-label .bar { background:var(--death); box-shadow:0 0 6px var(--death-glow); }
+
+  /* ── Grid ── */
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:880px; margin:0 auto; }
+
+  /* ── Card ── */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius:10px;
+    padding:15px 15px 13px;
+    display:flex; flex-direction:column; gap:10px;
+    position:relative; overflow:hidden;
+    transition: border-color 0.18s, box-shadow 0.18s;
+  }
+  /* corner triangle decoration */
+  .card::before {
+    content:''; position:absolute;
+    top:0; right:0;
+    width:0; height:0;
+    border-top:28px solid transparent;
+    border-right:28px solid transparent;
+    opacity:0.18; transition:opacity 0.2s;
+  }
+  .hurt-card::before  { border-top-color:var(--hurt);  border-right-color:var(--hurt); }
+  .death-card::before { border-top-color:var(--death); border-right-color:var(--death); }
+  .card.playing::before { opacity:0.6; }
+  .hurt-card.playing  { border-color:var(--hurt);  box-shadow:0 0 18px #ff3c6e28; }
+  .death-card.playing { border-color:var(--death); box-shadow:0 0 18px #00e5ff22; }
+
+  /* energy bar (top) */
+  .energy-bar {
+    height:2px; border-radius:1px; width:0%;
+    transition: width 0.08s;
+    margin-bottom:2px;
+  }
+  .hurt-card  .energy-bar { background: linear-gradient(90deg, var(--hurt-glow), var(--hurt)); }
+  .death-card .energy-bar { background: linear-gradient(90deg, var(--death-glow), var(--death)); }
+  .card.playing .energy-bar { width:100%; }
+
+  .card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+  .card-meta { display:flex; flex-direction:column; gap:3px; }
+  .card-tag  { font-size:0.57rem; letter-spacing:3px; color:var(--muted); }
+  .card-name {
+    font-family:'Rajdhani',sans-serif; font-weight:700;
+    font-size:1.0rem; letter-spacing:1px; line-height:1.1;
+  }
+  .hurt-card  .card-name { color:var(--hurt); }
+  .death-card .card-name { color:var(--death); }
+
+  /* mini triangle icon */
+  .tri-icon {
+    width:0; height:0; flex-shrink:0; margin-top:2px;
+    border-left:10px solid transparent;
+    border-right:10px solid transparent;
+    transition: transform 0.1s;
+  }
+  .hurt-card  .tri-icon { border-bottom:18px solid var(--hurt); }
+  .death-card .tri-icon { border-bottom:18px solid var(--death); }
+  .card.playing .tri-icon { transform: scale(1.3) translateY(-3px); }
+
+  /* waveform */
+  .waveform { height:30px; display:flex; align-items:center; gap:2px; }
+  .wb { flex:1; border-radius:1px; min-height:2px; transition:height 0.055s; }
+  .hurt-card  .wb { background:var(--hurt);  opacity:0.45; }
+  .death-card .wb { background:var(--death); opacity:0.45; }
+  .card.playing .wb { opacity:1; }
+
+  .card-desc { font-size:0.62rem; color:var(--muted); line-height:1.65; letter-spacing:0.3px; }
+
+  /* buttons */
+  .card-actions { display:flex; gap:8px; margin-top:2px; }
+  .btn {
+    border:none; border-radius:6px; cursor:pointer;
+    font-family:'Share Tech Mono',monospace; font-size:0.63rem; letter-spacing:2px;
+    padding:9px 0; display:flex; align-items:center; justify-content:center; gap:5px;
+    transition:all 0.14s;
+  }
+  .btn-play { flex:1; background:transparent; border:1.5px solid currentColor; }
+  .hurt-card  .btn-play { color:var(--hurt);  }
+  .death-card .btn-play { color:var(--death); }
+  .hurt-card  .btn-play:hover { background:var(--hurt-dim); }
+  .death-card .btn-play:hover { background:var(--death-dim); }
+  .btn-dl { flex:0 0 42px; background:var(--border); color:var(--muted); border:1.5px solid transparent; }
+  .btn-dl:hover { background:#222a48; color:var(--text); }
+
+  footer { text-align:center; margin-top:30px; font-size:0.59rem; color:var(--muted); letter-spacing:4px; }
+
+  @media(max-width:580px){ .grid,.section-row{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="tri-row">
+    <div class="tri"></div>
+    <h1>TRIANGLE SFX</h1>
+    <div class="tri t2"></div>
+  </div>
+  <p>HURT × 6 &nbsp;·&nbsp; DEATH × 6 &nbsp;·&nbsp; SCI-FI / HYPER-BURST STYLE</p>
+  <div class="header-line"></div>
+</header>
+
+<div class="section-row">
+  <div class="slabel hurt-label"><span class="bar"></span>HURT SOUNDS</div>
+  <div class="slabel death-label"><span class="bar"></span>DEATH SOUNDS</div>
+</div>
+
+<div class="grid" id="grid"></div>
+<footer>▶ PREVIEW &nbsp;|&nbsp; ⬇ DOWNLOAD WAV &nbsp;|&nbsp; TRIANGLE · SCI-FI HYPER-BURST</footer>
+
+<script>
+// ─── Audio ────────────────────────────────────────────────────────────────────
+let actx = null;
+const getCtx = () => { if(!actx) actx = new(window.AudioContext||window.webkitAudioContext)(); return actx; };
+
+// ─── WAV Encoder ──────────────────────────────────────────────────────────────
+function encodeWAV(buf) {
+  const sr=buf.sampleRate, s=buf.getChannelData(0), n=s.length;
+  const ab=new ArrayBuffer(44+n*2), v=new DataView(ab);
+  const ws=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i));};
+  ws(0,'RIFF');v.setUint32(4,36+n*2,true);ws(8,'WAVE');ws(12,'fmt ');
+  v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);
+  v.setUint16(32,2,true);v.setUint16(34,16,true);
+  ws(36,'data');v.setUint32(40,n*2,true);
+  let o=44;
+  for(let i=0;i<n;i++){const x=Math.max(-1,Math.min(1,s[i]));v.setInt16(o,x<0?x*0x8000:x*0x7FFF,true);o+=2;}
+  return ab;
+}
+function dlBuf(buf,name){
+  const blob=new Blob([encodeWAV(buf)],{type:'audio/wav'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);
+}
+
+// ─── DSP Helpers ──────────────────────────────────────────────────────────────
+function mkNoise(ctx, dur) {
+  const n=Math.ceil(ctx.sampleRate*dur), b=ctx.createBuffer(1,n,ctx.sampleRate);
+  const d=b.getChannelData(0); for(let i=0;i<n;i++) d[i]=Math.random()*2-1; return b;
+}
+
+// Brown noise (deeper, more explosive)
+function mkBrown(ctx, dur) {
+  const n=Math.ceil(ctx.sampleRate*dur), b=ctx.createBuffer(1,n,ctx.sampleRate);
+  const d=b.getChannelData(0); let last=0;
+  for(let i=0;i<n;i++){last=(last+(Math.random()*2-1)*0.02);last=Math.max(-1,Math.min(1,last));d[i]=last*8;}
+  return b;
+}
+
+function chain(ctx, nodes, dest) {
+  for(let i=0;i<nodes.length-1;i++) nodes[i].connect(nodes[i+1]);
+  nodes[nodes.length-1].connect(dest||ctx.destination);
+}
+
+// Pitched oscillator with full envelope control
+function osc(ctx, dest, {type='sine', freqEnv=[], gainEnv=[], dur=0.5}) {
+  const o=ctx.createOscillator(); o.type=type;
+  const now=ctx.currentTime;
+  freqEnv.forEach(([t,f,ramp],i)=>{
+    o.frequency.setValueAtTime(f, now+t);
+    if(ramp==='exp' && freqEnv[i+1]) o.frequency.exponentialRampToValueAtTime(freqEnv[i+1][1], now+freqEnv[i+1][0]);
+    if(ramp==='lin' && freqEnv[i+1]) o.frequency.linearRampToValueAtTime(freqEnv[i+1][1], now+freqEnv[i+1][0]);
+  });
+  const g=ctx.createGain();
+  gainEnv.forEach(([t,v,ramp],i)=>{
+    g.gain.setValueAtTime(v, now+t);
+    if(ramp==='exp' && gainEnv[i+1]) g.gain.exponentialRampToValueAtTime(Math.max(0.0001,gainEnv[i+1][1]), now+gainEnv[i+1][0]);
+    if(ramp==='lin' && gainEnv[i+1]) g.gain.linearRampToValueAtTime(gainEnv[i+1][1], now+gainEnv[i+1][0]);
+  });
+  o.connect(g); g.connect(dest||ctx.destination);
+  o.start(now); o.stop(now+dur+0.05);
+}
+
+function noiseNode(ctx, dest, {buf, lpFreq=null, hpFreq=null, bpFreq=null, bpQ=1, gainEnv=[], dur=0.1, startAt=0}) {
+  const now = ctx.currentTime + startAt;
+  const src=ctx.createBufferSource(); src.buffer=buf;
+  let last = src;
+  if(lpFreq){const f=ctx.createBiquadFilter();f.type='lowpass';f.frequency.value=lpFreq;src.connect(f);last=f;}
+  if(hpFreq){const f=ctx.createBiquadFilter();f.type='highpass';f.frequency.value=hpFreq;last.connect(f);last=f;}
+  if(bpFreq){const f=ctx.createBiquadFilter();f.type='bandpass';f.frequency.value=bpFreq;f.Q.value=bpQ;last.connect(f);last=f;}
+  const g=ctx.createGain();
+  gainEnv.forEach(([t,v,ramp],i)=>{
+    g.gain.setValueAtTime(v, now+t);
+    if(ramp==='exp'&&gainEnv[i+1]) g.gain.exponentialRampToValueAtTime(Math.max(0.0001,gainEnv[i+1][1]), now+gainEnv[i+1][0]);
+    if(ramp==='lin'&&gainEnv[i+1]) g.gain.linearRampToValueAtTime(gainEnv[i+1][1], now+gainEnv[i+1][0]);
+  });
+  last.connect(g); g.connect(dest||ctx.destination);
+  src.start(now); src.stop(now+dur+0.02);
+}
+
+// Waveshaper distortion curve
+function distCurve(amount=6) {
+  const c=new Float32Array(512);
+  for(let i=0;i<512;i++){const x=i/256-1; c[i]=Math.tanh(x*amount);}
+  return c;
+}
+
+// ─── HURT SOUNDS ─────────────────────────────────────────────────────────────
+// Character profile:
+//   sci-fi-lift  : bright, fast 10ms attack, 259→3150Hz rising tonal
+//   hyper-burst  : instant attack, noisy/complex, LOW rumble, max peak
+//   wind-scream  : bright/high, slow build, airy 166→900Hz
+//   mega-blast   : instant 0ms attack, noisy/complex, 41Hz sub-rumble
+// → HURT = instant/very-fast attack, bright + low-sub combo, sci-fi glitch character
+
+const hurtDefs = [
+  {
+    name: 'PLASMA STING',
+    file: 'hurt-plasma-sting.wav',
+    desc: 'Instant high-energy strike. Bright sci-fi discharge with sub-bass punch.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      // Sub-bass punch (like mega-blast's 41Hz)
+      osc(ctx,d,{type:'sine',
+        freqEnv:[[0,55,'exp'],[0.001,55],[0.10,18]],
+        gainEnv:[[0,1.0,'exp'],[0.001,1.0],[0.13,0.001]], dur:0.15});
+      // Sci-fi high whip (like sci-fi-lift 259→3150Hz) — instant attack
+      osc(ctx,d,{type:'sawtooth',
+        freqEnv:[[0,280,'exp'],[0.001,280],[0.12,2800]],
+        gainEnv:[[0,0.55,'exp'],[0.001,0.55],[0.16,0.001]], dur:0.18});
+      // Bright noise burst (hyper-burst character)
+      noiseNode(ctx,d,{buf:mkNoise(ctx,0.05),hpFreq:3000,
+        gainEnv:[[0,0.9,'exp'],[0.001,0.9],[0.05,0.001]], dur:0.05});
+      // Distorted crunch layer
+      const ns=ctx.createBufferSource(); ns.buffer=mkNoise(ctx,0.08);
+      const dist=ctx.createWaveShaper(); dist.curve=distCurve(8);
+      const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=800; bp.Q.value=1.2;
+      const ng=ctx.createGain();
+      ng.gain.setValueAtTime(0.7,now); ng.gain.exponentialRampToValueAtTime(0.001,now+0.09);
+      chain(ctx,[ns,dist,bp,ng],d); ns.start(); ns.stop(now+0.09);
+      return 0.22;
+    }
+  },
+  {
+    name: 'ENERGY CRACK',
+    file: 'hurt-energy-crack.wav',
+    desc: 'Sharp electric snap. Mid-air energy field cracking on impact.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      // Instant crack — broadband noise, zero attack
+      noiseNode(ctx,d,{buf:mkNoise(ctx,0.04),hpFreq:1800,
+        gainEnv:[[0,1.1,'exp'],[0.001,1.1],[0.04,0.001]], dur:0.04});
+      // Descending tonal hit (reverse sci-fi-lift: starts high falls)
+      osc(ctx,d,{type:'square',
+        freqEnv:[[0,2200,'exp'],[0.001,2200],[0.08,180]],
+        gainEnv:[[0,0.5,'exp'],[0.001,0.5],[0.12,0.001]], dur:0.14});
+      // Sub thud
+      osc(ctx,d,{type:'sine',
+        freqEnv:[[0,80,'exp'],[0.001,80],[0.07,22]],
+        gainEnv:[[0,0.8,'exp'],[0.001,0.8],[0.09,0.001]], dur:0.11});
+      // Electrical ringing tail
+      osc(ctx,d,{type:'sine',
+        freqEnv:[[0.02,1400],[0.02,1400,'exp'],[0.18,600]],
+        gainEnv:[[0.02,0,'lin'],[0.025,0.2,'exp'],[0.22,0.001]], dur:0.24});
+      return 0.26;
+    }
+  },
+  {
+    name: 'HYPER JOLT',
+    file: 'hurt-hyper-jolt.wav',
+    desc: 'Hyper-burst style — instant noisy slam with complex harmonic debris.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      // Main blast (matching hyper-burst: instant, noisy/complex, low rumble)
+      const nb=ctx.createBufferSource(); nb.buffer=mkBrown(ctx,0.12);
+      const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=300;
+      const dist=ctx.createWaveShaper(); dist.curve=distCurve(10);
+      const ng=ctx.createGain();
+      ng.gain.setValueAtTime(0.9,now); ng.gain.exponentialRampToValueAtTime(0.001,now+0.13);
+      chain(ctx,[nb,lp,dist,ng],d); nb.start(); nb.stop(now+0.14);
+      // High-freq scatter
+      [0, 0.02, 0.045].forEach((t,i)=>{
+        noiseNode(ctx,d,{buf:mkNoise(ctx,0.03), hpFreq:2500+i*500,
+          gainEnv:[[0,0.6-i*0.15,'exp'],[0.001,0.6-i*0.15],[0.04,0.001]],
+          startAt:t, dur:0.04});
+      });
+      // Tonal bite
+      osc(ctx,d,{type:'sawtooth',
+        freqEnv:[[0,340,'exp'],[0.001,340],[0.06,80]],
+        gainEnv:[[0,0.45,'exp'],[0.001,0.45],[0.09,0.001]], dur:0.10});
+      return 0.20;
+    }
+  },
+  {
+    name: 'LASER WHIP',
+    file: 'hurt-laser-whip.wav',
+    desc: 'Thin bright laser slash. Fast rising whip + sharp echo sting.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      // Rising whip (sci-fi-lift character: 259→3150Hz, bright)
+      osc(ctx,d,{type:'sine',
+        freqEnv:[[0,260,'exp'],[0.001,260],[0.15,3000]],
+        gainEnv:[[0,0.8,'exp'],[0.001,0.8],[0.17,0.001]], dur:0.19});
+      // Harmonics layer
+      osc(ctx,d,{type:'triangle',
+        freqEnv:[[0,520,'exp'],[0.001,520],[0.12,2000]],
+        gainEnv:[[0,0.3,'exp'],[0.001,0.3],[0.14,0.001]], dur:0.16});
+      // Sharp noise transient
+      noiseNode(ctx,d,{buf:mkNoise(ctx,0.03), hpFreq:4000,
+        gainEnv:[[0,0.85,'exp'],[0.001,0.85],[0.03,0.001]], dur:0.03});
+      // Echo sting (short repeat)
+      osc(ctx,d,{type:'sine',
+        freqEnv:[[0.10,1800,'exp'],[0.101,1800],[0.22,500]],
+        gainEnv:[[0.10,0,'lin'],[0.105,0.3,'exp'],[0.25,0.001]], dur:0.27});
+      return 0.28;
+    }
+  },
+  {
+    name: 'IMPACT STATIC',
+    file: 'hurt-impact-static.wav',
+    desc: 'Static burst on impact. Noisy distorted crunch + low-frequency shockwave.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      // Shockwave sub
+      osc(ctx,d,{type:'sine',
+        freqEnv:[[0,45,'exp'],[0.001,45],[0.12,18]],
+        gainEnv:[[0,1.0,'exp'],[0.001,1.0],[0.14,0.001]], dur:0.16});
+      // Static noise — distorted, noisy/complex (hyper-burst texture)
+      const nb=ctx.createBufferSource(); nb.buffer=mkNoise(ctx,0.15);
+      const dist=ctx.createWaveShaper(); dist.curve=distCurve(12);
+      const hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=600;
+      const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=8000;
+      const ng=ctx.createGain();
+      ng.gain.setValueAtTime(0.8,now); ng.gain.setValueAtTime(0.8,now+0.01);
+      ng.gain.exponentialRampToValueAtTime(0.001,now+0.16);
+      chain(ctx,[nb,dist,hp,lp,ng],d); nb.start(); nb.stop(now+0.17);
+      // Mid-range ring
+      osc(ctx,d,{type:'square',
+        freqEnv:[[0,900,'exp'],[0.001,900],[0.10,200]],
+        gainEnv:[[0,0.3,'exp'],[0.001,0.3],[0.12,0.001]], dur:0.14});
+      return 0.22;
+    }
+  },
+  {
+    name: 'VOID PIERCE',
+    file: 'hurt-void-pierce.wav',
+    desc: 'Penetrating high-freq beam interrupted. Wind-scream sting with sub-bass hit.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      // Wind-scream style: slow rising brightness (165→900Hz)
+      osc(ctx,d,{type:'sawtooth',
+        freqEnv:[[0,165,'lin'],[0.001,165],[0.18,880]],
+        gainEnv:[[0,0.5,'exp'],[0.001,0.5],[0.20,0.001]], dur:0.22});
+      // Sub punch (mega-blast 41Hz character)
+      osc(ctx,d,{type:'sine',
+        freqEnv:[[0,42,'exp'],[0.001,42],[0.08,18]],
+        gainEnv:[[0,0.9,'exp'],[0.001,0.9],[0.10,0.001]], dur:0.12});
+      // Piercing noise spike
+      noiseNode(ctx,d,{buf:mkNoise(ctx,0.05), bpFreq:5500, bpQ:2.5,
+        gainEnv:[[0,0.7,'exp'],[0.001,0.7],[0.05,0.001]], dur:0.05});
+      // Abrupt cut shimmer
+      osc(ctx,d,{type:'sine',
+        freqEnv:[[0.06,2200,'exp'],[0.061,2200],[0.18,800]],
+        gainEnv:[[0.06,0,'lin'],[0.065,0.25,'exp'],[0.22,0.001]], dur:0.24});
+      return 0.26;
+    }
+  }
+];
+
+// ─── DEATH SOUNDS ─────────────────────────────────────────────────────────────
+// mega-blast: instant, 41Hz sub, 1.3s decay, noisy/complex → core of death
+// hyper-burst: instant, full peak, 0.6s, noisy = initial explosion
+// wind-scream: 2.5s sustained, bright, rising → disintegration trail
+// sci-fi-lift: bright 259→3150Hz → ascending debris
+
+const deathDefs = [
+  {
+    name: 'MEGA DISINTEGRATE',
+    file: 'death-mega-disintegrate.wav',
+    desc: 'Full mega-blast explosion. Sub-bass obliteration + screaming debris trail.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      const dur=1.6;
+      // ① Core explosion (mega-blast: instant 41Hz, noisy/complex, 1.3s decay)
+      const bb=ctx.createBufferSource(); bb.buffer=mkBrown(ctx,0.5);
+      const blp=ctx.createBiquadFilter(); blp.type='lowpass'; blp.frequency.value=200;
+      const bdist=ctx.createWaveShaper(); bdist.curve=distCurve(14);
+      const bg=ctx.createGain();
+      bg.gain.setValueAtTime(1.2,now); bg.gain.exponentialRampToValueAtTime(0.001,now+0.55);
+      chain(ctx,[bb,blp,bdist,bg],d); bb.start(); bb.stop(now+0.56);
+      // Sub-bass (41Hz like mega-blast start)
+      osc(ctx,d,{type:'sine',
+        freqEnv:[[0,41,'exp'],[0.001,41],[0.35,18]],
+        gainEnv:[[0,1.0,'exp'],[0.001,1.0],[0.4,0.001]], dur:0.42});
+      // ② Hyper-burst noise blast (full-peak instant)
+      const hb=ctx.createBufferSource(); hb.buffer=mkNoise(ctx,0.12);
+      const hdist=ctx.createWaveShaper(); hdist.curve=distCurve(16);
+      const hg=ctx.createGain();
+      hg.gain.setValueAtTime(1.0,now); hg.gain.exponentialRampToValueAtTime(0.001,now+0.14);
+      chain(ctx,[hb,hdist,hg],d); hb.start(); hb.stop(now+0.15);
+      // ③ Wind-scream debris trail (165→900Hz over 1.0s)
+      osc(ctx,d,{type:'sawtooth',
+        freqEnv:[[0.1,165,'lin'],[0.11,165],[0.9,900]],
+        gainEnv:[[0.1,0,'lin'],[0.15,0.3,'exp'],[1.3,0.001]], dur:1.35});
+      // ④ Sci-fi-lift ascending sparks (259→3150Hz)
+      [0.08,0.18,0.32].forEach((t,i)=>{
+        osc(ctx,d,{type:'sine',
+          freqEnv:[[t,260,'exp'],[t+0.001,260],[t+0.3,2800]],
+          gainEnv:[[t,0,'lin'],[t+0.005,0.2-i*0.05,'exp'],[t+0.35,0.001]], dur:t+0.38});
+      });
+      return dur;
+    }
+  },
+  {
+    name: 'HYPER COLLAPSE',
+    file: 'death-hyper-collapse.wav',
+    desc: 'Hyper-burst peak hit. Instant total collapse then cascading glitch fragments.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      const dur=1.2;
+      // ① Instant wall of noise (hyper-burst: 0ms attack, full peak, noisy/complex)
+      const nb=ctx.createBufferSource(); nb.buffer=mkNoise(ctx,0.08);
+      const ndist=ctx.createWaveShaper(); ndist.curve=distCurve(18);
+      const ng=ctx.createGain();
+      ng.gain.setValueAtTime(1.1,now); ng.gain.exponentialRampToValueAtTime(0.001,now+0.09);
+      chain(ctx,[nb,ndist,ng],d); nb.start(); nb.stop(now+0.10);
+      // Sub floor drop
+      osc(ctx,d,{type:'sine',
+        freqEnv:[[0,60,'exp'],[0.001,60],[0.18,15]],
+        gainEnv:[[0,0.95,'exp'],[0.001,0.95],[0.20,0.001]], dur:0.22});
+      // ② Cascading glitch fragments — 8 descending sci-fi tones
+      for(let i=0;i<8;i++){
+        const t=0.06+i*0.11+Math.random()*0.04;
+        const fStart=2000-i*180;
+        osc(ctx,d,{type:'square',
+          freqEnv:[[t,fStart,'exp'],[t+0.001,fStart],[t+0.12,fStart*0.15]],
+          gainEnv:[[t,0,'lin'],[t+0.004,0.22-i*0.02,'exp'],[t+0.18,0.001]], dur:t+0.20});
+        // Noise click per fragment
+        noiseNode(ctx,d,{buf:mkNoise(ctx,0.025), hpFreq:1500+i*200,
+          gainEnv:[[0,0.3-i*0.025,'exp'],[0.001,0.3-i*0.025],[0.03,0.001]],
+          startAt:t, dur:0.03});
+      }
+      return dur;
+    }
+  },
+  {
+    name: 'WIND SCREAM DEATH',
+    file: 'death-wind-scream-death.wav',
+    desc: 'Long agonising wind-scream tear. Triangle rips apart over 2 seconds.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      const dur=2.0;
+      // ① Opening blast
+      const bb=ctx.createBufferSource(); bb.buffer=mkBrown(ctx,0.25);
+      const blp=ctx.createBiquadFilter(); blp.type='lowpass'; blp.frequency.value=300;
+      const bg=ctx.createGain();
+      bg.gain.setValueAtTime(1.0,now); bg.gain.exponentialRampToValueAtTime(0.001,now+0.28);
+      chain(ctx,[bb,blp,bg],d); bb.start(); bb.stop(now+0.29);
+      osc(ctx,d,{type:'sine',
+        freqEnv:[[0,50,'exp'],[0.001,50],[0.2,16]],
+        gainEnv:[[0,0.9,'exp'],[0.001,0.9],[0.22,0.001]], dur:0.24});
+      // ② Wind-scream long rising (2.5s ref: slow build 165→900Hz)
+      osc(ctx,d,{type:'sawtooth',
+        freqEnv:[[0.1,165,'lin'],[0.11,165],[1.6,1800]],
+        gainEnv:[[0.1,0,'lin'],[0.2,0.35,'exp'],[1.7,0.001]], dur:1.75});
+      // Second harmonic layer
+      osc(ctx,d,{type:'triangle',
+        freqEnv:[[0.15,330,'lin'],[0.16,330],[1.5,3200]],
+        gainEnv:[[0.15,0,'lin'],[0.25,0.18,'exp'],[1.6,0.001]], dur:1.65});
+      // ③ Shredding noise throughout
+      const sn=ctx.createBufferSource(); sn.buffer=mkNoise(ctx,1.5);
+      const sbp=ctx.createBiquadFilter(); sbp.type='bandpass'; sbp.frequency.value=2500; sbp.Q.value=0.6;
+      sbp.frequency.linearRampToValueAtTime(6000,now+1.6);
+      const sg=ctx.createGain();
+      sg.gain.setValueAtTime(0,now+0.1); sg.gain.linearRampToValueAtTime(0.22,now+0.3);
+      sg.gain.exponentialRampToValueAtTime(0.001,now+1.7);
+      chain(ctx,[sn,sbp,sg],d); sn.start(now+0.1); sn.stop(now+1.75);
+      return dur;
+    }
+  },
+  {
+    name: 'SHATTER BREAK',
+    file: 'death-shatter-break.wav',
+    desc: 'Clean shatter. One sharp crack, pieces break off and ring out briefly.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      const dur=0.9;
+
+      // ① Single sharp crack — the break moment, very short & bright
+      const c1=ctx.createBufferSource(); c1.buffer=mkNoise(ctx,0.03);
+      const c1hp=ctx.createBiquadFilter(); c1hp.type='highpass'; c1hp.frequency.value=3000;
+      const c1g=ctx.createGain();
+      c1g.gain.setValueAtTime(1.4,now); c1g.gain.exponentialRampToValueAtTime(0.001,now+0.03);
+      chain(ctx,[c1,c1hp,c1g],d); c1.start(); c1.stop(now+0.035);
+
+      // Low thud underneath — the mass impact
+      const thud=ctx.createOscillator(); thud.type='sine';
+      thud.frequency.setValueAtTime(130,now);
+      thud.frequency.exponentialRampToValueAtTime(30,now+0.08);
+      const tg=ctx.createGain();
+      tg.gain.setValueAtTime(0.85,now); tg.gain.exponentialRampToValueAtTime(0.001,now+0.09);
+      thud.connect(tg); tg.connect(d); thud.start(now); thud.stop(now+0.10);
+
+      // ② 6 broken piece rings — each a pure tone that decays naturally
+      // Spread over first 200ms, each at a distinct pitch like glass/metal fragments
+      const pieces=[
+        {t:0.01, f:3800, dur:0.28},
+        {t:0.025,f:2400, dur:0.32},
+        {t:0.04, f:5100, dur:0.22},
+        {t:0.06, f:1900, dur:0.35},
+        {t:0.09, f:4300, dur:0.20},
+        {t:0.14, f:2900, dur:0.25},
+      ];
+      pieces.forEach(({t,f,dur:pd},i)=>{
+        const o=ctx.createOscillator(); o.type='sine';
+        o.frequency.setValueAtTime(f,now+t);
+        o.frequency.exponentialRampToValueAtTime(f*0.88,now+t+pd);
+        const g=ctx.createGain();
+        g.gain.setValueAtTime(0.0001,now+t);
+        g.gain.linearRampToValueAtTime(0.20-i*0.022,now+t+0.005);
+        g.gain.exponentialRampToValueAtTime(0.0001,now+t+pd);
+        o.connect(g); g.connect(d); o.start(now+t); o.stop(now+t+pd+0.02);
+      });
+
+      // ③ Short debris hiss — small fragments scattering, fades fast
+      const hn=ctx.createBufferSource(); hn.buffer=mkNoise(ctx,0.35);
+      const hhp=ctx.createBiquadFilter(); hhp.type='highpass'; hhp.frequency.value=4500;
+      const hg=ctx.createGain();
+      hg.gain.setValueAtTime(0.22,now+0.01);
+      hg.gain.exponentialRampToValueAtTime(0.001,now+0.38);
+      chain(ctx,[hn,hhp,hg],d); hn.start(now+0.01); hn.stop(now+0.40);
+
+      return dur;
+    }
+  },
+  {
+    name: 'CORE MELTDOWN',
+    file: 'death-core-meltdown.wav',
+    desc: 'Reactor core breach. Low sub-bass overload, crackling layers, long decay.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      const dur=1.8;
+      // ① Overload — rising then exploding
+      osc(ctx,d,{type:'sawtooth',
+        freqEnv:[[0,80,'lin'],[0.001,80],[0.22,320]],
+        gainEnv:[[0,0.5,'lin'],[0.001,0.5],[0.20,0.8,'exp'],[0.22,0.001]], dur:0.24});
+      // ② Main core blast (mega-blast: 41Hz, instant, noisy/complex)
+      const t2=0.20;
+      const cb=ctx.createBufferSource(); cb.buffer=mkBrown(ctx,0.6);
+      const cdist=ctx.createWaveShaper(); cdist.curve=distCurve(16);
+      const clp=ctx.createBiquadFilter(); clp.type='lowpass'; clp.frequency.value=250;
+      const cg=ctx.createGain();
+      cg.gain.setValueAtTime(1.3,now+t2); cg.gain.exponentialRampToValueAtTime(0.001,now+t2+0.65);
+      chain(ctx,[cb,cdist,clp,cg],d); cb.start(now+t2); cb.stop(now+t2+0.66);
+      osc(ctx,d,{type:'sine',
+        freqEnv:[[t2,41,'exp'],[t2+0.001,41],[t2+0.45,12]],
+        gainEnv:[[t2,1.1,'exp'],[t2+0.001,1.1],[t2+0.50,0.001]], dur:t2+0.52});
+      // ③ Crackle decay (noisy/complex texture throughout)
+      for(let i=0;i<6;i++){
+        const t=0.22+i*0.18+Math.random()*0.06;
+        noiseNode(ctx,d,{buf:mkNoise(ctx,0.08), hpFreq:800+i*300,
+          gainEnv:[[0,0.45-i*0.06,'exp'],[0.001,0.45-i*0.06],[0.09,0.001]],
+          startAt:t, dur:0.09});
+      }
+      // ④ Long wind-scream tail
+      osc(ctx,d,{type:'sawtooth',
+        freqEnv:[[0.3,200,'lin'],[0.31,200],[1.5,1200]],
+        gainEnv:[[0.3,0,'lin'],[0.4,0.2,'exp'],[1.6,0.001]], dur:1.65});
+      return dur;
+    }
+  },
+  {
+    name: 'RIFT COLLAPSE',
+    file: 'death-rift-collapse.wav',
+    desc: 'Dimensional rift tears open. Sci-fi pitch-scream then total void implosion.',
+    gen(ctx, dest) {
+      const d=dest||ctx.destination, now=ctx.currentTime;
+      const dur=1.5;
+      // ① Rift opening — sci-fi-lift ascending (259→3150Hz + harmonics)
+      osc(ctx,d,{type:'sine',
+        freqEnv:[[0,259,'exp'],[0.001,259],[0.5,3150]],
+        gainEnv:[[0,0.7,'exp'],[0.001,0.7],[0.52,0.001]], dur:0.55});
+      osc(ctx,d,{type:'triangle',
+        freqEnv:[[0,518,'exp'],[0.001,518],[0.5,6300]],
+        gainEnv:[[0,0.3,'exp'],[0.001,0.3],[0.48,0.001]], dur:0.52});
+      // ② Mid peak — bright noise burst
+      noiseNode(ctx,d,{buf:mkNoise(ctx,0.06), bpFreq:4000, bpQ:1.2,
+        gainEnv:[[0,0.9,'exp'],[0.001,0.9],[0.06,0.001]], startAt:0.48, dur:0.07});
+      // ③ Implosion — everything collapses DOWN
+      const t3=0.52;
+      osc(ctx,d,{type:'sawtooth',
+        freqEnv:[[t3,3000,'exp'],[t3+0.001,3000],[t3+0.5,28]],
+        gainEnv:[[t3,0,'lin'],[t3+0.01,0.8,'exp'],[t3+0.55,0.001]], dur:t3+0.58});
+      // Sub implosion boom
+      const ib=ctx.createBufferSource(); ib.buffer=mkBrown(ctx,0.4);
+      const idist=ctx.createWaveShaper(); idist.curve=distCurve(12);
+      const ilp=ctx.createBiquadFilter(); ilp.type='lowpass'; ilp.frequency.value=150;
+      const ig=ctx.createGain();
+      ig.gain.setValueAtTime(0,now+t3); ig.gain.linearRampToValueAtTime(1.0,now+t3+0.05);
+      ig.gain.exponentialRampToValueAtTime(0.001,now+t3+0.45);
+      chain(ctx,[ib,idist,ilp,ig],d); ib.start(now+t3); ib.stop(now+t3+0.46);
+      // ④ Debris scatter (5 small sci-fi pings)
+      for(let i=0;i<5;i++){
+        const t=t3+0.1+Math.random()*0.5;
+        osc(ctx,d,{type:'sine',
+          freqEnv:[[t,800+i*200,'exp'],[t+0.001,800+i*200],[t+0.15,200]],
+          gainEnv:[[t,0,'lin'],[t+0.004,0.15,'exp'],[t+0.20,0.001]], dur:t+0.22});
+      }
+      return dur;
+    }
+  }
+];
+
+// ─── Offline render ───────────────────────────────────────────────────────────
+function renderAndDownload(def) {
+  const sr=44100;
+  const tmp=new(window.AudioContext||window.webkitAudioContext)();
+  const dur=def.gen(tmp,null); tmp.close();
+  const off=new OfflineAudioContext(1,Math.ceil(sr*(dur+0.3)),sr);
+  def.gen(off,off.destination);
+  off.startRendering().then(buf=>dlBuf(buf,def.file));
+}
+
+// ─── Build UI ─────────────────────────────────────────────────────────────────
+const grid=document.getElementById('grid');
+const BARS=24;
+
+for(let i=0;i<6;i++){
+  ['hurt','death'].forEach(type=>{
+    const def=type==='hurt'?hurtDefs[i]:deathDefs[i];
+    const card=document.createElement('div');
+    card.className=`card ${type}-card`; card.id=`card-${type}-${i}`;
+    const bars=Array.from({length:BARS},()=>{
+      const h=2+Math.random()*26;
+      return `<div class="wb" style="height:${h}px" data-h="${h}"></div>`;
+    }).join('');
+    card.innerHTML=`
+      <div class="energy-bar"></div>
+      <div class="card-top">
+        <div class="card-meta">
+          <span class="card-tag">VAR ${String(i+1).padStart(2,'0')} · ${type.toUpperCase()}</span>
+          <span class="card-name">${def.name}</span>
+        </div>
+        <div class="tri-icon"></div>
+      </div>
+      <div class="waveform">${bars}</div>
+      <div class="card-desc">${def.desc}</div>
+      <div class="card-actions">
+        <button class="btn btn-play" onclick="preview('${type}',${i},this)">▶ PREVIEW</button>
+        <button class="btn btn-dl" title="Download WAV" onclick="renderAndDownload(${type==='hurt'?'hurtDefs':'deathDefs'}[${i}])">⬇</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ─── Preview ──────────────────────────────────────────────────────────────────
+const timers={};
+function preview(type, idx, btn) {
+  const ctx=getCtx();
+  const def=type==='hurt'?hurtDefs[idx]:deathDefs[idx];
+  const card=document.getElementById(`card-${type}-${idx}`);
+  const bars=card.querySelectorAll('.wb');
+  const key=`${type}-${idx}`;
+  if(timers[key]){clearInterval(timers[key].a);clearTimeout(timers[key].s);}
+  card.classList.add('playing'); btn.textContent='■ PLAYING';
+  timers[key]={};
+  timers[key].a=setInterval(()=>{
+    bars.forEach(b=>{const h=parseFloat(b.dataset.h);b.style.height=(h*(0.2+Math.random()*1.9))+'px';});
+  },55);
+  const dur=def.gen(ctx,ctx.destination);
+  timers[key].s=setTimeout(()=>{
+    clearInterval(timers[key].a);
+    bars.forEach(b=>{b.style.height=b.dataset.h+'px';});
+    card.classList.remove('playing'); btn.textContent='▶ PREVIEW';
+  },dur*1000+200);
+}
+</script>
+</body>
+</html>

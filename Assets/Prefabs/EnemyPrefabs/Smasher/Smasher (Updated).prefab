@@ -886,6 +886,7 @@ GameObject:
   - component: {fileID: 651928336566726612}
   - component: {fileID: 3264664600884314264}
   - component: {fileID: 6753002468737004396}
+  - component: {fileID: 3716757145581806478}
   m_Layer: 11
   m_Name: Smasher (Updated)
   m_TagString: Enemy
@@ -1007,9 +1008,12 @@ MonoBehaviour:
   <DamageAmount>k__BackingField: 1
   _dissolveEffect: {fileID: 0}
   _animator: {fileID: 1028351407008393188}
+  _audioSource: {fileID: 3716757145581806478}
   _enemyVisuals: {fileID: 5019590170214375569}
   _enemyVisualSpriteRenderer: {fileID: 0}
   _enemyVisualMaterial: {fileID: 0}
+  _hurtSoundEffect: {fileID: 8300000, guid: dc149b3bef338e14fadd3d48edc6e779, type: 3}
+  _deathSoundEffect: {fileID: 8300000, guid: 9d953e48a22b86741b54ebb220b13778, type: 3}
   _enemyType: 2
   GroundCheckRadius: 1.2
   platformDetectionDistance: 0.4
@@ -1052,6 +1056,9 @@ MonoBehaviour:
   pauseBeforeNextJump: 1
   isJumping: 0
   isBusy: 0
+  _smasherJumpEffect: {fileID: 8300000, guid: bfbc2accdae7f2e4e8cc87c17a630143, type: 3}
+  _smasherLandEffect: {fileID: 8300000, guid: 4aee4b6432396b648aba9a9d73511428, type: 3}
+  _smasherSlamEffect: {fileID: 8300000, guid: d52e0f6d12f236242ae2ef591b9ab9d8, type: 3}
 --- !u!114 &6753002468737004396
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1078,10 +1085,106 @@ MonoBehaviour:
   - {x: 0.5, y: -0.50000006, z: 0}
   m_ShapePathHash: 0
   m_Mesh: {fileID: 0}
-  m_InstanceId: 111206
+  m_InstanceId: -309042
   m_LocalBounds:
     m_Center: {x: 0, y: -0.00000008940697, z: 0}
     m_Extent: {x: 0.5, y: 0.49999997, z: 0}
+--- !u!82 &3716757145581806478
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3159435265551719321}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 8300000, guid: 6c2f0f0f168e29a4391781c2d5e8b0bb, type: 3}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 1
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 6.357992
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.00008333333
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1.1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &3315284344701270254
 GameObject:
   m_ObjectHideFlags: 0

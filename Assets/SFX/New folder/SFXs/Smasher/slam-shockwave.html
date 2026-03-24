@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Heavy Slam + Shockwave — 6 Variations</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #06060d;
+    display: flex; flex-direction: column; align-items: center;
+    min-height: 100vh; font-family: 'Courier New', monospace;
+    color: #aef; gap: 7px; user-select: none; padding: 10px 0;
+  }
+  h1 { font-size: 0.74rem; letter-spacing: 6px; color: #5af; text-transform: uppercase; }
+  #game-canvas { border: 2px solid #181e30; display: block; box-shadow: 0 0 44px #06101e88; }
+
+  #hud { display: flex; gap: 22px; font-size: 0.58rem; letter-spacing: 3px; }
+  .hud-item { color: #22303e; transition: color 0.08s; }
+  .hud-item.active { text-shadow: 0 0 10px currentColor; }
+
+  #cdwrap { width: 760px; height: 3px; background: #0c1218; border-radius: 2px; overflow: hidden; }
+  #cdbar  { height: 100%; width: 100%; transform-origin: left; }
+
+  #vpanel {
+    width: 760px; background: #09090f; border: 1px solid #151e2e;
+    border-radius: 8px; padding: 11px 13px; display: flex; flex-direction: column; gap: 6px;
+  }
+  .panel-title { font-size: 0.55rem; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 3px; }
+
+  .vrow { display: flex; align-items: stretch; gap: 8px; }
+
+  .vbtn {
+    flex: 1; background: #0c1020; border: 1.5px solid #18263a;
+    border-radius: 6px; color: #42647a;
+    font-family: 'Courier New', monospace; font-size: 0.54rem;
+    letter-spacing: 1px; padding: 8px 10px;
+    cursor: pointer; transition: all 0.11s; text-align: left; line-height: 1.45;
+  }
+  .vbtn:hover { background: #101828; border-color: #304e68; color: #70a0c0; }
+  .vbtn.sel { background: #0f1a28; border-color: var(--col); box-shadow: 0 0 10px var(--col-d); }
+  .vbtn .vname { font-size: 0.63rem; font-weight: bold; display: block; margin-bottom: 2px; }
+  .vbtn .vdesc { font-size: 0.49rem; color: #2e4050; letter-spacing: 0.6px; display: block; line-height: 1.45; }
+  .vbtn.sel .vdesc { color: #486070; }
+
+  .dlbtn {
+    background: #0a0e16; border: 1px solid #18222e;
+    border-radius: 5px; padding: 0 10px;
+    font-family: 'Courier New', monospace; font-size: 0.5rem;
+    letter-spacing: 0.8px; cursor: pointer; transition: all 0.11s;
+    white-space: nowrap; color: #334050;
+    display: flex; align-items: center;
+  }
+  .dlbtn:hover { color: #90b8d0; border-color: #406080; background: #0f1820; }
+  .dlbtn.adl { color: var(--col); border-color: var(--col); background: #0a1018; box-shadow: 0 0 6px var(--col-d); }
+
+  #instructions { font-size: 0.52rem; color: #20283a; letter-spacing: 2px; }
+</style>
+</head>
+<body>
+<h1>▸ Slam + Shockwave — 6 Variations</h1>
+<canvas id="game-canvas" width="760" height="240"></canvas>
+
+<div id="hud">
+  <span class="hud-item" id="ind-move">▷ MOVE</span>
+  <span class="hud-item" id="ind-jump">▷ JUMP</span>
+  <span class="hud-item" id="ind-slam">▷ SLAM</span>
+</div>
+<div id="cdwrap"><div id="cdbar"></div></div>
+
+<div id="vpanel">
+  <div class="panel-title" style="color:#f84">▸ Slam + Shockwave Variations — [ S / ↓ ] in air to slam</div>
+
+  <div class="vrow">
+    <button class="vbtn sel" id="vb0" style="--col:#ff5522;--col-d:#ff552233" onclick="sel(0)">
+      <span class="vname" style="color:#ff5522">S1 · TECTONIC SLAM</span>
+      <span class="vdesc">Cataclysmic sub impact → slow deep shockwave that cracks and rumbles through bedrock</span>
+    </button>
+    <button class="dlbtn adl" id="db0" style="--col:#ff5522;--col-d:#ff552233" onclick="dl(0)">⬇ S1</button>
+  </div>
+
+  <div class="vrow">
+    <button class="vbtn" id="vb1" style="--col:#ff8800;--col-d:#ff880033" onclick="sel(1)">
+      <span class="vname" style="color:#ff8800">S2 · IRON SMASH</span>
+      <span class="vdesc">Dense metal-on-stone crack + shockwave pulse that rings outward like a struck anvil</span>
+    </button>
+    <button class="dlbtn" id="db1" style="--col:#ff8800;--col-d:#ff880033" onclick="dl(1)">⬇ S2</button>
+  </div>
+
+  <div class="vrow">
+    <button class="vbtn" id="vb2" style="--col:#ffcc00;--col-d:#ffcc0033" onclick="sel(2)">
+      <span class="vname" style="color:#ffcc00">S3 · THUNDER DROP</span>
+      <span class="vdesc">Lightning-fast impact crack → cascading thunder shockwave that booms and rolls outward</span>
+    </button>
+    <button class="dlbtn" id="db2" style="--col:#ffcc00;--col-d:#ffcc0033" onclick="dl(2)">⬇ S3</button>
+  </div>
+
+  <div class="vrow">
+    <button class="vbtn" id="vb3" style="--col:#cc44ff;--col-d:#cc44ff33" onclick="sel(3)">
+      <span class="vname" style="color:#cc44ff">S4 · VOID QUAKE</span>
+      <span class="vdesc">Eerie sub void impact → phasing resonant shockwave that warps and distorts outward</span>
+    </button>
+    <button class="dlbtn" id="db3" style="--col:#cc44ff;--col-d:#cc44ff33" onclick="dl(3)">⬇ S4</button>
+  </div>
+
+  <div class="vrow">
+    <button class="vbtn" id="vb4" style="--col:#00ddaa;--col-d:#00ddaa33" onclick="sel(4)">
+      <span class="vname" style="color:#00ddaa">S5 · SONIC CRATER</span>
+      <span class="vdesc">Sonic boom snap → supersonic shockwave ring expands at speed, debris scatter tail</span>
+    </button>
+    <button class="dlbtn" id="db4" style="--col:#00ddaa;--col-d:#00ddaa33" onclick="dl(4)">⬇ S5</button>
+  </div>
+
+  <div class="vrow">
+    <button class="vbtn" id="vb5" style="--col:#ff2266;--col-d:#ff226633" onclick="sel(5)">
+      <span class="vname" style="color:#ff2266">S6 · DEAD STAR</span>
+      <span class="vdesc">Impossibly heavy collapse thud → slow gravity-well shockwave that pulls inward then releases</span>
+    </button>
+    <button class="dlbtn" id="db5" style="--col:#ff2266;--col-d:#ff226633" onclick="dl(5)">⬇ S6</button>
+  </div>
+</div>
+
+<div id="instructions">[ ← → / A D ] MOVE &nbsp;·&nbsp; [ SPACE / ↑ ] JUMP &nbsp;·&nbsp; [ S / ↓ ] SLAM (in air)</div>
+
+<script>
+// ═══════════════════════════════════════
+//  AUDIO
+// ═══════════════════════════════════════
+const AC = window.AudioContext || window.webkitAudioContext;
+let ctx = null, noiseBuf = null;
+
+function initAudio() {
+  if (ctx) return;
+  ctx = new AC();
+  const len = ctx.sampleRate * 0.6;
+  noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
+  const d = noiseBuf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+}
+
+function resumeAudio() {
+  if (ctx && ctx.state === 'suspended') ctx.resume();
+}
+
+// ═══════════════════════════════════════
+//  6 SLAM + SHOCKWAVE SOUNDS
+// ═══════════════════════════════════════
+
+// S1 · TECTONIC SLAM
+// A colossal sub impact (two stacked sub sines + low noise) followed by a slow
+// deep shockwave: three staggered low-frequency rumble pulses sweep outward,
+// each lower and slower than the last — like bedrock splitting apart.
+function slam1(o, dest, buf) {
+  const t = o.currentTime;
+
+  // ─ IMPACT ─
+  // Primary sub sine — deepest, hardest hit
+  const sub1 = o.createOscillator(); sub1.type = 'sine';
+  sub1.frequency.setValueAtTime(38, t);
+  sub1.frequency.exponentialRampToValueAtTime(18, t + 0.40);
+  const sg1 = o.createGain();
+  sg1.gain.setValueAtTime(0, t); sg1.gain.linearRampToValueAtTime(0.32, t + 0.006);
+  sg1.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+  sub1.connect(sg1); sg1.connect(dest);
+
+  // Secondary sub — slightly higher, reinforces weight
+  const sub2 = o.createOscillator(); sub2.type = 'sine';
+  sub2.frequency.setValueAtTime(62, t);
+  sub2.frequency.exponentialRampToValueAtTime(30, t + 0.30);
+  const sg2 = o.createGain();
+  sg2.gain.setValueAtTime(0, t); sg2.gain.linearRampToValueAtTime(0.16, t + 0.006);
+  sg2.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+  sub2.connect(sg2); sg2.connect(dest);
+
+  // Low noise body
+  const sn = o.createBufferSource(); sn.buffer = buf; sn.loop = true;
+  const lpn = o.createBiquadFilter(); lpn.type = 'lowpass'; lpn.frequency.value = 110;
+  const gn = o.createGain();
+  gn.gain.setValueAtTime(0, t); gn.gain.linearRampToValueAtTime(0.20, t + 0.007);
+  gn.gain.exponentialRampToValueAtTime(0.0001, t + 0.30);
+  sn.connect(lpn); lpn.connect(gn); gn.connect(dest);
+
+  // Mid crack on impact
+  const sc = o.createBufferSource(); sc.buffer = buf; sc.loop = true;
+  const bpc = o.createBiquadFilter(); bpc.type = 'bandpass'; bpc.Q.value = 1.4; bpc.frequency.value = 380;
+  const gc = o.createGain();
+  gc.gain.setValueAtTime(0, t); gc.gain.linearRampToValueAtTime(0.10, t + 0.005);
+  gc.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+  sc.connect(bpc); bpc.connect(gc); gc.connect(dest);
+
+  // ─ SHOCKWAVE — 3 deep pulses staggered outward ─
+  [0.08, 0.22, 0.40].forEach((delay, i) => {
+    const sp = o.createBufferSource(); sp.buffer = buf; sp.loop = true;
+    const bp = o.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.7 - i * 0.1;
+    const startF = 260 - i * 55;
+    bp.frequency.setValueAtTime(startF, t + delay);
+    bp.frequency.exponentialRampToValueAtTime(startF * 0.35, t + delay + 0.30 + i * 0.12);
+    const shelf = o.createBiquadFilter(); shelf.type = 'lowshelf'; shelf.frequency.value = 200; shelf.gain.value = 7;
+    const gp = o.createGain();
+    const vol = 0.075 - i * 0.015;
+    gp.gain.setValueAtTime(0, t + delay);
+    gp.gain.linearRampToValueAtTime(vol, t + delay + 0.015);
+    gp.gain.linearRampToValueAtTime(vol * 0.5, t + delay + 0.18);
+    gp.gain.linearRampToValueAtTime(0, t + delay + 0.45 + i * 0.15);
+    sp.connect(bp); bp.connect(shelf); shelf.connect(gp); gp.connect(dest);
+    sp.start(t + delay); sp.stop(t + delay + 0.65 + i * 0.18);
+  });
+
+  // Ground groan — very low sustained rumble
+  const groan = o.createOscillator(); groan.type = 'sine';
+  groan.frequency.setValueAtTime(28, t + 0.10);
+  groan.frequency.exponentialRampToValueAtTime(18, t + 0.90);
+  const gg = o.createGain();
+  gg.gain.setValueAtTime(0, t + 0.10); gg.gain.linearRampToValueAtTime(0.09, t + 0.18);
+  gg.gain.linearRampToValueAtTime(0.04, t + 0.55); gg.gain.linearRampToValueAtTime(0, t + 0.95);
+  groan.connect(gg); gg.connect(dest);
+
+  sub1.start(t); sub1.stop(t + 0.50);
+  sub2.start(t); sub2.stop(t + 0.40);
+  sn.start(t); sn.stop(t + 0.35);
+  sc.start(t); sc.stop(t + 0.16);
+  groan.start(t + 0.10); groan.stop(t + 1.00);
+}
+
+// S2 · IRON SMASH
+// Heavy metal-on-stone impact: dense mid crack + detuned metallic sine cluster.
+// Shockwave pulses outward as ringing anvil harmonics that expand and decay —
+// like being near a forge hammer striking stone.
+function slam2(o, dest, buf) {
+  const t = o.currentTime;
+
+  // ─ IMPACT ─
+  // Sub thud
+  const sub = o.createOscillator(); sub.type = 'sine';
+  sub.frequency.setValueAtTime(50, t); sub.frequency.exponentialRampToValueAtTime(22, t + 0.25);
+  const sg = o.createGain();
+  sg.gain.setValueAtTime(0, t); sg.gain.linearRampToValueAtTime(0.24, t + 0.006);
+  sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.30);
+  sub.connect(sg); sg.connect(dest);
+
+  // Metal crack noise — tight mid
+  const sc = o.createBufferSource(); sc.buffer = buf; sc.loop = true;
+  const bpc = o.createBiquadFilter(); bpc.type = 'bandpass'; bpc.Q.value = 2.0; bpc.frequency.value = 600;
+  const gc = o.createGain();
+  gc.gain.setValueAtTime(0, t); gc.gain.linearRampToValueAtTime(0.13, t + 0.005);
+  gc.gain.exponentialRampToValueAtTime(0.0001, t + 0.10);
+  sc.connect(bpc); bpc.connect(gc); gc.connect(dest);
+
+  // Stone body noise
+  const ss = o.createBufferSource(); ss.buffer = buf; ss.loop = true;
+  const lps = o.createBiquadFilter(); lps.type = 'lowpass'; lps.frequency.value = 180;
+  const gs = o.createGain();
+  gs.gain.setValueAtTime(0, t); gs.gain.linearRampToValueAtTime(0.16, t + 0.007);
+  gs.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+  ss.connect(lps); lps.connect(gs); gs.connect(dest);
+
+  // ─ SHOCKWAVE — anvil ring harmonics radiating outward ─
+  // Each harmonic fires slightly later (the ring expanding away)
+  [120, 180, 240, 300, 380].forEach((f, i) => {
+    const osc = o.createOscillator(); osc.type = 'sine';
+    osc.frequency.setValueAtTime(f, t + i * 0.035);
+    osc.frequency.exponentialRampToValueAtTime(f * 0.6, t + i * 0.035 + 0.55);
+    const g = o.createGain();
+    g.gain.setValueAtTime(0, t + i * 0.035);
+    g.gain.linearRampToValueAtTime(0.055 - i * 0.007, t + i * 0.035 + 0.010);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.035 + 0.50 + i * 0.08);
+    osc.connect(g); g.connect(dest);
+    osc.start(t + i * 0.035); osc.stop(t + i * 0.035 + 0.70);
+  });
+
+  // Shockwave noise ring — expands outward as widening noise band
+  const sw = o.createBufferSource(); sw.buffer = buf; sw.loop = true;
+  const bpw = o.createBiquadFilter(); bpw.type = 'bandpass'; bpw.Q.value = 1.2;
+  bpw.frequency.setValueAtTime(320, t + 0.05);
+  bpw.frequency.exponentialRampToValueAtTime(900, t + 0.30);
+  bpw.frequency.exponentialRampToValueAtTime(400, t + 0.70);
+  const gw = o.createGain();
+  gw.gain.setValueAtTime(0, t + 0.05); gw.gain.linearRampToValueAtTime(0.055, t + 0.065);
+  gw.gain.linearRampToValueAtTime(0.025, t + 0.35); gw.gain.linearRampToValueAtTime(0, t + 0.75);
+  sw.connect(bpw); bpw.connect(gw); gw.connect(dest);
+
+  sub.start(t); sub.stop(t + 0.35);
+  sc.start(t); sc.stop(t + 0.14);
+  ss.start(t); ss.stop(t + 0.28);
+  sw.start(t + 0.05); sw.stop(t + 0.80);
+}
+
+// S3 · THUNDER DROP
+// A sharp explosive crack (like a lightning strike) + immediate shockwave that
+// fans outward as cascading thunder: multiple noise bands stagger across the
+// frequency spectrum, rolling and booming as they spread.
+function slam3(o, dest, buf) {
+  const t = o.currentTime;
+
+  // ─ IMPACT ─
+  // Lightning crack — very short wideband noise burst
+  const sl = o.createBufferSource(); sl.buffer = buf; sl.loop = true;
+  const bpl = o.createBiquadFilter(); bpl.type = 'bandpass'; bpl.Q.value = 0.5;
+  bpl.frequency.setValueAtTime(1200, t); bpl.frequency.exponentialRampToValueAtTime(300, t + 0.06);
+  const gl = o.createGain();
+  gl.gain.setValueAtTime(0, t); gl.gain.linearRampToValueAtTime(0.18, t + 0.003);
+  gl.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+  sl.connect(bpl); bpl.connect(gl); gl.connect(dest);
+
+  // Sub boom follows crack
+  const sub = o.createOscillator(); sub.type = 'sine';
+  sub.frequency.setValueAtTime(55, t + 0.03); sub.frequency.exponentialRampToValueAtTime(24, t + 0.35);
+  const sg = o.createGain();
+  sg.gain.setValueAtTime(0, t + 0.03); sg.gain.linearRampToValueAtTime(0.26, t + 0.038);
+  sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.40);
+  sub.connect(sg); sg.connect(dest);
+
+  // ─ SHOCKWAVE — cascading thunder rolls outward ─
+  // Each band starts slightly later, lower in freq = further from source
+  const bands = [
+    { delay: 0.05, freqStart: 800, freqEnd: 200, Q: 0.8, vol: 0.07, dur: 0.40 },
+    { delay: 0.14, freqStart: 500, freqEnd: 130, Q: 0.9, vol: 0.065, dur: 0.48 },
+    { delay: 0.26, freqStart: 300, freqEnd: 80,  Q: 1.0, vol: 0.055, dur: 0.55 },
+    { delay: 0.40, freqStart: 180, freqEnd: 50,  Q: 0.7, vol: 0.045, dur: 0.60 },
+  ];
+  bands.forEach(b => {
+    const sw = o.createBufferSource(); sw.buffer = buf; sw.loop = true;
+    const bp = o.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = b.Q;
+    bp.frequency.setValueAtTime(b.freqStart, t + b.delay);
+    bp.frequency.exponentialRampToValueAtTime(b.freqEnd, t + b.delay + b.dur * 0.7);
+    const shelf = o.createBiquadFilter(); shelf.type = 'lowshelf'; shelf.frequency.value = 180; shelf.gain.value = 6;
+    const gw = o.createGain();
+    gw.gain.setValueAtTime(0, t + b.delay);
+    gw.gain.linearRampToValueAtTime(b.vol, t + b.delay + 0.018);
+    gw.gain.linearRampToValueAtTime(b.vol * 0.55, t + b.delay + b.dur * 0.4);
+    gw.gain.linearRampToValueAtTime(0, t + b.delay + b.dur);
+    sw.connect(bp); bp.connect(shelf); shelf.connect(gw); gw.connect(dest);
+    sw.start(t + b.delay); sw.stop(t + b.delay + b.dur + 0.05);
+  });
+
+  // High air crack hiss
+  const sh = o.createBufferSource(); sh.buffer = buf; sh.loop = true;
+  const hph = o.createBiquadFilter(); hph.type = 'highpass'; hph.frequency.value = 2200;
+  const gh = o.createGain();
+  gh.gain.setValueAtTime(0, t); gh.gain.linearRampToValueAtTime(0.05, t + 0.004);
+  gh.gain.exponentialRampToValueAtTime(0.0001, t + 0.10);
+  sh.connect(hph); hph.connect(gh); gh.connect(dest);
+
+  sl.start(t); sl.stop(t + 0.10);
+  sub.start(t + 0.03); sub.stop(t + 0.45);
+  sh.start(t); sh.stop(t + 0.14);
+}
+
+// S4 · VOID QUAKE
+// A dark eerie sub impact — almost no high crack — followed by a phasing
+// shockwave: two slightly detuned bandpass sweeps create a warping, resonant
+// phase-shift effect as the wave spreads. Unsettling and otherworldly.
+function slam4(o, dest, buf) {
+  const t = o.currentTime;
+
+  // ─ IMPACT ─
+  // Deep void sub — very low, no bounce
+  const sub = o.createOscillator(); sub.type = 'sine';
+  sub.frequency.setValueAtTime(32, t); sub.frequency.exponentialRampToValueAtTime(14, t + 0.50);
+  const sg = o.createGain();
+  sg.gain.setValueAtTime(0, t); sg.gain.linearRampToValueAtTime(0.28, t + 0.007);
+  sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
+  sub.connect(sg); sg.connect(dest);
+
+  // Eerie mid-tone on impact — sine that descends, haunting
+  const eerie = o.createOscillator(); eerie.type = 'sine';
+  eerie.frequency.setValueAtTime(220, t); eerie.frequency.exponentialRampToValueAtTime(55, t + 0.45);
+  const eg = o.createGain();
+  eg.gain.setValueAtTime(0, t); eg.gain.linearRampToValueAtTime(0.06, t + 0.015);
+  eg.gain.linearRampToValueAtTime(0.02, t + 0.25); eg.gain.linearRampToValueAtTime(0, t + 0.50);
+  eerie.connect(eg); eg.connect(dest);
+
+  // Low noise body
+  const sn = o.createBufferSource(); sn.buffer = buf; sn.loop = true;
+  const lpn = o.createBiquadFilter(); lpn.type = 'lowpass'; lpn.frequency.value = 130;
+  const gn = o.createGain();
+  gn.gain.setValueAtTime(0, t); gn.gain.linearRampToValueAtTime(0.14, t + 0.008);
+  gn.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+  sn.connect(lpn); lpn.connect(gn); gn.connect(dest);
+
+  // ─ SHOCKWAVE — phasing detuned bandpass pair warps outward ─
+  [0.06, 0.22, 0.40].forEach((delay, i) => {
+    const freqA = 400 - i * 80;
+    const freqB = freqA * 1.045; // slightly detuned = phaser
+
+    [freqA, freqB].forEach(f => {
+      const sw = o.createBufferSource(); sw.buffer = buf; sw.loop = true;
+      const bp = o.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 3.0 - i * 0.4;
+      bp.frequency.setValueAtTime(f, t + delay);
+      bp.frequency.exponentialRampToValueAtTime(f * 0.28, t + delay + 0.50 + i * 0.14);
+      const gw = o.createGain();
+      const vol = 0.030 - i * 0.005;
+      gw.gain.setValueAtTime(0, t + delay);
+      gw.gain.linearRampToValueAtTime(vol, t + delay + 0.018);
+      gw.gain.linearRampToValueAtTime(vol * 0.4, t + delay + 0.30);
+      gw.gain.linearRampToValueAtTime(0, t + delay + 0.62 + i * 0.15);
+      sw.connect(bp); bp.connect(gw); gw.connect(dest);
+      sw.start(t + delay); sw.stop(t + delay + 0.75 + i * 0.15);
+    });
+  });
+
+  // Void resonance — very low sustained oscillation
+  const vres = o.createOscillator(); vres.type = 'sine';
+  vres.frequency.setValueAtTime(22, t + 0.15); vres.frequency.exponentialRampToValueAtTime(14, t + 1.00);
+  const vrg = o.createGain();
+  vrg.gain.setValueAtTime(0, t + 0.15); vrg.gain.linearRampToValueAtTime(0.07, t + 0.28);
+  vrg.gain.linearRampToValueAtTime(0.03, t + 0.65); vrg.gain.linearRampToValueAtTime(0, t + 1.05);
+  vres.connect(vrg); vrg.connect(dest);
+
+  sub.start(t); sub.stop(t + 0.60);
+  eerie.start(t); eerie.stop(t + 0.55);
+  sn.start(t); sn.stop(t + 0.32);
+  vres.start(t + 0.15); vres.stop(t + 1.10);
+}
+
+// S5 · SONIC CRATER
+// A supersonic snap (hard, instantaneous wideband crack) followed by a fast
+// expanding shockwave ring: high-to-low noise sweep races outward at speed,
+// then a scatter of debris noise fills the aftermath.
+function slam5(o, dest, buf) {
+  const t = o.currentTime;
+
+  // ─ IMPACT ─
+  // Sonic snap — extremely fast, full spectrum
+  const ss = o.createBufferSource(); ss.buffer = buf; ss.loop = true;
+  const bps = o.createBiquadFilter(); bps.type = 'bandpass'; bps.Q.value = 0.4;
+  bps.frequency.setValueAtTime(2000, t); bps.frequency.exponentialRampToValueAtTime(400, t + 0.04);
+  const gs = o.createGain();
+  gs.gain.setValueAtTime(0, t); gs.gain.linearRampToValueAtTime(0.20, t + 0.003);
+  gs.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+  ss.connect(bps); bps.connect(gs); gs.connect(dest);
+
+  // Immediate sub punch
+  const sub = o.createOscillator(); sub.type = 'sine';
+  sub.frequency.setValueAtTime(60, t); sub.frequency.exponentialRampToValueAtTime(28, t + 0.20);
+  const sg = o.createGain();
+  sg.gain.setValueAtTime(0, t); sg.gain.linearRampToValueAtTime(0.22, t + 0.005);
+  sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
+  sub.connect(sg); sg.connect(dest);
+
+  // ─ SHOCKWAVE — supersonic ring expands fast ─
+  // Single fast sweep from very high to very low = the wave front passing
+  const sw1 = o.createBufferSource(); sw1.buffer = buf; sw1.loop = true;
+  const bpw1 = o.createBiquadFilter(); bpw1.type = 'bandpass'; bpw1.Q.value = 1.0;
+  bpw1.frequency.setValueAtTime(1800, t + 0.02);
+  bpw1.frequency.exponentialRampToValueAtTime(120, t + 0.28); // races through spectrum fast
+  const gw1 = o.createGain();
+  gw1.gain.setValueAtTime(0, t + 0.02); gw1.gain.linearRampToValueAtTime(0.10, t + 0.026);
+  gw1.gain.linearRampToValueAtTime(0.055, t + 0.14); gw1.gain.linearRampToValueAtTime(0, t + 0.34);
+  sw1.connect(bpw1); bpw1.connect(gw1); gw1.connect(dest);
+
+  // Second ring slightly behind — the echo/reflection
+  const sw2 = o.createBufferSource(); sw2.buffer = buf; sw2.loop = true;
+  const bpw2 = o.createBiquadFilter(); bpw2.type = 'bandpass'; bpw2.Q.value = 0.8;
+  bpw2.frequency.setValueAtTime(900, t + 0.10);
+  bpw2.frequency.exponentialRampToValueAtTime(80, t + 0.45);
+  const gw2 = o.createGain();
+  gw2.gain.setValueAtTime(0, t + 0.10); gw2.gain.linearRampToValueAtTime(0.06, t + 0.115);
+  gw2.gain.linearRampToValueAtTime(0.025, t + 0.30); gw2.gain.linearRampToValueAtTime(0, t + 0.52);
+  sw2.connect(bpw2); bpw2.connect(gw2); gw2.connect(dest);
+
+  // Debris scatter — mid noise that rattles and settles
+  const sd1 = o.createBufferSource(); sd1.buffer = buf; sd1.loop = true;
+  const bpd1 = o.createBiquadFilter(); bpd1.type = 'bandpass'; bpd1.Q.value = 1.5; bpd1.frequency.value = 700;
+  const gd1 = o.createGain();
+  gd1.gain.setValueAtTime(0, t + 0.06); gd1.gain.linearRampToValueAtTime(0.055, t + 0.075);
+  gd1.gain.linearRampToValueAtTime(0.02, t + 0.30); gd1.gain.linearRampToValueAtTime(0, t + 0.55);
+  sd1.connect(bpd1); bpd1.connect(gd1); gd1.connect(dest);
+
+  // Fine debris hiss
+  const sd2 = o.createBufferSource(); sd2.buffer = buf; sd2.loop = true;
+  const hpd2 = o.createBiquadFilter(); hpd2.type = 'highpass'; hpd2.frequency.value = 2500;
+  const gd2 = o.createGain();
+  gd2.gain.setValueAtTime(0, t + 0.04); gd2.gain.linearRampToValueAtTime(0.038, t + 0.06);
+  gd2.gain.linearRampToValueAtTime(0, t + 0.38);
+  sd2.connect(hpd2); hpd2.connect(gd2); gd2.connect(dest);
+
+  ss.start(t); ss.stop(t + 0.08);
+  sub.start(t); sub.stop(t + 0.30);
+  sw1.start(t + 0.02); sw1.stop(t + 0.40);
+  sw2.start(t + 0.10); sw2.stop(t + 0.58);
+  sd1.start(t + 0.06); sd1.stop(t + 0.60);
+  sd2.start(t + 0.04); sd2.stop(t + 0.44);
+}
+
+// S6 · DEAD STAR
+// A gravitationally massive collapse — no sharp crack, just an impossible weight
+// descending. The shockwave is unusual: it first pulls inward (reverse swell,
+// freq descends) as if gravity is drawing everything in, then releases outward
+// in a slow, enormous low-frequency roll.
+function slam6(o, dest, buf) {
+  const t = o.currentTime;
+
+  // ─ IMPACT — gravitational collapse ─
+  // Three stacked subs, no bounce — just mass
+  [32, 48, 68].forEach((f, i) => {
+    const s = o.createOscillator(); s.type = 'sine';
+    s.frequency.setValueAtTime(f, t); s.frequency.exponentialRampToValueAtTime(f * 0.38, t + 0.55);
+    const g = o.createGain();
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.24 - i * 0.055, t + 0.007);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.60 - i * 0.05);
+    s.connect(g); g.connect(dest); s.start(t); s.stop(t + 0.65);
+  });
+
+  // Low noise mass
+  const sn = o.createBufferSource(); sn.buffer = buf; sn.loop = true;
+  const lpn = o.createBiquadFilter(); lpn.type = 'lowpass'; lpn.frequency.value = 100;
+  const gn = o.createGain();
+  gn.gain.setValueAtTime(0, t); gn.gain.linearRampToValueAtTime(0.18, t + 0.008);
+  gn.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+  sn.connect(lpn); lpn.connect(gn); gn.connect(dest);
+
+  // ─ SHOCKWAVE — gravity pull inward then release ─
+  // Phase 1: inward pull — freq descends (reverse swell), gain rises slowly
+  const pull = o.createBufferSource(); pull.buffer = buf; pull.loop = true;
+  const bpp = o.createBiquadFilter(); bpp.type = 'bandpass'; bpp.Q.value = 0.9;
+  bpp.frequency.setValueAtTime(500, t + 0.08);
+  bpp.frequency.exponentialRampToValueAtTime(120, t + 0.35); // descends = pulling inward
+  const gpp = o.createGain();
+  gpp.gain.setValueAtTime(0, t + 0.08); gpp.gain.linearRampToValueAtTime(0.07, t + 0.30);
+  gpp.gain.linearRampToValueAtTime(0, t + 0.38); // snaps off
+  pull.connect(bpp); bpp.connect(gpp); gpp.connect(dest);
+
+  // Phase 2: outward release — slow enormous low-freq roll
+  const rel1 = o.createBufferSource(); rel1.buffer = buf; rel1.loop = true;
+  const bpr1 = o.createBiquadFilter(); bpr1.type = 'bandpass'; bpr1.Q.value = 0.6;
+  bpr1.frequency.setValueAtTime(80, t + 0.36);
+  bpr1.frequency.exponentialRampToValueAtTime(280, t + 0.65);
+  bpr1.frequency.exponentialRampToValueAtTime(100, t + 1.00);
+  const shelf1 = o.createBiquadFilter(); shelf1.type = 'lowshelf'; shelf1.frequency.value = 200; shelf1.gain.value = 8;
+  const gr1 = o.createGain();
+  gr1.gain.setValueAtTime(0, t + 0.36); gr1.gain.linearRampToValueAtTime(0.10, t + 0.38);
+  gr1.gain.linearRampToValueAtTime(0.055, t + 0.65); gr1.gain.linearRampToValueAtTime(0, t + 1.05);
+  rel1.connect(bpr1); bpr1.connect(shelf1); shelf1.connect(gr1); gr1.connect(dest);
+
+  // Second wider release wave
+  const rel2 = o.createBufferSource(); rel2.buffer = buf; rel2.loop = true;
+  const bpr2 = o.createBiquadFilter(); bpr2.type = 'bandpass'; bpr2.Q.value = 0.5;
+  bpr2.frequency.setValueAtTime(60, t + 0.48);
+  bpr2.frequency.exponentialRampToValueAtTime(200, t + 0.85);
+  bpr2.frequency.exponentialRampToValueAtTime(70, t + 1.15);
+  const shelf2 = o.createBiquadFilter(); shelf2.type = 'lowshelf'; shelf2.frequency.value = 200; shelf2.gain.value = 8;
+  const gr2 = o.createGain();
+  gr2.gain.setValueAtTime(0, t + 0.48); gr2.gain.linearRampToValueAtTime(0.07, t + 0.50);
+  gr2.gain.linearRampToValueAtTime(0.04, t + 0.80); gr2.gain.linearRampToValueAtTime(0, t + 1.20);
+  rel2.connect(bpr2); bpr2.connect(shelf2); shelf2.connect(gr2); gr2.connect(dest);
+
+  // Gravity groan — ultra low, long tail
+  const groan = o.createOscillator(); groan.type = 'sine';
+  groan.frequency.setValueAtTime(20, t + 0.20); groan.frequency.linearRampToValueAtTime(14, t + 1.10);
+  const gg = o.createGain();
+  gg.gain.setValueAtTime(0, t + 0.20); gg.gain.linearRampToValueAtTime(0.10, t + 0.38);
+  gg.gain.linearRampToValueAtTime(0.06, t + 0.70); gg.gain.linearRampToValueAtTime(0, t + 1.15);
+  groan.connect(gg); gg.connect(dest);
+
+  sn.start(t); sn.stop(t + 0.40);
+  pull.start(t + 0.08); pull.stop(t + 0.42);
+  rel1.start(t + 0.36); rel1.stop(t + 1.10);
+  rel2.start(t + 0.48); rel2.stop(t + 1.25);
+  groan.start(t + 0.20); groan.stop(t + 1.20);
+}
+
+const SLAMS = [slam1, slam2, slam3, slam4, slam5, slam6];
+const V_COLS = ['#ff5522','#ff8800','#ffcc00','#cc44ff','#00ddaa','#ff2266'];
+const V_GLOW = ['#ff5522','#ff8800','#ffcc00','#cc44ff','#00ddaa','#ff2266'];
+const V_BODY = ['#ff7744','#ffaa22','#ffdd44','#dd66ff','#22ffbb','#ff4488'];
+const P_HUE  = [15, 32, 48, 280, 168, 340];
+const SLAM_CD = 70;
+
+let curV = 0, slamCD = 0;
+
+function sel(i) {
+  curV = i;
+  document.querySelectorAll('.vbtn').forEach((b,j) => b.classList.toggle('sel', j===i));
+  document.querySelectorAll('.dlbtn').forEach((b,j) => b.classList.toggle('adl', j===i));
+  document.getElementById('cdbar').style.background = V_COLS[i];
+}
+async function playSlam() {
+  if (!ctx) return;
+  if (ctx.state === 'suspended') await ctx.resume();
+  SLAMS[curV](ctx, ctx.destination, noiseBuf);
+}
+
+function dl(idx) {
+  initAudio(); resumeAudio(); // clicking download also unlocks audio
+  const sr=44100, dur=1.30;
+  const off = new OfflineAudioContext(1, Math.floor(sr*dur), sr);
+  const bLen = Math.floor(sr*0.6), b = off.createBuffer(1,bLen,sr), d = b.getChannelData(0);
+  for (let i=0;i<bLen;i++) d[i]=Math.random()*2-1;
+  SLAMS[idx](off, off.destination, b);
+  off.startRendering().then(r => {
+    const names=['S1-tectonic-slam','S2-iron-smash','S3-thunder-drop','S4-void-quake','S5-sonic-crater','S6-dead-star'];
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([encodeWAV(r)],{type:'audio/wav'}));
+    a.download = `slam-${names[idx]}.wav`; a.click();
+  });
+}
+function encodeWAV(ab){
+  const sr=ab.sampleRate,s=ab.getChannelData(0),n=s.length,ds=n*2;
+  const buf=new ArrayBuffer(44+ds),v=new DataView(buf);
+  const ws=(o,x)=>{for(let i=0;i<x.length;i++)v.setUint8(o+i,x.charCodeAt(i));};
+  ws(0,'RIFF');v.setUint32(4,36+ds,true);ws(8,'WAVE');ws(12,'fmt ');
+  v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);
+  v.setUint16(34,16,true);ws(36,'data');v.setUint32(40,ds,true);
+  let off=44;
+  for(let i=0;i<n;i++){const x=Math.max(-1,Math.min(1,s[i]));v.setInt16(off,x<0?x*0x8000:x*0x7FFF,true);off+=2;}
+  return buf;
+}
+
+sel(0);
+
+// ═══════════════════════════════════════
+//  GAME
+// ═══════════════════════════════════════
+const canvas = document.getElementById('game-canvas');
+const c = canvas.getContext('2d');
+const W=canvas.width, H=canvas.height, FLOOR_Y=H-44;
+
+const indMove=document.getElementById('ind-move');
+const indJump=document.getElementById('ind-jump');
+const indSlam=document.getElementById('ind-slam');
+const cdBar=document.getElementById('cdbar');
+
+const platforms=[
+  {x:0,y:FLOOR_Y,w:W,h:44},
+  {x:100,y:170,w:140,h:11},
+  {x:310,y:132,w:130,h:11},
+  {x:530,y:170,w:120,h:11},
+  {x:40,y:108,w:90,h:11},
+  {x:630,y:96,w:90,h:11},
+];
+
+const player={
+  x:60,y:FLOOR_Y-38,w:34,h:38,
+  vx:0,vy:0,onGround:false,wasOnGround:false,facing:1,
+  isSlam:false,slamDone:false,
+  squash:0,stretch:0,
+  parts:[],trails:[],shockwaves:[],rocks:[]
+};
+
+const keys={};
+let jUsed=false,sUsed=false,frame=0,slamFlash=0,jFlash=0,landFlash=0;
+document.addEventListener('keydown',e=>{if(!keys[e.code]){keys[e.code]=true;initAudio();resumeAudio();}});
+document.addEventListener('keyup',e=>{
+  keys[e.code]=false;
+  if(['Space','ArrowUp','KeyW'].includes(e.code)) jUsed=false;
+  if(['KeyS','ArrowDown'].includes(e.code)){ sUsed=false; }
+});
+document.addEventListener('pointerdown', ()=>{ initAudio(); resumeAudio(); });
+
+function onPlat(p){return player.vy>=0&&player.x+player.w>p.x+2&&player.x<p.x+p.w-2&&player.y+player.h>=p.y&&player.y+player.h<=p.y+p.h+6;}
+
+function spawnShockwave(cx, cy) {
+  // Shockwave rings expanding outward
+  for (let i=0;i<3;i++) {
+    player.shockwaves.push({ x:cx, y:cy, r:8+i*6, maxR:220+i*60, speed:10+i*2.5, alpha:0.85-i*0.18, col:V_COLS[curV], thick:5-i });
+  }
+  // Rock / debris chunks — spray outward in all directions
+  for (let i=0;i<24;i++) {
+    const angle = (Math.random()-0.5)*Math.PI*2;
+    const spd = Math.random()*9+2;
+    player.rocks.push({
+      x:cx, y:cy,
+      vx:Math.cos(angle)*spd, vy:Math.sin(angle)*spd - Math.random()*4,
+      life:1, size:Math.random()*6+3,
+      col:V_BODY[curV]
+    });
+  }
+  // Ground crack flash
+  slamFlash=35;
+}
+
+function update(){
+  frame++;
+  if(jFlash>0)jFlash--; if(slamFlash>0)slamFlash--; if(landFlash>0)landFlash--;
+  if(slamCD>0)slamCD--;
+  if(player.squash>0)player.squash-=0.055; if(player.squash<0)player.squash=0;
+  if(player.stretch>0)player.stretch-=0.05; if(player.stretch<0)player.stretch=0;
+
+  const L=keys['ArrowLeft']||keys['KeyA'], R=keys['ArrowRight']||keys['KeyD'];
+  const J=keys['Space']||keys['ArrowUp']||keys['KeyW'];
+  const S=keys['KeyS']||keys['ArrowDown'];
+
+  // Slam trigger — in air, press S/Down
+  if(S&&!sUsed&&!player.onGround&&!player.isSlam&&slamCD===0){
+    player.isSlam=true; player.slamDone=false; sUsed=true;
+    player.vy=20; // rocket straight down
+    player.vx=0;  // kill ALL horizontal movement — pure downward slam
+    // spawn falling trail
+    for(let i=0;i<6;i++) player.trails.push({x:player.x+player.w/2,y:player.y+player.h/2,life:1,r:8});
+  }
+
+  if(player.isSlam){
+    player.vy = Math.min(player.vy+1.2, 24);
+    player.vx = 0; // stay locked — no drift during slam
+  } else if(!player.onGround){
+    if(L){player.vx-=0.9;player.facing=-1;} if(R){player.vx+=0.9;player.facing=1;}
+    player.vy+=0.50;
+  } else {
+    if(L){player.vx-=0.9;player.facing=-1;} if(R){player.vx+=0.9;player.facing=1;}
+    player.vx*=0.74; if(Math.abs(player.vx)>2.8)player.vx=2.8*Math.sign(player.vx);
+    player.vy+=0.50;
+  }
+
+  // Slam trail while falling
+  if(player.isSlam&&frame%2===0){
+    player.trails.push({x:player.x+player.w/2,y:player.y+player.h,life:1,r:player.w*0.6});
+  }
+
+  player.wasOnGround=player.onGround;
+  player.x+=player.vx; player.y+=player.vy;
+  if(player.x<0)player.x=0; if(player.x+player.w>W)player.x=W-player.w;
+
+  player.onGround=false;
+  for(const p of platforms){
+    if(onPlat(p)){
+      player.y=p.y-player.h; player.vy=0; player.onGround=true;
+      if(player.isSlam&&!player.slamDone){
+        // SLAM LANDS
+        player.slamDone=true; player.isSlam=false;
+        player.squash=1.0; slamCD=SLAM_CD;
+        sUsed=false; // allow slam again next jump
+        playSlam();
+        spawnShockwave(player.x+player.w/2, player.y+player.h);
+      }
+    }
+  }
+
+  // Normal jump — only vertical, no horizontal boost
+  if(J&&player.onGround&&!jUsed&&!player.isSlam){
+    player.vy=-9.2; player.onGround=false; jUsed=true; jFlash=20;
+    player.stretch=0.8;
+    for(let i=0;i<10;i++) player.parts.push({x:player.x+player.w/2,y:player.y+player.h,vx:(Math.random()-0.5)*4,vy:-(Math.random()*2.5+0.5),life:1,r:Math.random()*4+2});
+  }
+
+  if(player.y>H+80){player.y=-60;player.vy=0;player.isSlam=false;player.slamDone=true;}
+
+  // Update shockwaves
+  player.shockwaves=player.shockwaves.filter(sw=>{sw.r+=sw.speed;sw.alpha-=0.028;return sw.alpha>0&&sw.r<sw.maxR;});
+  // Update rocks
+  player.rocks=player.rocks.filter(r=>{r.x+=r.vx;r.y+=r.vy;r.vy+=0.28;r.life-=0.038;r.vx*=0.94;return r.life>0;});
+  player.trails=player.trails.filter(t=>{t.life-=0.12;return t.life>0;});
+  player.parts=player.parts.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.10;p.life-=0.06;return p.life>0;});
+
+  const mv=player.onGround&&Math.abs(player.vx)>0.5;
+  const vl=`S${curV+1}`;
+  const sReady=slamCD===0&&!player.onGround&&!player.isSlam;
+
+  indMove.className='hud-item'+(mv?' active':'');
+  indMove.style.color=mv?'#4df':'';
+  indMove.textContent=mv?'◆ MOVE':'▷ MOVE';
+
+  indJump.className='hud-item'+(jFlash>0?' active':'');
+  indJump.style.color=jFlash>0?'#8af':'';
+  indJump.textContent=jFlash>0?'◆ JUMP':player.onGround?'▷ JUMP':'– JUMP';
+
+  indSlam.className='hud-item'+(slamFlash>0?' active':'');
+  indSlam.style.color=slamFlash>0?V_GLOW[curV]:sReady?V_GLOW[curV]+'88':'';
+  indSlam.textContent=slamFlash>0?`◆ ${vl}`:slamCD>0?`○ ${vl}`:sReady?`▷ ${vl}`:`– ${vl}`;
+
+  const pct=slamCD/SLAM_CD;
+  cdBar.style.transform=`scaleX(${1-pct})`;
+  cdBar.style.opacity=pct>0?'0.45':'1';
+}
+
+// ─ Background ────────────────────────
+const bgT=[];
+for(let tx=0;tx<W;tx+=16)for(let ty=0;ty<FLOOR_Y;ty+=16)if(Math.random()<0.04)bgT.push({x:tx,y:ty,b:Math.random()*0.045+0.012});
+const stars=Array.from({length:55},()=>({x:Math.floor(Math.random()*(W/2))*2,y:Math.floor(Math.random()*(FLOOR_Y*0.7/2))*2,on:Math.random()>0.5}));
+
+function drawBG(){
+  const sky=c.createLinearGradient(0,0,0,FLOOR_Y);sky.addColorStop(0,'#02020a');sky.addColorStop(1,'#070c1a');
+  c.fillStyle=sky;c.fillRect(0,0,W,H);
+  if(frame%40===0)stars.forEach(s=>{if(Math.random()<0.15)s.on=!s.on;});
+  c.fillStyle='#a8c8ee';stars.forEach(s=>{if(s.on)c.fillRect(s.x,s.y,2,2);});
+  bgT.forEach(t=>{c.fillStyle=`rgba(60,120,200,${t.b})`;c.fillRect(t.x,t.y,16,16);});
+  // Buildings
+  c.fillStyle='#060a12';
+  [{x:0,w:56,h:68},{x:52,w:36,h:48},{x:85,w:46,h:88},{x:670,w:46,h:78},{x:710,w:36,h:54},{x:740,w:20,h:66}].forEach(b=>{
+    c.fillRect(b.x,FLOOR_Y-b.h,b.w,b.h);
+    c.fillStyle='#ffe88024';
+    for(let wy=FLOOR_Y-b.h+8;wy<FLOOR_Y-8;wy+=14)for(let wx=b.x+6;wx<b.x+b.w-6;wx+=12)if(Math.sin(wx*3.1+wy*1.7)>0.2)c.fillRect(wx,wy,5,7);
+    c.fillStyle='#060a12';
+  });
+}
+
+function drawPlatforms(){
+  platforms.forEach((p,i)=>{
+    c.fillStyle=i===0?'#181e38':'#1a2c50';c.fillRect(p.x,p.y,p.w,p.h);
+    c.fillStyle=i===0?'#283060':'#305880';c.fillRect(p.x,p.y,p.w,3);
+    if(i>0){c.fillStyle='#3e68a0';c.fillRect(p.x,p.y,4,4);c.fillRect(p.x+p.w-4,p.y,4,4);}
+    if(i===0){c.fillStyle='rgba(255,255,255,0.018)';for(let gx=0;gx<W;gx+=16)c.fillRect(gx,p.y,1,p.h);for(let gy=p.y;gy<H;gy+=16)c.fillRect(0,gy,W,1);}
+  });
+}
+
+function drawFX(){
+  // Slam trail
+  player.trails.forEach(t=>{
+    c.globalAlpha=t.life*0.35;
+    c.fillStyle=V_BODY[curV];
+    const r=Math.round(t.r*t.life);
+    c.fillRect(Math.round(t.x-r/2),Math.round(t.y-r/2),r,r);
+  });
+
+  // Jump dust
+  player.parts.forEach(p=>{
+    c.globalAlpha=p.life*0.6;c.fillStyle=`hsl(200,60%,${55+p.life*20}%)`;
+    const r=Math.max(1,Math.round(p.r*p.life/2))*2;
+    c.fillRect(Math.round(p.x/2)*2,Math.round(p.y/2)*2,r,r);
+  });
+
+  // Rocks / debris
+  player.rocks.forEach(r=>{
+    c.globalAlpha=r.life*0.85;
+    c.fillStyle=r.col;
+    const s=Math.max(2,Math.round(r.size*r.life/2))*2;
+    c.fillRect(Math.round(r.x/2)*2,Math.round(r.y/2)*2,s,s);
+  });
+
+  c.globalAlpha=1;
+
+  // Shockwave rings
+  player.shockwaves.forEach(sw=>{
+    c.save();
+    c.globalAlpha=sw.alpha;
+    c.strokeStyle=sw.col;
+    c.lineWidth=Math.max(1,sw.thick*(sw.alpha/0.85));
+    c.beginPath();
+    // Ellipse — flatter on Y to look like ground wave
+    c.ellipse(sw.x, sw.y, sw.r, sw.r*0.28, 0, 0, Math.PI*2);
+    c.stroke();
+    // Inner glow ring
+    c.globalAlpha=sw.alpha*0.35;
+    c.lineWidth=Math.max(1,(sw.thick+3)*(sw.alpha/0.85));
+    c.strokeStyle=sw.col;
+    c.beginPath();
+    c.ellipse(sw.x, sw.y, sw.r*0.85, sw.r*0.85*0.28, 0, 0, Math.PI*2);
+    c.stroke();
+    c.restore();
+  });
+
+  // Ground flash on slam impact
+  if(slamFlash>0){
+    const f=slamFlash/35;
+    c.save();
+    c.globalAlpha=f*0.22;
+    c.fillStyle=V_COLS[curV];
+    c.fillRect(0,FLOOR_Y-4,W,4);
+    c.globalAlpha=f*0.08;
+    c.fillRect(0,0,W,H);
+    c.restore();
+  }
+}
+
+function drawPlayer(){
+  const {x,y,w,h,vx,vy,onGround,facing,isSlam,squash,stretch}=player;
+  const px=Math.round(x), py=Math.round(y);
+  const mv=onGround&&Math.abs(vx)>0.5;
+  const inAir=!onGround;
+
+  // Squash/stretch
+  const sqX=onGround?1-squash*0.20:1, sqY=onGround?1+squash*0.30:1;
+  const stX=isSlam?1+0.18:1, stY=isSlam?1-0.18:1-stretch*0.18;
+  const scX=sqX*stX, scY=sqY*stY;
+  const rw=Math.round(w*scX), rh=Math.round(h*scY);
+  const rx=Math.round(x+(w-rw)/2), ry=Math.round(y+(h-rh));
+
+  // Shadow
+  const shadW=w*(1+squash*0.6)+(isSlam?(player.y>FLOOR_Y-100?12:2):0);
+  c.fillStyle=`rgba(0,0,0,${0.16+squash*0.12})`;
+  c.beginPath(); c.ellipse(x+w/2,y+h+2,shadW*0.55,5+squash*5,0,0,Math.PI*2); c.fill();
+
+  // Glow
+  if(isSlam){c.shadowColor=V_GLOW[curV];c.shadowBlur=18+6*Math.sin(frame*0.8);}
+  else if(slamFlash>0){c.shadowColor=V_GLOW[curV];c.shadowBlur=14+squash*10;}
+  else if(mv){c.shadowColor='#2ea8f8';c.shadowBlur=11;}
+  else if(inAir){c.shadowColor='#55d5f8';c.shadowBlur=8;}
+
+  c.fillStyle=isSlam?V_BODY[curV]:slamFlash>0?V_BODY[curV]:mv?'#3cc5f5':inAir?'#4ed5f8':'#2c78c8';
+  c.fillRect(rx,ry,rw,rh);
+  c.fillStyle='rgba(0,0,40,0.26)';c.fillRect(rx,ry+Math.floor(rh*0.55),rw,Math.ceil(rh*0.45));
+  c.fillStyle='rgba(255,255,255,0.16)';c.fillRect(rx+2,ry+2,rw-4,4);
+  c.fillStyle='rgba(0,0,0,0.28)';c.fillRect(rx,ry,3,rh);
+  c.shadowBlur=0;
+
+  // Eye
+  const ex=facing===1?rx+rw-10:rx+5;
+  const eyeCol=isSlam?V_GLOW[curV]:slamFlash>0?V_GLOW[curV]:mv?'#00eeff':'#001840';
+  c.fillStyle='#fff';c.fillRect(ex,ry+8,7,9);
+  c.fillStyle=eyeCol;c.fillRect(ex+facing+(facing===1?1:1),ry+10,3,5);
+  c.shadowBlur=0;
+}
+
+function draw(){c.clearRect(0,0,W,H);drawBG();drawPlatforms();drawFX();drawPlayer();}
+function loop(){update();draw();requestAnimationFrame(loop);}
+loop();
+</script>
+</body>
+</html>

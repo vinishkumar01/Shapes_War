@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pistol SFX – 10 Variations</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:#07070f;
+  min-height:100vh;
+  font-family:'Courier New',monospace;
+  color:#ccc;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:24px 16px 40px;
+}
+h1 {
+  font-size:12px;
+  letter-spacing:6px;
+  text-transform:uppercase;
+  color:#f5a623;
+  margin-bottom:4px;
+  text-shadow:0 0 12px #f5a62355;
+}
+.sub {
+  font-size:9px;
+  letter-spacing:4px;
+  color:#333;
+  margin-bottom:24px;
+}
+
+/* Grid */
+#grid {
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:8px;
+  width:100%;
+  max-width:560px;
+  margin-bottom:20px;
+}
+
+.card {
+  background:#0c0c1a;
+  border:1px solid #1c1c30;
+  padding:12px 14px;
+  cursor:pointer;
+  transition:border-color 0.1s, background 0.1s;
+  position:relative;
+  overflow:hidden;
+  user-select:none;
+}
+.card:hover { border-color:#444; }
+.card.active { border-color:#f5a623; background:#0f0f20; }
+.card.firing::after {
+  content:'';
+  position:absolute;
+  inset:0;
+  background:#f5a62318;
+  animation:flash 0.12s ease-out forwards;
+}
+@keyframes flash { from{opacity:1} to{opacity:0} }
+
+.card-top {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  margin-bottom:6px;
+}
+.card-num {
+  font-size:9px;
+  color:#2a2a44;
+  letter-spacing:2px;
+}
+.card-name {
+  font-size:11px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  color:#aaa;
+  margin-bottom:3px;
+}
+.card.active .card-name { color:#f5a623; }
+.card-desc {
+  font-size:9px;
+  color:#383858;
+  letter-spacing:1px;
+  line-height:1.5;
+}
+.card.active .card-desc { color:#7a6a40; }
+
+/* Mini waveform */
+.wave {
+  display:flex;
+  gap:2px;
+  align-items:flex-end;
+  height:16px;
+  margin-top:8px;
+}
+.wb {
+  width:3px;
+  background:#1c1c30;
+  border-radius:1px;
+  transition:height 0.04s, background 0.04s;
+  min-height:2px;
+}
+
+/* Play + Download row */
+.card-actions {
+  display:flex;
+  gap:6px;
+  margin-top:8px;
+}
+.play-btn, .dl-btn {
+  font-family:'Courier New',monospace;
+  font-size:8px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  border:none;
+  cursor:pointer;
+  padding:5px 8px;
+  transition:all 0.08s;
+}
+.play-btn {
+  background:#1a1a2e;
+  color:#888;
+  border:1px solid #2a2a44;
+  flex:1;
+}
+.play-btn:hover { background:#22223a; color:#f5a623; border-color:#f5a62366; }
+.card.active .play-btn { color:#f5a623; border-color:#f5a623; }
+
+.dl-btn {
+  background:#0a180a;
+  color:#3a8a3a;
+  border:1px solid #1a401a;
+  flex:1;
+}
+.dl-btn:hover { background:#0d220d; color:#5aaa5a; border-color:#3a8a3a; }
+.dl-btn:active { transform:scale(0.97); }
+
+/* "BANG" flash label */
+.bang-label {
+  position:absolute;
+  top:8px; right:10px;
+  font-size:9px;
+  letter-spacing:2px;
+  color:#f5a623;
+  opacity:0;
+  transition:opacity 0.05s;
+  pointer-events:none;
+}
+.card.firing .bang-label { opacity:1; }
+
+/* Bottom bar */
+#bottombar {
+  width:100%;
+  max-width:560px;
+  border-top:1px solid #151525;
+  padding-top:14px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.dl-all-btn {
+  font-family:'Courier New',monospace;
+  font-size:9px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  background:#0a1a0a;
+  color:#4aaa4a;
+  border:1px solid #1a4a1a;
+  padding:8px 16px;
+  cursor:pointer;
+  transition:all 0.1s;
+}
+.dl-all-btn:hover { border-color:#4aaa4a; box-shadow:0 0 10px #4aaa4a22; }
+.tip {
+  font-size:9px;
+  color:#222;
+  letter-spacing:2px;
+}
+</style>
+</head>
+<body>
+
+<h1>🔫 PISTOL SFX PACK</h1>
+<div class="sub">10 VARIATIONS — WEB AUDIO SYNTHESIS — .WAV EXPORT</div>
+
+<div id="grid"></div>
+
+<div id="bottombar">
+  <button class="dl-all-btn" onclick="downloadAll()">⬇ DOWNLOAD ALL 10 .WAV</button>
+  <span class="tip">44100Hz · 16-BIT PCM · MONO</span>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  AUDIO CONTEXT
+// ═══════════════════════════════════════════════════════
+const AC = window.AudioContext || window.webkitAudioContext;
+let liveCtx = null;
+
+function getLive() {
+  if (!liveCtx) liveCtx = new AC();
+  if (liveCtx.state === 'suspended') liveCtx.resume();
+  return liveCtx;
+}
+
+function mkNoise(ctx, dur) {
+  const buf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  return src;
+}
+
+function mkOsc(ctx, type, freq) {
+  const o = ctx.createOscillator();
+  o.type = type;
+  o.frequency.value = freq;
+  return o;
+}
+
+function gain(ctx, val) {
+  const g = ctx.createGain();
+  g.gain.value = val;
+  return g;
+}
+
+function filter(ctx, type, freq, q=1) {
+  const f = ctx.createBiquadFilter();
+  f.type = type;
+  f.frequency.value = freq;
+  f.Q.value = q;
+  return f;
+}
+
+function chain(...nodes) {
+  for (let i = 0; i < nodes.length - 1; i++) nodes[i].connect(nodes[i+1]);
+}
+
+// ═══════════════════════════════════════════════════════
+//  10 PISTOL VARIATIONS
+// ═══════════════════════════════════════════════════════
+
+const GUNS = [
+
+  // ── 01: CLASSIC SEMI-AUTO ────────────────────────────
+  {
+    name: 'CLASSIC SEMI-AUTO',
+    desc: 'Dry crack · punchy body · short tail',
+    color: '#f5a623',
+    dur: 0.32,
+    fn(ctx, dest, t) {
+      // Transient crack
+      const n1 = mkNoise(ctx, 0.07);
+      const bp = filter(ctx,'bandpass',1900,0.5);
+      const g1 = gain(ctx, 2.0); g1.gain.setValueAtTime(2.0,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.06);
+      chain(n1,bp,g1,dest); n1.start(t); n1.stop(t+0.07);
+      // Thump
+      const o = mkOsc(ctx,'sine',190); o.frequency.exponentialRampToValueAtTime(42,t+0.1);
+      const g2 = gain(ctx,1.0); g2.gain.setValueAtTime(1.0,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.1);
+      chain(o,g2,dest); o.start(t); o.stop(t+0.12);
+      // Click
+      const n2 = mkNoise(ctx,0.02); const hp = filter(ctx,'highpass',4000);
+      const g3 = gain(ctx,0.5); g3.gain.setValueAtTime(0.5,t); g3.gain.exponentialRampToValueAtTime(0.001,t+0.02);
+      chain(n2,hp,g3,dest); n2.start(t); n2.stop(t+0.025);
+      // Tail
+      const n3 = mkNoise(ctx,0.18); const lp = filter(ctx,'lowpass',800);
+      const g4 = gain(ctx,0.28); g4.gain.setValueAtTime(0.28,t+0.01); g4.gain.exponentialRampToValueAtTime(0.001,t+0.18);
+      chain(n3,lp,g4,dest); n3.start(t+0.01); n3.stop(t+0.2);
+    }
+  },
+
+  // ── 02: SUPPRESSED / SILENCED ───────────────────────
+  {
+    name: 'SUPPRESSED',
+    desc: 'Muted thump · soft click · minimal tail',
+    color: '#88aaff',
+    dur: 0.18,
+    fn(ctx, dest, t) {
+      const o = mkOsc(ctx,'sine',95); o.frequency.exponentialRampToValueAtTime(28,t+0.09);
+      const g1 = gain(ctx,0.7); g1.gain.setValueAtTime(0.7,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.09);
+      chain(o,g1,dest); o.start(t); o.stop(t+0.1);
+      const n1 = mkNoise(ctx,0.05); const lp = filter(ctx,'lowpass',500);
+      const g2 = gain(ctx,0.45); g2.gain.setValueAtTime(0.45,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.05);
+      chain(n1,lp,g2,dest); n1.start(t); n1.stop(t+0.06);
+      const n2 = mkNoise(ctx,0.04); const bp = filter(ctx,'bandpass',380,1.5);
+      const g3 = gain(ctx,0.22); g3.gain.setValueAtTime(0.22,t); g3.gain.exponentialRampToValueAtTime(0.001,t+0.04);
+      chain(n2,bp,g3,dest); n2.start(t); n2.stop(t+0.05);
+    }
+  },
+
+  // ── 03: HEAVY MAGNUM ────────────────────────────────
+  {
+    name: 'HEAVY MAGNUM',
+    desc: 'Deep sub boom · sharp crack · long reverb',
+    color: '#ff6644',
+    dur: 0.55,
+    fn(ctx, dest, t) {
+      const o1 = mkOsc(ctx,'sine',230); o1.frequency.exponentialRampToValueAtTime(22,t+0.26);
+      const g1 = gain(ctx,1.7); g1.gain.setValueAtTime(1.7,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.26);
+      chain(o1,g1,dest); o1.start(t); o1.stop(t+0.28);
+      const n1 = mkNoise(ctx,0.055); const bp1 = filter(ctx,'bandpass',2600,0.35);
+      const g2 = gain(ctx,2.2); g2.gain.setValueAtTime(2.2,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.045);
+      chain(n1,bp1,g2,dest); n1.start(t); n1.stop(t+0.055);
+      const o2 = mkOsc(ctx,'sawtooth',85); o2.frequency.exponentialRampToValueAtTime(48,t+0.1);
+      const g3 = gain(ctx,0.55); g3.gain.setValueAtTime(0.55,t); g3.gain.exponentialRampToValueAtTime(0.001,t+0.1);
+      chain(o2,g3,dest); o2.start(t); o2.stop(t+0.12);
+      const n2 = mkNoise(ctx,0.48); const lp2 = filter(ctx,'lowpass',650);
+      const g4 = gain(ctx,0.5); g4.gain.setValueAtTime(0.5,t+0.02); g4.gain.exponentialRampToValueAtTime(0.001,t+0.45);
+      chain(n2,lp2,g4,dest); n2.start(t+0.02); n2.stop(t+0.5);
+    }
+  },
+
+  // ── 04: SNAPPY POCKET PISTOL ────────────────────────
+  {
+    name: 'POCKET PISTOL',
+    desc: 'Thin snap · high pitch · fast decay',
+    color: '#ffdd44',
+    dur: 0.18,
+    fn(ctx, dest, t) {
+      const n1 = mkNoise(ctx,0.045); const bp = filter(ctx,'bandpass',3200,0.7);
+      const g1 = gain(ctx,1.6); g1.gain.setValueAtTime(1.6,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.04);
+      chain(n1,bp,g1,dest); n1.start(t); n1.stop(t+0.045);
+      const o = mkOsc(ctx,'sine',260); o.frequency.exponentialRampToValueAtTime(60,t+0.07);
+      const g2 = gain(ctx,0.65); g2.gain.setValueAtTime(0.65,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.07);
+      chain(o,g2,dest); o.start(t); o.stop(t+0.08);
+      const n2 = mkNoise(ctx,0.04); const hp = filter(ctx,'highpass',2800);
+      const g3 = gain(ctx,0.5); g3.gain.setValueAtTime(0.5,t); g3.gain.exponentialRampToValueAtTime(0.001,t+0.035);
+      chain(n2,hp,g3,dest); n2.start(t); n2.stop(t+0.04);
+    }
+  },
+
+  // ── 05: OLD-WESTERN REVOLVER ────────────────────────
+  {
+    name: 'REVOLVER',
+    desc: 'Wide crack · warm boom · dusty tail',
+    color: '#cc8844',
+    dur: 0.42,
+    fn(ctx, dest, t) {
+      const n1 = mkNoise(ctx,0.08); const bp = filter(ctx,'bandpass',1200,0.4);
+      const g1 = gain(ctx,1.9); g1.gain.setValueAtTime(1.9,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.07);
+      chain(n1,bp,g1,dest); n1.start(t); n1.stop(t+0.08);
+      const o1 = mkOsc(ctx,'sine',160); o1.frequency.exponentialRampToValueAtTime(35,t+0.18);
+      const g2 = gain(ctx,1.3); g2.gain.setValueAtTime(1.3,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.18);
+      chain(o1,g2,dest); o1.start(t); o1.stop(t+0.2);
+      const n2 = mkNoise(ctx,0.36); const lp = filter(ctx,'lowpass',1100);
+      const g3 = gain(ctx,0.38); g3.gain.setValueAtTime(0.38,t+0.015); g3.gain.exponentialRampToValueAtTime(0.001,t+0.36);
+      chain(n2,lp,g3,dest); n2.start(t+0.015); n2.stop(t+0.38);
+      // Metallic cylinder click
+      const n3 = mkNoise(ctx,0.025); const hp = filter(ctx,'highpass',3000);
+      const g4 = gain(ctx,0.4); g4.gain.setValueAtTime(0.4,t+0.07); g4.gain.exponentialRampToValueAtTime(0.001,t+0.1);
+      chain(n3,hp,g4,dest); n3.start(t+0.07); n3.stop(t+0.1);
+    }
+  },
+
+  // ── 06: BURST / RAPID FIRE ──────────────────────────
+  {
+    name: 'BURST FIRE',
+    desc: 'Quick triple pop · light · staccato',
+    color: '#ff4488',
+    dur: 0.38,
+    fn(ctx, dest, t) {
+      [0, 0.1, 0.2].forEach(delay => {
+        const n = mkNoise(ctx,0.055); const bp = filter(ctx,'bandpass',1700,0.6);
+        const g = gain(ctx,1.2); g.gain.setValueAtTime(1.2,t+delay); g.gain.exponentialRampToValueAtTime(0.001,t+delay+0.05);
+        chain(n,bp,g,dest); n.start(t+delay); n.stop(t+delay+0.06);
+        const o = mkOsc(ctx,'sine',155); o.frequency.exponentialRampToValueAtTime(38,t+delay+0.08);
+        const g2 = gain(ctx,0.7); g2.gain.setValueAtTime(0.7,t+delay); g2.gain.exponentialRampToValueAtTime(0.001,t+delay+0.08);
+        chain(o,g2,dest); o.start(t+delay); o.stop(t+delay+0.09);
+      });
+    }
+  },
+
+  // ── 07: UNDERWATER / MUFFLED ────────────────────────
+  {
+    name: 'UNDERWATER',
+    desc: 'Submerged thud · heavy low-pass · bubbles',
+    color: '#44ccee',
+    dur: 0.38,
+    fn(ctx, dest, t) {
+      const n1 = mkNoise(ctx,0.1); const lp1 = filter(ctx,'lowpass',280,2.5);
+      const g1 = gain(ctx,1.0); g1.gain.setValueAtTime(1.0,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.1);
+      chain(n1,lp1,g1,dest); n1.start(t); n1.stop(t+0.11);
+      const o = mkOsc(ctx,'sine',75); o.frequency.exponentialRampToValueAtTime(18,t+0.22);
+      const g2 = gain(ctx,1.2); g2.gain.setValueAtTime(1.2,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.22);
+      chain(o,g2,dest); o.start(t); o.stop(t+0.24);
+      // Bubble trail
+      [0.04,0.09,0.14,0.2].forEach((d,i) => {
+        const ob = mkOsc(ctx,'sine',220-i*30);
+        ob.frequency.exponentialRampToValueAtTime(80-i*10, t+d+0.06);
+        const gb = gain(ctx,0.1); gb.gain.setValueAtTime(0.1,t+d); gb.gain.exponentialRampToValueAtTime(0.001,t+d+0.06);
+        chain(ob,gb,dest); ob.start(t+d); ob.stop(t+d+0.07);
+      });
+    }
+  },
+
+  // ── 08: METALLIC / RICOCHET PISTOL ──────────────────
+  {
+    name: 'METALLIC',
+    desc: 'Hard clang · ring · high-frequency bite',
+    color: '#aaddff',
+    dur: 0.45,
+    fn(ctx, dest, t) {
+      // Hard attack crack
+      const n1 = mkNoise(ctx,0.06); const hp = filter(ctx,'highpass',2200);
+      const g1 = gain(ctx,1.8); g1.gain.setValueAtTime(1.8,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.05);
+      chain(n1,hp,g1,dest); n1.start(t); n1.stop(t+0.06);
+      // Metallic ring tone
+      const o1 = mkOsc(ctx,'sine',860); o1.frequency.exponentialRampToValueAtTime(440,t+0.35);
+      const g2 = gain(ctx,0.35); g2.gain.setValueAtTime(0.35,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.35);
+      chain(o1,g2,dest); o1.start(t); o1.stop(t+0.38);
+      // Sub thump
+      const o2 = mkOsc(ctx,'sine',130); o2.frequency.exponentialRampToValueAtTime(40,t+0.08);
+      const g3 = gain(ctx,0.8); g3.gain.setValueAtTime(0.8,t); g3.gain.exponentialRampToValueAtTime(0.001,t+0.08);
+      chain(o2,g3,dest); o2.start(t); o2.stop(t+0.1);
+      // Zing tail
+      const o3 = mkOsc(ctx,'sawtooth',1200); o3.frequency.exponentialRampToValueAtTime(300,t+0.4);
+      const g4 = gain(ctx,0.08); g4.gain.setValueAtTime(0.08,t+0.03); g4.gain.exponentialRampToValueAtTime(0.001,t+0.4);
+      const lp = filter(ctx,'lowpass',1800);
+      chain(o3,lp,g4,dest); o3.start(t+0.03); o3.stop(t+0.42);
+    }
+  },
+
+  // ── 09: FLINTLOCK / ANTIQUE ─────────────────────────
+  {
+    name: 'FLINTLOCK',
+    desc: 'Flint spark · delayed boom · smoke tail',
+    color: '#ddaa55',
+    dur: 0.55,
+    fn(ctx, dest, t) {
+      // Flint spark (high scratch)
+      const n1 = mkNoise(ctx,0.03); const bp1 = filter(ctx,'bandpass',5000,1.2);
+      const g1 = gain(ctx,0.8); g1.gain.setValueAtTime(0.8,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.025);
+      chain(n1,bp1,g1,dest); n1.start(t); n1.stop(t+0.03);
+      // Delayed powder ignite (small pop)
+      const n2 = mkNoise(ctx,0.06); const bp2 = filter(ctx,'bandpass',1400,0.8);
+      const g2 = gain(ctx,1.0); g2.gain.setValueAtTime(1.0,t+0.055); g2.gain.exponentialRampToValueAtTime(0.001,t+0.12);
+      chain(n2,bp2,g2,dest); n2.start(t+0.05); n2.stop(t+0.12);
+      // Big boom
+      const o = mkOsc(ctx,'sine',140); o.frequency.exponentialRampToValueAtTime(30,t+0.22);
+      const g3 = gain(ctx,1.3); g3.gain.setValueAtTime(0,t+0.05); g3.gain.linearRampToValueAtTime(1.3,t+0.07); g3.gain.exponentialRampToValueAtTime(0.001,t+0.28);
+      chain(o,g3,dest); o.start(t+0.05); o.stop(t+0.3);
+      // Smoky tail
+      const n3 = mkNoise(ctx,0.42); const lp = filter(ctx,'lowpass',600);
+      const g4 = gain(ctx,0.32); g4.gain.setValueAtTime(0,t+0.06); g4.gain.linearRampToValueAtTime(0.32,t+0.1); g4.gain.exponentialRampToValueAtTime(0.001,t+0.48);
+      chain(n3,lp,g4,dest); n3.start(t+0.06); n3.stop(t+0.5);
+    }
+  },
+
+  // ── 10: FUTURISTIC RAIL PISTOL ──────────────────────
+  {
+    name: 'RAIL PISTOL',
+    desc: 'Electric charge · sharp zap · magnetic hum',
+    color: '#55ffcc',
+    dur: 0.38,
+    fn(ctx, dest, t) {
+      // Charge whine (ascending before shot)
+      const o1 = mkOsc(ctx,'sawtooth',200); o1.frequency.exponentialRampToValueAtTime(1800,t+0.06);
+      const g1 = gain(ctx,0.2); g1.gain.setValueAtTime(0.05,t); g1.gain.linearRampToValueAtTime(0.2,t+0.06); g1.gain.exponentialRampToValueAtTime(0.001,t+0.08);
+      const lp1 = filter(ctx,'lowpass',2000);
+      chain(o1,lp1,g1,dest); o1.start(t); o1.stop(t+0.08);
+      // Main crack/zap
+      const n1 = mkNoise(ctx,0.05); const bp = filter(ctx,'bandpass',2800,0.6);
+      const g2 = gain(ctx,1.6); g2.gain.setValueAtTime(1.6,t+0.06); g2.gain.exponentialRampToValueAtTime(0.001,t+0.11);
+      chain(n1,bp,g2,dest); n1.start(t+0.06); n1.stop(t+0.12);
+      // Descending zap
+      const o2 = mkOsc(ctx,'square',1400); o2.frequency.exponentialRampToValueAtTime(80,t+0.3);
+      const g3 = gain(ctx,0.3); g3.gain.setValueAtTime(0.3,t+0.06); g3.gain.exponentialRampToValueAtTime(0.001,t+0.3);
+      const lp2 = filter(ctx,'lowpass',1600);
+      chain(o2,lp2,g3,dest); o2.start(t+0.06); o2.stop(t+0.32);
+      // Magnetic hum tail
+      const o3 = mkOsc(ctx,'sine',55);
+      const g4 = gain(ctx,0.18); g4.gain.setValueAtTime(0.18,t+0.07); g4.gain.exponentialRampToValueAtTime(0.001,t+0.32);
+      chain(o3,g4,dest); o3.start(t+0.07); o3.stop(t+0.34);
+    }
+  },
+];
+
+// ═══════════════════════════════════════════════════════
+//  VIS PROFILES (16 bars each)
+// ═══════════════════════════════════════════════════════
+const VIS = [
+  [14,22,18,14,11,9,7,5,4,4,3,3,2,2,1,1],
+  [6,9,7,6,5,4,3,3,2,2,2,1,1,1,1,1],
+  [16,26,22,18,16,14,12,10,9,8,7,6,5,4,3,2],
+  [10,16,13,10,8,6,5,4,3,2,2,1,1,1,1,1],
+  [12,20,17,14,12,10,9,8,7,6,5,4,4,3,2,2],
+  [10,14,10,14,10,14,8,6,4,3,2,1,1,1,1,1],
+  [8,12,14,12,10,8,10,8,6,8,6,4,3,2,2,1],
+  [14,18,14,10,8,14,12,10,8,6,10,8,6,4,2,1],
+  [6,8,14,18,14,10,8,6,5,4,3,2,2,1,1,1],
+  [4,8,14,16,14,12,10,8,6,10,8,6,4,3,2,1],
+];
+
+// ═══════════════════════════════════════════════════════
+//  BUILD UI
+// ═══════════════════════════════════════════════════════
+const grid = document.getElementById('grid');
+let visTimers = {};
+
+GUNS.forEach((gun, idx) => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.id = 'card'+idx;
+  card.innerHTML = `
+    <div class="bang-label">BANG!</div>
+    <div class="card-top">
+      <span class="card-num">0${idx+1}</span>
+    </div>
+    <div class="card-name">${gun.name}</div>
+    <div class="card-desc">${gun.desc}</div>
+    <div class="wave" id="wave${idx}">
+      ${Array.from({length:16},(_,i)=>`<div class="wb" id="wb${idx}_${i}"></div>`).join('')}
+    </div>
+    <div class="card-actions">
+      <button class="play-btn" onclick="playGun(${idx})">▶ PLAY</button>
+      <button class="dl-btn" id="dlbtn${idx}" onclick="downloadWav(${idx},event)">⬇ WAV</button>
+    </div>
+  `;
+  card.addEventListener('click', (e) => {
+    if (e.target.tagName === 'BUTTON') return;
+    playGun(idx);
+  });
+  grid.appendChild(card);
+});
+
+function playGun(idx) {
+  const ctx = getLive();
+  const t = ctx.currentTime;
+  GUNS[idx].fn(ctx, ctx.destination, t);
+
+  // Fire flash on card
+  const card = document.getElementById('card'+idx);
+  card.classList.remove('firing');
+  void card.offsetWidth;
+  card.classList.add('firing');
+  setTimeout(()=>card.classList.remove('firing'), 150);
+
+  // Animate waveform bars
+  clearTimeout(visTimers[idx]);
+  let f = 0;
+  const profile = VIS[idx];
+  const col = GUNS[idx].color;
+  function animVis() {
+    const decay = Math.max(0, 1 - f / 28);
+    for (let i = 0; i < 16; i++) {
+      const bar = document.getElementById(`wb${idx}_${i}`);
+      if (!bar) continue;
+      const jitter = decay > 0.05 ? (Math.random()*0.35+0.65) : 0;
+      const h = Math.max(2, Math.round(profile[i] * decay * jitter));
+      bar.style.height = h + 'px';
+      bar.style.background = decay > 0.08 ? col : '#1c1c30';
+    }
+    f++;
+    if (f < 38) visTimers[idx] = setTimeout(animVis, 30);
+    else {
+      for (let i=0;i<16;i++){
+        const bar=document.getElementById(`wb${idx}_${i}`);
+        if(bar){bar.style.height='2px';bar.style.background='#1c1c30';}
+      }
+    }
+  }
+  animVis();
+}
+
+// ═══════════════════════════════════════════════════════
+//  WAV EXPORT
+// ═══════════════════════════════════════════════════════
+function renderOffline(gunFn, dur) {
+  const sr = 44100;
+  const len = Math.ceil(sr * (dur + 0.05));
+  const off = new OfflineAudioContext(1, len, sr);
+  gunFn(off, off.destination, 0);
+  return off.startRendering();
+}
+
+function toWav(buffer) {
+  const sr = buffer.sampleRate, samples = buffer.getChannelData(0);
+  const dataBytes = samples.length * 2;
+  const ab = new ArrayBuffer(44 + dataBytes);
+  const v = new DataView(ab);
+  const ws = (o,s) => { for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)); };
+  ws(0,'RIFF'); v.setUint32(4,36+dataBytes,true); ws(8,'WAVE');
+  ws(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true);
+  v.setUint16(22,1,true); v.setUint32(24,sr,true); v.setUint32(28,sr*2,true);
+  v.setUint16(32,2,true); v.setUint16(34,16,true);
+  ws(36,'data'); v.setUint32(40,dataBytes,true);
+  let off=44;
+  for(let i=0;i<samples.length;i++){
+    const s=Math.max(-1,Math.min(1,samples[i]));
+    v.setInt16(off, s<0?s*0x8000:s*0x7FFF, true); off+=2;
+  }
+  return ab;
+}
+
+async function downloadWav(idx, e) {
+  if(e) e.stopPropagation();
+  const btn = document.getElementById('dlbtn'+idx);
+  const orig = btn.textContent;
+  btn.textContent='⏳...'; btn.style.color='#666';
+  try {
+    const buf = await renderOffline(GUNS[idx].fn, GUNS[idx].dur);
+    const wav = toWav(buf);
+    const blob = new Blob([wav],{type:'audio/wav'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href=url; a.download=`pistol_${GUNS[idx].name.toLowerCase().replace(/\s+/g,'_')}.wav`;
+    a.click(); URL.revokeObjectURL(url);
+    btn.textContent='✓ DONE'; btn.style.color='#4aaa4a';
+    setTimeout(()=>{btn.textContent=orig;btn.style.color='';},2000);
+  } catch(err) {
+    btn.textContent='✗ ERR'; btn.style.color='#ff4444';
+    setTimeout(()=>{btn.textContent=orig;btn.style.color='';},2000);
+  }
+}
+
+async function downloadAll() {
+  const allBtn = document.querySelector('.dl-all-btn');
+  allBtn.textContent='⏳ RENDERING ALL...'; allBtn.style.color='#888';
+  for(let i=0;i<GUNS.length;i++){
+    await downloadWav(i);
+    await new Promise(r=>setTimeout(r,300));
+  }
+  allBtn.textContent='✓ ALL DOWNLOADED!'; allBtn.style.color='#4aaa4a';
+  setTimeout(()=>{allBtn.textContent='⬇ DOWNLOAD ALL 10 .WAV';allBtn.style.color='';},3000);
+}
+</script>
+</body>
+</html>

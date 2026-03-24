@@ -25,6 +25,10 @@ public class GrappleRopeConfigs : MonoBehaviour, IUpdateObserver
     public bool isgrappling = true;
     public bool StraightLine = true;
 
+    [Header("Rope SFX")]
+    [SerializeField] private AudioClip _ropeTravel;
+    [SerializeField] private AudioClip _hookImpact;
+    private bool _impactPlayed = false;
 
     private void OnEnable()
     {
@@ -36,9 +40,14 @@ public class GrappleRopeConfigs : MonoBehaviour, IUpdateObserver
         StraightLine = false;
         isgrappling = false;
 
+        _impactPlayed = false;
+
         _lineRenderer.positionCount = precision;
         linePointsToFirePoint();
         _lineRenderer.enabled = true;
+
+        //Rope Travel SFX
+        SFXManager._instance.playSFX(_ropeTravel, gameObject.transform.position, 0.5f,false, false);
     }
 
     private void Awake()
@@ -91,6 +100,14 @@ public class GrappleRopeConfigs : MonoBehaviour, IUpdateObserver
             {   
                 //Debug.Log(" straight line");
                 StraightLine = true;
+
+                //We will play the hook impact sound here
+                if(!_impactPlayed)
+                {
+                    _impactPlayed = true;
+
+                    SFXManager._instance.playSFX(_hookImpact, grapplingGun._grapplePoint, 1f, false, false);
+                }
             }
             else
             {

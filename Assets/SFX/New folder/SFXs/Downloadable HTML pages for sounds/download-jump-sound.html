@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Jump Sound Exporter</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d0d1a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    font-family: 'Courier New', monospace;
+    color: #aef;
+    gap: 20px;
+  }
+  h1 { font-size: 1rem; letter-spacing: 4px; color: #7df; text-transform: uppercase; }
+  p { font-size: 0.72rem; color: #556; letter-spacing: 2px; }
+  button {
+    background: #1a3a5c;
+    color: #7df;
+    border: 1.5px solid #4a80b0;
+    border-radius: 6px;
+    padding: 12px 32px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    letter-spacing: 3px;
+    cursor: pointer;
+    transition: background 0.15s, box-shadow 0.15s;
+  }
+  button:hover { background: #254d78; box-shadow: 0 0 16px #4a80b055; }
+  #status { font-size: 0.7rem; color: #4df; letter-spacing: 2px; min-height: 1em; }
+</style>
+</head>
+<body>
+<h1>Jump Sound Exporter</h1>
+<p>Pixel-style jump sound — matched to the slide</p>
+<button onclick="generate()">⬇ DOWNLOAD JUMP SOUND</button>
+<div id="status"></div>
+
+<script>
+function setStatus(msg) {
+  document.getElementById('status').textContent = msg;
+}
+
+function generate() {
+  setStatus('Generating...');
+
+  const sampleRate  = 44100;
+  const duration    = 0.45; // short punchy jump
+  const numSamples  = Math.floor(sampleRate * duration);
+  const offCtx      = new OfflineAudioContext(1, numSamples, sampleRate);
+
+  // ── Noise burst (same source as slide) ──────────────────────
+  const bufLen = Math.floor(sampleRate * 0.5);
+  const noiseBuf = offCtx.createBuffer(1, bufLen, sampleRate);
+  const nd = noiseBuf.getChannelData(0);
+  for (let i = 0; i < bufLen; i++) nd[i] = Math.random() * 2 - 1;
+
+  const noise = offCtx.createBufferSource();
+  noise.buffer = noiseBuf;
+  noise.loop   = true;
+
+  // Band-pass — same character as slide but sweeps upward
+  const bpf = offCtx.createBiquadFilter();
+  bpf.type            = 'bandpass';
+  bpf.frequency.value = 260;          // start near slide's 320 Hz
+  bpf.Q.value         = 1.6;
+  // Sweep freq upward — gives the "whoosh lift" feel
+  bpf.frequency.setValueAtTime(260, 0);
+  bpf.frequency.exponentialRampToValueAtTime(900, 0.18);
+  bpf.frequency.exponentialRampToValueAtTime(400, duration);
+
+  // Low-shelf (same as slide)
+  const shelf = offCtx.createBiquadFilter();
+  shelf.type            = 'lowshelf';
+  shelf.frequency.value = 200;
+  shelf.gain.value      = 5;
+
+  // Noise gain envelope — sharp attack, quick decay
+  const noiseGain = offCtx.createGain();
+  noiseGain.gain.setValueAtTime(0,    0);
+  noiseGain.gain.linearRampToValueAtTime(0.07, 0.01);  // snap in
+  noiseGain.gain.linearRampToValueAtTime(0.035, 0.12); // mid sustain
+  noiseGain.gain.linearRampToValueAtTime(0,    duration);
+
+  noise.connect(bpf);
+  bpf.connect(shelf);
+  shelf.connect(noiseGain);
+  noiseGain.connect(offCtx.destination);
+
+  // ── Pixel "blip" tone on top (retro rectangle feel) ─────────
+  const osc = offCtx.createOscillator();
+  osc.type            = 'square';     // pixel/chiptune character
+  osc.frequency.value = 180;
+  // Pitch sweep up — classic 8-bit jump
+  osc.frequency.setValueAtTime(180, 0);
+  osc.frequency.exponentialRampToValueAtTime(520, 0.12);
+  osc.frequency.exponentialRampToValueAtTime(300, 0.28);
+
+  // High-pass to keep blip light, not bassy
+  const hpf = offCtx.createBiquadFilter();
+  hpf.type            = 'highpass';
+  hpf.frequency.value = 150;
+
+  const oscGain = offCtx.createGain();
+  oscGain.gain.setValueAtTime(0,     0);
+  oscGain.gain.linearRampToValueAtTime(0.04, 0.008); // sharp pixel attack
+  oscGain.gain.linearRampToValueAtTime(0.02, 0.1);
+  oscGain.gain.linearRampToValueAtTime(0,    0.28);
+
+  osc.connect(hpf);
+  hpf.connect(oscGain);
+  oscGain.connect(offCtx.destination);
+
+  noise.start(0);
+  osc.start(0);
+  osc.stop(duration);
+
+  offCtx.startRendering().then(rendered => {
+    const wav  = encodeWAV(rendered);
+    const blob = new Blob([wav], { type: 'audio/wav' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'jump-sound.wav';
+    a.click();
+    URL.revokeObjectURL(url);
+    setStatus('✓ Downloaded!');
+  });
+}
+
+function encodeWAV(audioBuffer) {
+  const numChannels = 1;
+  const sampleRate  = audioBuffer.sampleRate;
+  const samples     = audioBuffer.getChannelData(0);
+  const numSamples  = samples.length;
+  const byteRate    = sampleRate * numChannels * 2;
+  const blockAlign  = numChannels * 2;
+  const dataSize    = numSamples * 2;
+  const buffer      = new ArrayBuffer(44 + dataSize);
+  const view        = new DataView(buffer);
+
+  function writeStr(offset, str) {
+    for (let i = 0; i < str.length; i++)
+      view.setUint8(offset + i, str.charCodeAt(i));
+  }
+
+  writeStr(0,  'RIFF');
+  view.setUint32(4,  36 + dataSize, true);
+  writeStr(8,  'WAVE');
+  writeStr(12, 'fmt ');
+  view.setUint32(16, 16,          true);
+  view.setUint16(20, 1,           true);
+  view.setUint16(22, numChannels, true);
+  view.setUint32(24, sampleRate,  true);
+  view.setUint32(28, byteRate,    true);
+  view.setUint16(32, blockAlign,  true);
+  view.setUint16(34, 16,          true);
+  writeStr(36, 'data');
+  view.setUint32(40, dataSize,    true);
+
+  let offset = 44;
+  for (let i = 0; i < numSamples; i++) {
+    const s = Math.max(-1, Math.min(1, samples[i]));
+    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+    offset += 2;
+  }
+
+  return buffer;
+}
+</script>
+</body>
+</html>

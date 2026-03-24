@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Rifle SFX – Full Auto & Burst</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:#060608;
+  min-height:100vh;
+  font-family:'Courier New',monospace;
+  color:#ccc;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:20px 14px 50px;
+}
+h1 {
+  font-size:12px;
+  letter-spacing:6px;
+  text-transform:uppercase;
+  color:#e84040;
+  margin-bottom:3px;
+  text-shadow:0 0 14px #e8404055;
+}
+.sub {
+  font-size:9px;
+  letter-spacing:4px;
+  color:#2a2a2a;
+  margin-bottom:18px;
+}
+
+/* Mode tabs */
+#tabs {
+  display:flex;
+  gap:0;
+  margin-bottom:16px;
+  border:1px solid #1e1e1e;
+}
+.tab {
+  font-family:'Courier New',monospace;
+  font-size:10px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  padding:9px 22px;
+  cursor:pointer;
+  background:#0a0a0a;
+  color:#444;
+  border:none;
+  transition:all 0.1s;
+}
+.tab:hover { color:#aaa; background:#111; }
+.tab.active { background:#1a0808; color:#e84040; border-bottom:2px solid #e84040; }
+
+/* Mode indicator */
+#mode-label {
+  font-size:10px;
+  letter-spacing:4px;
+  color:#333;
+  margin-bottom:14px;
+  text-align:center;
+}
+#mode-label strong { color:#e84040; }
+#mode-desc {
+  font-size:9px;
+  letter-spacing:2px;
+  color:#252525;
+  margin-bottom:14px;
+  text-align:center;
+}
+
+/* Grid */
+#grid {
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:7px;
+  width:100%;
+  max-width:580px;
+  margin-bottom:18px;
+}
+
+.card {
+  background:#0b0b10;
+  border:1px solid #181820;
+  padding:11px 13px;
+  cursor:pointer;
+  position:relative;
+  overflow:hidden;
+  user-select:none;
+  transition:border-color 0.1s,background 0.1s;
+}
+.card:hover { border-color:#333; background:#0e0e15; }
+.card.playing { border-color:#e84040; background:#130808; }
+.card.playing::after {
+  content:'';
+  position:absolute;
+  inset:0;
+  background:#e8404012;
+  animation:flashCard 0.15s ease-out forwards;
+}
+@keyframes flashCard { from{opacity:1} to{opacity:0} }
+
+.bang-label {
+  position:absolute;
+  top:7px; right:9px;
+  font-size:8px; letter-spacing:2px;
+  color:#e84040; opacity:0;
+  pointer-events:none;
+  transition:opacity 0.05s;
+}
+.card.playing .bang-label { opacity:1; }
+
+.card-num { font-size:8px; color:#222; letter-spacing:2px; margin-bottom:5px; }
+.card-name { font-size:10px; letter-spacing:3px; text-transform:uppercase; color:#888; margin-bottom:3px; }
+.card.playing .card-name { color:#e84040; }
+.card-desc { font-size:8px; color:#2e2e2e; letter-spacing:1px; line-height:1.6; }
+.card.playing .card-desc { color:#6a3030; }
+
+/* Mini waveform */
+.wave {
+  display:flex;
+  gap:2px;
+  align-items:flex-end;
+  height:18px;
+  margin:8px 0;
+}
+.wb { width:3px; background:#141420; border-radius:1px; min-height:2px; transition:height 0.04s,background 0.04s; }
+
+/* Actions */
+.card-actions { display:flex; gap:5px; margin-top:4px; }
+.play-btn, .dl-btn {
+  font-family:'Courier New',monospace;
+  font-size:8px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  border:none;
+  cursor:pointer;
+  padding:5px 8px;
+  transition:all 0.08s;
+}
+.play-btn { background:#111118; color:#666; border:1px solid #222; flex:1; }
+.play-btn:hover { color:#e84040; border-color:#e8404066; background:#1a0a0a; }
+.card.playing .play-btn { color:#e84040; border-color:#e84040; }
+.dl-btn { background:#080f08; color:#356535; border:1px solid #153015; flex:0 0 auto; padding:5px 9px; }
+.dl-btn:hover { color:#5aaa5a; border-color:#3a7a3a; background:#0d1a0d; }
+
+/* Progress ring (auto fire) */
+.auto-indicator {
+  display:inline-flex;
+  gap:2px;
+  margin-left:4px;
+  vertical-align:middle;
+}
+.auto-dot { width:3px; height:3px; background:#333; border-radius:50%; }
+
+/* Bottom bar */
+#bottombar {
+  width:100%;
+  max-width:580px;
+  border-top:1px solid #111118;
+  padding-top:14px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.dl-all-btn {
+  font-family:'Courier New',monospace;
+  font-size:9px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  background:#080f08;
+  color:#4aaa4a;
+  border:1px solid #1a401a;
+  padding:8px 16px;
+  cursor:pointer;
+  transition:all 0.1s;
+}
+.dl-all-btn:hover { border-color:#4aaa4a; box-shadow:0 0 10px #4aaa4a1a; }
+.tip { font-size:8px; color:#1a1a1a; letter-spacing:2px; }
+
+/* Stop btn */
+#stop-btn {
+  font-family:'Courier New',monospace;
+  font-size:9px; letter-spacing:3px; text-transform:uppercase;
+  background:#1a0808; color:#e84040; border:1px solid #3a1010;
+  padding:8px 14px; cursor:pointer; transition:all 0.1s;
+}
+#stop-btn:hover { border-color:#e84040; }
+</style>
+</head>
+<body>
+
+<h1>🔫 RIFLE SFX PACK</h1>
+<div class="sub">10 RIFLES · FULL-AUTO & BURST MODE · WEB AUDIO SYNTHESIS</div>
+
+<!-- Fire mode tabs -->
+<div id="tabs">
+  <button class="tab active" id="tab-auto" onclick="setMode('auto')">⚡ FULL AUTO</button>
+  <button class="tab" id="tab-burst" onclick="setMode('burst')">▶▶▶ BURST (3-RND)</button>
+</div>
+
+<div id="mode-label">MODE: <strong id="mode-name">FULL AUTO</strong></div>
+<div id="mode-desc">Hold PLAY to fire continuously — release to stop</div>
+
+<div id="grid"></div>
+
+<div id="bottombar">
+  <button class="dl-all-btn" id="dl-all-btn" onclick="downloadAll()">⬇ DOWNLOAD ALL 10 .WAV</button>
+  <button id="stop-btn" onclick="stopAll()">■ STOP ALL</button>
+  <span class="tip">44100Hz · 16-BIT PCM · MONO</span>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  AUDIO CONTEXT
+// ═══════════════════════════════════════════════════════
+const AC = window.AudioContext || window.webkitAudioContext;
+let liveCtx = null;
+function getLive() {
+  if (!liveCtx) liveCtx = new AC();
+  if (liveCtx.state === 'suspended') liveCtx.resume();
+  return liveCtx;
+}
+function mkNoise(ctx, dur) {
+  const buf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const src = ctx.createBufferSource(); src.buffer = buf; return src;
+}
+function mkOsc(ctx, type, freq) {
+  const o = ctx.createOscillator(); o.type = type; o.frequency.value = freq; return o;
+}
+function gain(ctx, val) { const g = ctx.createGain(); g.gain.value = val; return g; }
+function filt(ctx, type, freq, q=1) {
+  const f = ctx.createBiquadFilter(); f.type=type; f.frequency.value=freq; f.Q.value=q; return f;
+}
+function ch(...nodes) { for(let i=0;i<nodes.length-1;i++) nodes[i].connect(nodes[i+1]); }
+
+// ═══════════════════════════════════════════════════════
+//  SINGLE SHOT BUILDERS — one shot layer per rifle
+// ═══════════════════════════════════════════════════════
+const RIFLES = [
+
+  // 01: ASSAULT RIFLE (AK-style)
+  {
+    name:'ASSAULT RIFLE', desc:'Heavy crack · warm boom · medium tail · AK character',
+    color:'#e84040', autoRPM:600, dur:0.32,
+    shot(ctx, dest, t) {
+      // Sharp crack
+      const n1=mkNoise(ctx,0.07); const bp=filt(ctx,'bandpass',2100,0.45);
+      const g1=gain(ctx,2.2); g1.gain.setValueAtTime(2.2,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.06);
+      ch(n1,bp,g1,dest); n1.start(t); n1.stop(t+0.07);
+      // Warm low body
+      const o1=mkOsc(ctx,'sine',175); o1.frequency.exponentialRampToValueAtTime(38,t+0.18);
+      const g2=gain(ctx,1.4); g2.gain.setValueAtTime(1.4,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.18);
+      ch(o1,g2,dest); o1.start(t); o1.stop(t+0.2);
+      // Mid snap
+      const o2=mkOsc(ctx,'sawtooth',95); o2.frequency.exponentialRampToValueAtTime(55,t+0.08);
+      const g3=gain(ctx,0.55); g3.gain.setValueAtTime(0.55,t); g3.gain.exponentialRampToValueAtTime(0.001,t+0.08);
+      ch(o2,g3,dest); o2.start(t); o2.stop(t+0.09);
+      // Tail
+      const n2=mkNoise(ctx,0.24); const lp=filt(ctx,'lowpass',900);
+      const g4=gain(ctx,0.38); g4.gain.setValueAtTime(0.38,t+0.01); g4.gain.exponentialRampToValueAtTime(0.001,t+0.24);
+      ch(n2,lp,g4,dest); n2.start(t+0.01); n2.stop(t+0.26);
+    }
+  },
+
+  // 02: SMG (MP5-style)
+  {
+    name:'SMG', desc:'Fast light crack · high pitch · tight pop',
+    color:'#ff8844', autoRPM:900, dur:0.18,
+    shot(ctx, dest, t) {
+      const n1=mkNoise(ctx,0.05); const bp=filt(ctx,'bandpass',2800,0.55);
+      const g1=gain(ctx,1.7); g1.gain.setValueAtTime(1.7,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.04);
+      ch(n1,bp,g1,dest); n1.start(t); n1.stop(t+0.05);
+      const o1=mkOsc(ctx,'sine',240); o1.frequency.exponentialRampToValueAtTime(55,t+0.1);
+      const g2=gain(ctx,0.9); g2.gain.setValueAtTime(0.9,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.1);
+      ch(o1,g2,dest); o1.start(t); o1.stop(t+0.12);
+      const n2=mkNoise(ctx,0.12); const lp=filt(ctx,'lowpass',1000);
+      const g3=gain(ctx,0.25); g3.gain.setValueAtTime(0.25,t+0.01); g3.gain.exponentialRampToValueAtTime(0.001,t+0.12);
+      ch(n2,lp,g3,dest); n2.start(t+0.01); n2.stop(t+0.14);
+    }
+  },
+
+  // 03: BATTLE RIFLE (M14 / SCAR-H style)
+  {
+    name:'BATTLE RIFLE', desc:'Deep thud · slow fire · authoritative crack',
+    color:'#cc5522', autoRPM:420, dur:0.44,
+    shot(ctx, dest, t) {
+      const n1=mkNoise(ctx,0.08); const bp=filt(ctx,'bandpass',1600,0.38);
+      const g1=gain(ctx,2.4); g1.gain.setValueAtTime(2.4,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.07);
+      ch(n1,bp,g1,dest); n1.start(t); n1.stop(t+0.08);
+      const o1=mkOsc(ctx,'sine',130); o1.frequency.exponentialRampToValueAtTime(22,t+0.28);
+      const g2=gain(ctx,1.7); g2.gain.setValueAtTime(1.7,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.28);
+      ch(o1,g2,dest); o1.start(t); o1.stop(t+0.3);
+      const o2=mkOsc(ctx,'sawtooth',70); o2.frequency.exponentialRampToValueAtTime(40,t+0.1);
+      const g3=gain(ctx,0.7); g3.gain.setValueAtTime(0.7,t); g3.gain.exponentialRampToValueAtTime(0.001,t+0.1);
+      ch(o2,g3,dest); o2.start(t); o2.stop(t+0.12);
+      const n2=mkNoise(ctx,0.38); const lp=filt(ctx,'lowpass',750);
+      const g4=gain(ctx,0.45); g4.gain.setValueAtTime(0.45,t+0.02); g4.gain.exponentialRampToValueAtTime(0.001,t+0.38);
+      ch(n2,lp,g4,dest); n2.start(t+0.02); n2.stop(t+0.4);
+    }
+  },
+
+  // 04: CARBINE (M4-style)
+  {
+    name:'CARBINE', desc:'Sharp crack · dry pop · clean & tactical',
+    color:'#ddaa33', autoRPM:750, dur:0.26,
+    shot(ctx, dest, t) {
+      const n1=mkNoise(ctx,0.06); const bp=filt(ctx,'bandpass',2400,0.5);
+      const g1=gain(ctx,2.0); g1.gain.setValueAtTime(2.0,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.05);
+      ch(n1,bp,g1,dest); n1.start(t); n1.stop(t+0.06);
+      const o1=mkOsc(ctx,'sine',155); o1.frequency.exponentialRampToValueAtTime(40,t+0.14);
+      const g2=gain(ctx,1.1); g2.gain.setValueAtTime(1.1,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.14);
+      ch(o1,g2,dest); o1.start(t); o1.stop(t+0.15);
+      const n2=mkNoise(ctx,0.05); const hp=filt(ctx,'highpass',3500);
+      const g3=gain(ctx,0.55); g3.gain.setValueAtTime(0.55,t); g3.gain.exponentialRampToValueAtTime(0.001,t+0.04);
+      ch(n2,hp,g3,dest); n2.start(t); n2.stop(t+0.05);
+      const n3=mkNoise(ctx,0.2); const lp=filt(ctx,'lowpass',820);
+      const g4=gain(ctx,0.3); g4.gain.setValueAtTime(0.3,t+0.01); g4.gain.exponentialRampToValueAtTime(0.001,t+0.2);
+      ch(n3,lp,g4,dest); n3.start(t+0.01); n3.stop(t+0.22);
+    }
+  },
+
+  // 05: LMG (M249-style)
+  {
+    name:'LMG', desc:'Huge boom · rattle · ultra-heavy sustained fire',
+    color:'#ff4422', autoRPM:750, dur:0.38,
+    shot(ctx, dest, t) {
+      const n1=mkNoise(ctx,0.09); const bp=filt(ctx,'bandpass',1400,0.35);
+      const g1=gain(ctx,2.6); g1.gain.setValueAtTime(2.6,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.075);
+      ch(n1,bp,g1,dest); n1.start(t); n1.stop(t+0.09);
+      const o1=mkOsc(ctx,'sine',105); o1.frequency.exponentialRampToValueAtTime(20,t+0.28);
+      const g2=gain(ctx,1.9); g2.gain.setValueAtTime(1.9,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.28);
+      ch(o1,g2,dest); o1.start(t); o1.stop(t+0.3);
+      const o2=mkOsc(ctx,'sawtooth',60); o2.frequency.exponentialRampToValueAtTime(35,t+0.12);
+      const g3=gain(ctx,0.8); g3.gain.setValueAtTime(0.8,t); g3.gain.exponentialRampToValueAtTime(0.001,t+0.12);
+      ch(o2,g3,dest); o2.start(t); o2.stop(t+0.14);
+      // Rattle
+      const n2=mkNoise(ctx,0.06); const bp2=filt(ctx,'bandpass',900,2.5);
+      const g4=gain(ctx,0.6); g4.gain.setValueAtTime(0.6,t+0.02); g4.gain.exponentialRampToValueAtTime(0.001,t+0.08);
+      ch(n2,bp2,g4,dest); n2.start(t+0.02); n2.stop(t+0.08);
+      const n3=mkNoise(ctx,0.32); const lp=filt(ctx,'lowpass',700);
+      const g5=gain(ctx,0.5); g5.gain.setValueAtTime(0.5,t+0.02); g5.gain.exponentialRampToValueAtTime(0.001,t+0.32);
+      ch(n3,lp,g5,dest); n3.start(t+0.02); n3.stop(t+0.35);
+    }
+  },
+
+  // 06: SUPPRESSED RIFLE
+  {
+    name:'SUPPRESSED RIFLE', desc:'Muffled thud · subsonic crack · mechanical click',
+    color:'#5588ff', autoRPM:600, dur:0.22,
+    shot(ctx, dest, t) {
+      const n1=mkNoise(ctx,0.06); const lp1=filt(ctx,'lowpass',380,2.0);
+      const g1=gain(ctx,1.1); g1.gain.setValueAtTime(1.1,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.055);
+      ch(n1,lp1,g1,dest); n1.start(t); n1.stop(t+0.06);
+      const o1=mkOsc(ctx,'sine',88); o1.frequency.exponentialRampToValueAtTime(26,t+0.14);
+      const g2=gain(ctx,0.85); g2.gain.setValueAtTime(0.85,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.14);
+      ch(o1,g2,dest); o1.start(t); o1.stop(t+0.15);
+      // Bolt click
+      const n2=mkNoise(ctx,0.025); const bp=filt(ctx,'bandpass',2200,1.8);
+      const g3=gain(ctx,0.4); g3.gain.setValueAtTime(0.4,t+0.06); g3.gain.exponentialRampToValueAtTime(0.001,t+0.085);
+      ch(n2,bp,g3,dest); n2.start(t+0.06); n2.stop(t+0.09);
+    }
+  },
+
+  // 07: VINTAGE WW2 RIFLE (BAR-style auto)
+  {
+    name:'VINTAGE AUTO', desc:'Old boxy crack · warm resonance · era feel',
+    color:'#aa7733', autoRPM:480, dur:0.42,
+    shot(ctx, dest, t) {
+      const n1=mkNoise(ctx,0.08); const bp=filt(ctx,'bandpass',1300,0.42);
+      const g1=gain(ctx,2.1); g1.gain.setValueAtTime(2.1,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.07);
+      ch(n1,bp,g1,dest); n1.start(t); n1.stop(t+0.08);
+      const o1=mkOsc(ctx,'sine',145); o1.frequency.exponentialRampToValueAtTime(30,t+0.24);
+      const g2=gain(ctx,1.5); g2.gain.setValueAtTime(1.5,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.24);
+      ch(o1,g2,dest); o1.start(t); o1.stop(t+0.26);
+      // Woody box resonance
+      const o2=mkOsc(ctx,'sine',320); o2.frequency.exponentialRampToValueAtTime(180,t+0.12);
+      const g3=gain(ctx,0.18); g3.gain.setValueAtTime(0.18,t); g3.gain.exponentialRampToValueAtTime(0.001,t+0.12);
+      ch(o2,g3,dest); o2.start(t); o2.stop(t+0.14);
+      const n2=mkNoise(ctx,0.34); const lp=filt(ctx,'lowpass',820);
+      const g4=gain(ctx,0.42); g4.gain.setValueAtTime(0.42,t+0.015); g4.gain.exponentialRampToValueAtTime(0.001,t+0.34);
+      ch(n2,lp,g4,dest); n2.start(t+0.015); n2.stop(t+0.36);
+    }
+  },
+
+  // 08: FUTURISTIC ENERGY RIFLE
+  {
+    name:'ENERGY RIFLE', desc:'Plasma zap · electric hiss · sci-fi resonance',
+    color:'#44ffaa', autoRPM:660, dur:0.28,
+    shot(ctx, dest, t) {
+      // Charge crack
+      const n1=mkNoise(ctx,0.05); const bp=filt(ctx,'bandpass',3200,0.6);
+      const g1=gain(ctx,1.5); g1.gain.setValueAtTime(1.5,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.04);
+      ch(n1,bp,g1,dest); n1.start(t); n1.stop(t+0.05);
+      // Descending plasma zap
+      const o1=mkOsc(ctx,'sawtooth',1600); o1.frequency.exponentialRampToValueAtTime(90,t+0.22);
+      const g2=gain(ctx,0.38); g2.gain.setValueAtTime(0.38,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.22);
+      const lp1=filt(ctx,'lowpass',1800);
+      ch(o1,lp1,g2,dest); o1.start(t); o1.stop(t+0.24);
+      // Sub thump
+      const o2=mkOsc(ctx,'sine',110); o2.frequency.exponentialRampToValueAtTime(35,t+0.1);
+      const g3=gain(ctx,0.9); g3.gain.setValueAtTime(0.9,t); g3.gain.exponentialRampToValueAtTime(0.001,t+0.1);
+      ch(o2,g3,dest); o2.start(t); o2.stop(t+0.12);
+      // Electric hiss
+      const o3=mkOsc(ctx,'square',55);
+      const g4=gain(ctx,0.15); g4.gain.setValueAtTime(0.15,t); g4.gain.exponentialRampToValueAtTime(0.001,t+0.18);
+      ch(o3,g4,dest); o3.start(t); o3.stop(t+0.2);
+    }
+  },
+
+  // 09: BULLPUP RIFLE (P90 / AUG style)
+  {
+    name:'BULLPUP', desc:'Compact snap · high-pitched · fast cycling rattle',
+    color:'#ff66bb', autoRPM:840, dur:0.20,
+    shot(ctx, dest, t) {
+      const n1=mkNoise(ctx,0.05); const bp=filt(ctx,'bandpass',3000,0.5);
+      const g1=gain(ctx,1.9); g1.gain.setValueAtTime(1.9,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.04);
+      ch(n1,bp,g1,dest); n1.start(t); n1.stop(t+0.05);
+      const o1=mkOsc(ctx,'sine',210); o1.frequency.exponentialRampToValueAtTime(50,t+0.1);
+      const g2=gain(ctx,1.0); g2.gain.setValueAtTime(1.0,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.1);
+      ch(o1,g2,dest); o1.start(t); o1.stop(t+0.11);
+      // Compact body rattle
+      const n2=mkNoise(ctx,0.05); const bp2=filt(ctx,'bandpass',1200,2.2);
+      const g3=gain(ctx,0.45); g3.gain.setValueAtTime(0.45,t+0.02); g3.gain.exponentialRampToValueAtTime(0.001,t+0.06);
+      ch(n2,bp2,g3,dest); n2.start(t+0.02); n2.stop(t+0.07);
+      const n3=mkNoise(ctx,0.14); const lp=filt(ctx,'lowpass',1100);
+      const g4=gain(ctx,0.22); g4.gain.setValueAtTime(0.22,t+0.01); g4.gain.exponentialRampToValueAtTime(0.001,t+0.14);
+      ch(n3,lp,g4,dest); n3.start(t+0.01); n3.stop(t+0.16);
+    }
+  },
+
+  // 10: MINIGUN / ROTARY
+  {
+    name:'MINIGUN', desc:'Thunderous · barrel spin-up roar · wall of sound',
+    color:'#ff2200', autoRPM:1800, dur:0.14,
+    shot(ctx, dest, t) {
+      const n1=mkNoise(ctx,0.055); const bp=filt(ctx,'bandpass',1800,0.3);
+      const g1=gain(ctx,1.8); g1.gain.setValueAtTime(1.8,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.045);
+      ch(n1,bp,g1,dest); n1.start(t); n1.stop(t+0.055);
+      const o1=mkOsc(ctx,'sine',95); o1.frequency.exponentialRampToValueAtTime(25,t+0.1);
+      const g2=gain(ctx,1.3); g2.gain.setValueAtTime(1.3,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.1);
+      ch(o1,g2,dest); o1.start(t); o1.stop(t+0.11);
+      const n2=mkNoise(ctx,0.09); const lp=filt(ctx,'lowpass',600);
+      const g3=gain(ctx,0.55); g3.gain.setValueAtTime(0.55,t); g3.gain.exponentialRampToValueAtTime(0.001,t+0.09);
+      ch(n2,lp,g3,dest); n2.start(t); n2.stop(t+0.1);
+    }
+  },
+];
+
+// ═══════════════════════════════════════════════════════
+//  FIRE MODES
+// ═══════════════════════════════════════════════════════
+let currentMode = 'auto'; // 'auto' | 'burst'
+const autoIntervals = {}; // idx -> intervalId
+const visTimers = {};
+
+function setMode(mode) {
+  stopAll();
+  currentMode = mode;
+  document.getElementById('tab-auto').classList.toggle('active', mode==='auto');
+  document.getElementById('tab-burst').classList.toggle('active', mode==='burst');
+  document.getElementById('mode-name').textContent = mode==='auto' ? 'FULL AUTO' : 'BURST (3-RND)';
+  document.getElementById('mode-desc').textContent = mode==='auto'
+    ? 'Hold PLAY to fire continuously — release to stop'
+    : 'Click PLAY for 3-round burst';
+  // Update all play button labels
+  document.querySelectorAll('.play-btn').forEach(b => {
+    b.textContent = mode==='auto' ? '▶ HOLD' : '▶ BURST';
+  });
+  document.getElementById('dl-all-btn').textContent =
+    `⬇ DOWNLOAD ALL 10 ${mode==='auto'?'AUTO':'BURST'} .WAV`;
+}
+
+function stopAll() {
+  Object.keys(autoIntervals).forEach(idx => {
+    clearInterval(autoIntervals[idx]);
+    delete autoIntervals[idx];
+    setCardPlaying(idx, false);
+  });
+}
+
+function setCardPlaying(idx, on) {
+  const card = document.getElementById('card'+idx);
+  if (card) card.classList.toggle('playing', on);
+}
+
+// Full-auto: fire at RPM while holding
+function startAuto(idx) {
+  if (autoIntervals[idx]) return;
+  const ctx = getLive();
+  const rife = RIFLES[idx];
+  const interval = 60000 / rife.autoRPM; // ms between shots
+  fireShot(idx, ctx);
+  autoIntervals[idx] = setInterval(() => fireShot(idx, ctx), interval);
+  setCardPlaying(idx, true);
+}
+function stopAuto(idx) {
+  clearInterval(autoIntervals[idx]);
+  delete autoIntervals[idx];
+  setCardPlaying(idx, false);
+}
+
+// Burst: 3 shots with timed spacing
+function fireBurst(idx) {
+  const ctx = getLive();
+  const rife = RIFLES[idx];
+  const spacing = Math.max(0.085, 60 / rife.autoRPM); // seconds between burst shots
+  setCardPlaying(idx, true);
+  [0, spacing, spacing*2].forEach((delay, i) => {
+    setTimeout(() => {
+      fireShot(idx, ctx);
+      if (i === 2) setTimeout(() => setCardPlaying(idx, false), 300);
+    }, delay * 1000);
+  });
+}
+
+function fireShot(idx, ctx) {
+  const t = ctx.currentTime;
+  RIFLES[idx].shot(ctx, ctx.destination, t);
+  animVis(idx);
+}
+
+// ── Waveform vis ────────────────────────────────────────
+const VIS_PROFILES = [
+  [13,22,18,14,12,10,8,6,5,4,3,3,2,2,1,1],
+  [9,15,12,9,7,5,4,3,3,2,2,1,1,1,1,1],
+  [15,24,20,17,15,13,11,9,8,7,6,5,4,3,2,2],
+  [11,18,15,12,9,7,6,4,3,3,2,2,1,1,1,1],
+  [16,26,22,18,16,14,12,10,9,8,7,6,5,4,3,2],
+  [7,11,9,7,5,4,3,3,2,2,2,1,1,1,1,1],
+  [12,20,17,14,12,10,9,8,7,6,5,4,4,3,2,2],
+  [8,13,11,14,12,9,8,10,7,8,6,4,3,2,2,1],
+  [10,16,13,10,8,6,12,8,5,4,3,2,1,1,1,1],
+  [14,20,16,12,10,14,12,10,8,10,8,6,4,3,2,1],
+];
+
+function animVis(idx) {
+  clearTimeout(visTimers[idx]);
+  let f = 0;
+  const profile = VIS_PROFILES[idx];
+  const col = RIFLES[idx].color;
+  function step() {
+    const decay = Math.max(0, 1 - f / 22);
+    for (let i = 0; i < 16; i++) {
+      const bar = document.getElementById(`wb${idx}_${i}`);
+      if (!bar) continue;
+      const jitter = decay > 0.05 ? (Math.random()*0.4+0.6) : 0;
+      const h = Math.max(2, Math.round(profile[i] * decay * jitter));
+      bar.style.height = h+'px';
+      bar.style.background = decay > 0.08 ? col : '#141420';
+    }
+    f++;
+    if (f < 30) visTimers[idx] = setTimeout(step, 28);
+    else {
+      for(let i=0;i<16;i++){
+        const b=document.getElementById(`wb${idx}_${i}`);
+        if(b){b.style.height='2px';b.style.background='#141420';}
+      }
+    }
+  }
+  step();
+}
+
+// ═══════════════════════════════════════════════════════
+//  BUILD CARDS
+// ═══════════════════════════════════════════════════════
+const grid = document.getElementById('grid');
+RIFLES.forEach((rifle, idx) => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.id = 'card'+idx;
+  card.innerHTML = `
+    <div class="bang-label">FIRE!</div>
+    <div class="card-num">0${idx+1}</div>
+    <div class="card-name">${rifle.name}</div>
+    <div class="card-desc">${rifle.desc}</div>
+    <div class="wave" id="wave${idx}">
+      ${Array.from({length:16},(_,i)=>`<div class="wb" id="wb${idx}_${i}"></div>`).join('')}
+    </div>
+    <div class="card-actions">
+      <button class="play-btn" id="playbtn${idx}"
+        onmousedown="onPlayDown(${idx})"
+        onmouseup="onPlayUp(${idx})"
+        onmouseleave="onPlayUp(${idx})"
+        ontouchstart="onPlayDown(${idx});event.preventDefault()"
+        ontouchend="onPlayUp(${idx})">▶ HOLD</button>
+      <button class="dl-btn" id="dlbtn${idx}" onclick="downloadWav(${idx},event)">⬇ WAV</button>
+    </div>
+  `;
+  grid.appendChild(card);
+});
+
+function onPlayDown(idx) {
+  if (currentMode === 'auto') startAuto(idx);
+  else fireBurst(idx);
+}
+function onPlayUp(idx) {
+  if (currentMode === 'auto') stopAuto(idx);
+}
+
+// ═══════════════════════════════════════════════════════
+//  WAV EXPORT
+// ═══════════════════════════════════════════════════════
+function renderOffline(rifle, mode) {
+  const sr = 44100;
+  let totalDur;
+  if (mode === 'auto') {
+    // 1.5 seconds of full-auto
+    totalDur = 1.8;
+  } else {
+    // 3-round burst
+    const spacing = Math.max(0.085, 60 / rifle.autoRPM);
+    totalDur = spacing * 2 + rifle.dur + 0.15;
+  }
+  const len = Math.ceil(sr * totalDur);
+  const off = new OfflineAudioContext(1, len, sr);
+
+  if (mode === 'auto') {
+    const interval = 60 / rifle.autoRPM;
+    let t = 0;
+    while (t < totalDur - rifle.dur) {
+      rifle.shot(off, off.destination, t);
+      t += interval;
+    }
+  } else {
+    const spacing = Math.max(0.085, 60 / rifle.autoRPM);
+    [0, spacing, spacing*2].forEach(d => rifle.shot(off, off.destination, d));
+  }
+  return off.startRendering();
+}
+
+function toWav(buffer) {
+  const sr=buffer.sampleRate, samples=buffer.getChannelData(0);
+  const dataBytes=samples.length*2;
+  const ab=new ArrayBuffer(44+dataBytes);
+  const v=new DataView(ab);
+  const ws=(o,s)=>{for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i));};
+  ws(0,'RIFF'); v.setUint32(4,36+dataBytes,true); ws(8,'WAVE');
+  ws(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true);
+  v.setUint16(22,1,true); v.setUint32(24,sr,true); v.setUint32(28,sr*2,true);
+  v.setUint16(32,2,true); v.setUint16(34,16,true);
+  ws(36,'data'); v.setUint32(40,dataBytes,true);
+  let off=44;
+  for(let i=0;i<samples.length;i++){
+    const s=Math.max(-1,Math.min(1,samples[i]));
+    v.setInt16(off,s<0?s*0x8000:s*0x7FFF,true); off+=2;
+  }
+  return ab;
+}
+
+async function downloadWav(idx, e) {
+  if(e) e.stopPropagation();
+  const btn=document.getElementById('dlbtn'+idx);
+  const orig=btn.textContent;
+  btn.textContent='⏳'; btn.style.color='#666';
+  try {
+    const buf=await renderOffline(RIFLES[idx], currentMode);
+    const wav=toWav(buf);
+    const blob=new Blob([wav],{type:'audio/wav'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const modeSuffix = currentMode==='auto'?'auto':'burst';
+    a.href=url;
+    a.download=`rifle_${RIFLES[idx].name.toLowerCase().replace(/\s+/g,'_')}_${modeSuffix}.wav`;
+    a.click(); URL.revokeObjectURL(url);
+    btn.textContent='✓'; btn.style.color='#4aaa4a';
+    setTimeout(()=>{btn.textContent=orig;btn.style.color='';},2000);
+  } catch(err) {
+    btn.textContent='✗'; btn.style.color='#ff4444';
+    setTimeout(()=>{btn.textContent=orig;btn.style.color='';},2000);
+  }
+}
+
+async function downloadAll() {
+  const btn=document.getElementById('dl-all-btn');
+  const orig=btn.textContent;
+  btn.textContent='⏳ RENDERING...'; btn.style.color='#888';
+  for(let i=0;i<RIFLES.length;i++){
+    await downloadWav(i);
+    await new Promise(r=>setTimeout(r,350));
+  }
+  btn.textContent='✓ ALL DONE!'; btn.style.color='#4aaa4a';
+  setTimeout(()=>{btn.textContent=orig;btn.style.color='';},3000);
+}
+</script>
+</body>
+</html>

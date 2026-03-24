@@ -14,7 +14,7 @@ public class LoadingScreen : MonoBehaviour
     {
         yield return new WaitForSeconds(1f); // wait 2–3 seconds for transition
 
-        string nextScene = PlayerPrefs.GetString("NextScene", "");
+        int nextScene = PlayerPrefs.GetInt("NextScene", 0);
         SceneManager.LoadScene(nextScene);
     }
 }

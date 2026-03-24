@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.UIElements;
 
 //This is the base class for all the Enemy, and this inherits from two interfaces and all the stats and configs will be modified here
@@ -21,12 +22,22 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver,
     public Animator _animator;
     private Vector3 _startingPos;
 
+    [Header("Enemy SFX")]
+    public AudioSource _audioSource;
+
     [Header("Enemy Visuals")]
     public GameObject _enemyVisuals;
     public SpriteRenderer _enemyVisualSpriteRenderer;
     public Material _enemyVisualMaterial;
 
+    [Header("Camera")]
+    private Transform _cameraTransform;
+
     public bool isFacingRight { get; set; } = true;
+
+    [Header("SFX")]
+    [SerializeField] private AudioClip _hurtSoundEffect;
+    [SerializeField] private AudioClip _deathSoundEffect;
 
     #region State Machine Variables
 
@@ -88,6 +99,9 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver,
         {
             Debug.LogError("StateMachine or idleState is null in Awake");
         }
+
+        //im justing doing this manually to stop the audio for now
+        _audioSource.Stop();
     }
 
     private void Awake()
@@ -163,8 +177,6 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver,
 
         //Enemy Starting Position
         _startingPos = _enemyVisuals.transform.localScale;
-
-
     }
 
     private void Start()
@@ -176,6 +188,8 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver,
     {
         if(stateMachine.currentEnemyState != null)
             stateMachine.currentEnemyState.FrameUpdate();
+
+        UpdateEnemyAudioSource();
     }
 
     public void ObservedFixedUpdate()
@@ -205,6 +219,12 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver,
         else
         {
             Debug.LogError($"[{_enemyType}] NO FLASH EFFECT! _flashAndDissolveEffect is NULL");
+        }
+
+        //Hurt SoundEffect
+        if(_hurtSoundEffect != null)
+        {
+            SFXManager._instance.playSFX(_hurtSoundEffect, transform.position, 1f, true, false);
         }
 
 
@@ -239,6 +259,12 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver,
     public void Die()
     {
         GameManager._instance.AddScoreForEnemy(_enemyType);
+
+        //Death Sound Effect
+        if(_deathSoundEffect != null)
+        {
+            SFXManager._instance.playSFX(_deathSoundEffect, transform.position, 1f, true, false);
+        }
 
         //Notify Game Manager before pooling/destroying
         GameManager._instance.EnemyDestroyed(gameObject);
@@ -277,8 +303,53 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver,
 
     #endregion
 
+    #region Update Enemy Audio every Frame for the spatial Effect
+
+    bool isInsideCameraView()
+    {
+        Vector3 viewPortPos = Camera.main.WorldToViewportPoint(transform.position);
+
+        return viewPortPos.x >= 0 && viewPortPos.x <= 1 && viewPortPos.y >= 0 && viewPortPos.y <= 1;
+    }
+
+    private void UpdateEnemyAudioSource()
+    {
+        if(_cameraTransform == null)
+        {
+            //getting the camera transform
+            _cameraTransform = Camera.main.transform;
+        }
+
+        if (_audioSource == null || !_audioSource.isPlaying)
+        { return; }
+
+        float dx = transform.position.x - _cameraTransform.position.x;
+        float distance = Mathf.Abs(dx);
+
+        //Volume based on distance
+        float maxDistance = 10f;
+
+        float volume = 1f - Mathf.Clamp01(distance / maxDistance);
+
+        if (isInsideCameraView())
+        {
+            volume = Mathf.Max(volume, 0.4f);
+            _audioSource.panStereo = 0f;
+        }
+
+
+        volume = Mathf.SmoothStep(0f, 1f, volume);
+        _audioSource.volume = volume;
+
+        // left right panning
+        float pan = Mathf.Clamp(dx / maxDistance, -1f, 1f);
+        _audioSource.panStereo = pan;
+    }
+
+    #endregion
+
     #region Animation Trigger Event
-    
+
     public void AnimationTriggerEvent(AnimationTriggerType triggerType)
     {
         stateMachine.currentEnemyState.AnimationTriggerEvent(triggerType);

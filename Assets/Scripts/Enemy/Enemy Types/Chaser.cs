@@ -15,6 +15,7 @@ public class Chaser : Enemy
     [SerializeField] private List<Node> AllEdgeNodesinTheScene = new List<Node>();
     [SerializeField] private ParticleSystem Dust;
 
+
     [SerializeField] private LayerMask platformLayer;
 
     [Header("Movement / Pathing")]
@@ -38,6 +39,9 @@ public class Chaser : Enemy
 
     [Header("Chaser Visuals")]
     private SquashAndStretch _chaserSquashAndStretch;
+
+    [Header("SFX")]
+    [SerializeField] private AudioClip _chaserJumpEffect;
 
     public override void EnemyOnEnable()
     {
@@ -150,17 +154,29 @@ public class Chaser : Enemy
             if (Mathf.Approximately(direction, 0f))
             {
                 RB.velocity = new Vector2(0f, RB.velocity.y);
+                //_audioSource.Stop();
             }
             else
             {
                 RB.AddForce(new Vector2(direction * Movespeed * speedMultiplier, 0));
 
-               
+                //we play the movement sound here
+                if(!_audioSource.isPlaying)
+                {
+                    _audioSource.Play();
+                }
             }
             //Particle Effect for Dust when the NPC moves
             if (Mathf.Abs(RB.velocity.x) > 2)
             {
                 Dust.Play();
+            }
+        }
+        else
+        {
+            if (_audioSource.isPlaying)
+            {
+                _audioSource.Stop();
             }
         }
 
@@ -258,6 +274,9 @@ public class Chaser : Enemy
                 RB.AddForce(new Vector2(requiredVX, requiredVy) * RB.mass, ForceMode2D.Impulse);
 
                 Dust.Play();
+
+                //Applying jump effect
+                SFXManager._instance.playSFX(_chaserJumpEffect, transform.position, 0.1f, true , false);
 
                 //Jumping across the platform
                 if (!noPlatformxMax || !noPlatformxMin)

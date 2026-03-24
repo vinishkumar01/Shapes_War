@@ -52,6 +52,10 @@ public class Tracer : Enemy
     [Header("Chaser Visuals")]
     private SquashAndStretch _tracerSquashAndStretch;
 
+    [Header("SFX")]
+    [SerializeField] private AudioClip _tracerJumpEffect;
+    [SerializeField] private AudioClip _missileLaunchEffect;
+
     public override void EnemyOnEnable()
     {
         base.EnemyOnEnable();
@@ -275,7 +279,7 @@ public class Tracer : Enemy
 
     public void FacingPlayer()
     {
-        if ((path == null || path.Count == 0) && !isPlayerDetected && IsPlayerActive())
+        if ((path == null || path.Count == 0) && !isPlayerDetected && IsPlayerActive() && player != null)
         {
             //Flip the Character
             float watchingPlayer = Mathf.Sign(player.position.x - transform.position.x);
@@ -343,6 +347,20 @@ public class Tracer : Enemy
             else
             {
                 MoveEnemy(MoveVec);
+
+                //Applying Movement SFX
+                //we play the movement sound here
+                if (!_audioSource.isPlaying)
+                {
+                    _audioSource.Play();
+                }
+            }
+        }
+        else
+        {
+            if (_audioSource.isPlaying)
+            {
+                _audioSource.Stop();
             }
         }
 
@@ -394,6 +412,9 @@ public class Tracer : Enemy
                 //Apply one precise jump impulse
                 RB.AddForce(new Vector2(requiredVX, requiredVY) * RB.mass, ForceMode2D.Impulse);
 
+
+                //Applying jump effect
+                SFXManager._instance.playSFX(_tracerJumpEffect, transform.position, 1f, true, false);
             }
         }
 
@@ -467,6 +488,11 @@ public class Tracer : Enemy
             Vector3 Origin = firePoint.position;
 
             GameObject missile = PoolManager.SpawnObject(Missile, Origin, Quaternion.identity, PoolManager.PoolType.GameObjects);
+
+            //Missile launch sound effect
+            //Applying jump effect
+            SFXManager._instance.playSFX(_missileLaunchEffect, transform.position, 0.1f, true, false);
+
             missile.GetComponent<homingMissile>().SetOwnerTracer(this.gameObject);
             MissilesFired++;
 

@@ -24,7 +24,16 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
     [SerializeField] private WeaponSO _rifleAttributes;
     [SerializeField] private Pistol _pistol;
     [SerializeField] private Rifle _rifle;
-    
+
+    [Header("player SFX")]
+    public AudioSource _audioSource;
+    public AudioClip _slideSoundClip;
+    public AudioClip _jumpSoundClip;
+    public AudioClip _dashSoundClip;
+    [SerializeField] private AudioClip _hurtSoundEffect;
+    [SerializeField] private AudioClip _deathSoundEffect;
+
+
     public Animator _animator;
     public Rigidbody2D RB { get; set; }
     public bool IsFacingRight = true;
@@ -122,6 +131,9 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         //Making sure that the player has the weapon and the sprite when in the scene
         CheckIfGunisPresentWithPlayer();
         CheckIfPlayerVisualisPresent();
+
+        //Reset the Audio Source (Stopping the audio its playing)
+        _audioSource.Stop();
     }
 
     private void CheckIfGunisPresentWithPlayer()
@@ -239,6 +251,9 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         //KnockBack
         _knockBack.CallKnockBackCoroutine(hitDirection, Vector2.up, Input.GetAxisRaw("Horizontal"));
 
+        //Hurt Sound Effect 
+        SFXManager._instance.playSFX(_hurtSoundEffect, transform.position, 1f, false, false);
+
         //Damage Flash
         _flashEffect.CallDamageFlash();
 
@@ -273,6 +288,9 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
 
         _flashEffect.StopFlashEffect(); // This method contains the same logic as the StopKnockBack and also we are resetting the flash amount 0 here.
         _flashEffect.StopDashFlashEffect();
+
+        //Death Sound Effect
+        SFXManager._instance.playSFX(_deathSoundEffect, transform.position, 1f, false, false);
 
         //Call the Body particles
         _deadParticlesInitiation.CallSpawnBodyParticle();
@@ -316,7 +334,12 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
 
         CheckPlayerAttachedToRope();
         JumpCounters();
-        PlayerFacing();
+
+        if (UserInputs.instance != null)
+        {
+            PlayerFacing();
+        }
+
         #region FullScreen Low Health Effect
         //Check If the current health is below 30 or 40 we will enable the fullScreen Effect to indicate the player
         if (CurrentHealth <= 40 && !_fullScreenEffectController._lowHealthEffectActive)
@@ -478,6 +501,12 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
 
     private void PlayerFacing()
     {
+        if (UserInputs.instance == null || UserInputs.instance._cursorTransform == null)
+            return;
+
+        if (Camera.main == null)
+            return;
+
         Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(Camera.main, UserInputs.instance._cursorTransform.position);
         float z = transform.position.z - Camera.main.transform.position.z;
 
@@ -563,7 +592,7 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
 
     private void OnGUI()
     {
-        GUI.Label(new Rect(500, 10, 300, 100), $"Current State: {_playerStateMachine._currentPlayerState?.GetType().Name}");
+        GUI.Label(new Rect(650, 10, 500, 300), $"Current State: {_playerStateMachine._currentPlayerState?.GetType().Name}");
     }
 
     #region PowerUp Interactions
