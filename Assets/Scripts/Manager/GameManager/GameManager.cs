@@ -777,7 +777,7 @@ public class GameManager : MonoBehaviour, IUpdateObserver
             switch (wave)
             {
                 case 1:
-                    SetSpawnChances(100, 0, 0); // Chances for Chaser 100%, Smasher 0%, Tracer 0%
+                    SetSpawnChances(10, 0, 100); // Chances for Chaser 100%, Smasher 0%, Tracer 0%
                     break;
                 case 2:
                 case 3:
