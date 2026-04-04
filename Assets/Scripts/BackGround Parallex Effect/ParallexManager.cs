@@ -84,6 +84,7 @@ public class ParallexManager : MonoBehaviour, ILateUpdateObserver
     }
 
     //Just in case if we are changing the vCamera state manually we can call this method 
+    //currently we are switching state using animator so its fine we dont need this method
     public void OnCameraStateChanged()
     {
         _previousCamPos = _cam.position;

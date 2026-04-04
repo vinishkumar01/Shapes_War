@@ -59,7 +59,10 @@ public class PlayerMoveState : PlayerState
         }
 
         //Dust Effect
-        _player._dust.Play();
+        if(_player._isGrounded)
+        {
+            _player._dust.Play();
+        }
 
         MovePlayer();
 
