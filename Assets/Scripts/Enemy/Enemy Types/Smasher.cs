@@ -186,9 +186,12 @@ public class Smasher : Enemy
             }
 
             //Sound effect for movement
-            if(!_audioSource.isPlaying)
+            if(GameState.CanPlayerControl)
             {
-                _audioSource.Play();
+                if (!_audioSource.isPlaying)
+                {
+                    _audioSource.Play();
+                }
             }
         }
         else

@@ -1,0 +1,370 @@
+
+<style>
+  .wrap { padding: 1rem; max-width: 480px; margin: 0 auto; }
+  .grid { display: flex; flex-direction: column; gap: 10px; }
+  .card {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-lg);
+    padding: 12px 14px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .card.playing { border-color: var(--color-border-success); }
+  .icon {
+    width: 38px; height: 38px; border-radius: var(--border-radius-md);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .info { flex: 1; min-width: 0; }
+  .name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin: 0 0 2px; }
+  .desc { font-size: 12px; color: var(--color-text-secondary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .btns { display: flex; gap: 6px; flex-shrink: 0; }
+  .pbtn {
+    padding: 6px 14px; font-size: 13px; font-weight: 500;
+    border: 0.5px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    cursor: pointer; transition: background 0.12s;
+  }
+  .pbtn:hover { background: var(--color-background-secondary); }
+  .pbtn:active { transform: scale(0.97); }
+  .pbtn.playing { color: var(--color-text-success); border-color: var(--color-border-success); }
+  .dbtn {
+    padding: 6px 10px; font-size: 13px;
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-secondary);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+  }
+  .dbtn:hover { background: var(--color-background-primary); color: var(--color-text-primary); }
+  .viz { width: 100%; height: 44px; display: block; margin: 8px 0 0; border-radius: var(--border-radius-md); background: var(--color-background-secondary); }
+</style>
+
+<div class="wrap">
+  <div class="grid" id="grid"></div>
+</div>
+
+<script>
+const variants = [
+  {
+    id: 0,
+    name: 'Classic respawn',
+    desc: 'Low thud → digital rise → bright chord',
+    color: '#1D9E75', bg: '#E1F5EE',
+    icon: '⚡',
+    build: (ctx, now, master, pm, sp) => {
+      const td = 0.35/sp;
+      for(let i=0;i<3;i++){
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='sine'; o.frequency.setValueAtTime(80*pm,now+i*0.09/sp);
+        o.frequency.exponentialRampToValueAtTime(30*pm,now+td+i*0.09/sp);
+        g.gain.setValueAtTime(0.5-i*0.15,now+i*0.09/sp);
+        g.gain.exponentialRampToValueAtTime(0.001,now+td+i*0.09/sp);
+        o.connect(g);g.connect(master);o.start(now+i*0.09/sp);o.stop(now+td+i*0.09/sp+0.05);
+      }
+      const rs=0.45/sp,rd=0.9/sp;
+      for(let s=0;s<8;s++){
+        const t=rs+(s/8)*rd,f=(200+s*180)*pm;
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type=s%2===0?'square':'sawtooth'; o.frequency.value=f;
+        g.gain.setValueAtTime(0,now+t); g.gain.linearRampToValueAtTime(0.22,now+t+0.015/sp);
+        g.gain.exponentialRampToValueAtTime(0.001,now+t+0.09/sp);
+        o.connect(g);g.connect(master);o.start(now+t);o.stop(now+t+0.12/sp);
+      }
+      const sw=ctx.createOscillator(),sg=ctx.createGain();
+      sw.type='sine'; sw.frequency.setValueAtTime(150*pm,now+rs);
+      sw.frequency.exponentialRampToValueAtTime(800*pm,now+rs+rd);
+      sg.gain.setValueAtTime(0.001,now+rs); sg.gain.linearRampToValueAtTime(0.25,now+rs+rd*0.5);
+      sg.gain.linearRampToValueAtTime(0.001,now+rs+rd);
+      sw.connect(sg);sg.connect(master);sw.start(now+rs);sw.stop(now+rs+rd+0.05);
+      const ps=rs+rd+0.1/sp;
+      [880,1108,1320,1760].map(f=>f*pm).forEach((f,i)=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='sine'; o.frequency.value=f;
+        g.gain.setValueAtTime(0,now+ps+i*0.03/sp); g.gain.linearRampToValueAtTime(0.3-i*0.05,now+ps+i*0.03/sp+0.02/sp);
+        g.gain.exponentialRampToValueAtTime(0.001,now+ps+0.7/sp);
+        o.connect(g);g.connect(master);o.start(now+ps+i*0.03/sp);o.stop(now+ps+0.8/sp);
+      });
+      return 2.2/sp;
+    }
+  },
+  {
+    id: 1,
+    name: 'Ghost return',
+    desc: 'Eerie reverb → haunted whistle → hollow boom',
+    color: '#534AB7', bg: '#EEEDFE',
+    icon: '👻',
+    build: (ctx, now, master, pm, sp) => {
+      for(let i=0;i<5;i++){
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='sine'; const f=(300+i*120)*pm;
+        o.frequency.setValueAtTime(f,now+i*0.15/sp);
+        o.frequency.linearRampToValueAtTime(f*0.85,now+i*0.15/sp+0.4/sp);
+        g.gain.setValueAtTime(0,now+i*0.15/sp); g.gain.linearRampToValueAtTime(0.12,now+i*0.15/sp+0.05/sp);
+        g.gain.exponentialRampToValueAtTime(0.001,now+i*0.15/sp+0.5/sp);
+        o.connect(g);g.connect(master);o.start(now+i*0.15/sp);o.stop(now+i*0.15/sp+0.55/sp);
+      }
+      const ws=0.7/sp;
+      const wh=ctx.createOscillator(),wg=ctx.createGain();
+      wh.type='triangle'; wh.frequency.setValueAtTime(600*pm,now+ws);
+      wh.frequency.linearRampToValueAtTime(900*pm,now+ws+0.3/sp);
+      wh.frequency.linearRampToValueAtTime(400*pm,now+ws+0.6/sp);
+      wg.gain.setValueAtTime(0.001,now+ws); wg.gain.linearRampToValueAtTime(0.3,now+ws+0.2/sp);
+      wg.gain.exponentialRampToValueAtTime(0.001,now+ws+0.7/sp);
+      wh.connect(wg);wg.connect(master);wh.start(now+ws);wh.stop(now+ws+0.75/sp);
+      const bs=1.5/sp;
+      const bo=ctx.createOscillator(),bg2=ctx.createGain();
+      bo.type='sine'; bo.frequency.setValueAtTime(55*pm,now+bs);
+      bo.frequency.exponentialRampToValueAtTime(30*pm,now+bs+0.6/sp);
+      bg2.gain.setValueAtTime(0.6,now+bs); bg2.gain.exponentialRampToValueAtTime(0.001,now+bs+0.7/sp);
+      bo.connect(bg2);bg2.connect(master);bo.start(now+bs);bo.stop(now+bs+0.75/sp);
+      for(let sp2=0;sp2<4;sp2++){
+        const t=bs+sp2*0.08/sp;
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='sine'; o.frequency.value=(1200+sp2*400)*pm;
+        g.gain.setValueAtTime(0.1,now+t); g.gain.exponentialRampToValueAtTime(0.001,now+t+0.25/sp);
+        o.connect(g);g.connect(master);o.start(now+t);o.stop(now+t+0.3/sp);
+      }
+      return 2.3/sp;
+    }
+  },
+  {
+    id: 2,
+    name: 'Cyber glitch',
+    desc: 'Harsh static burst → corrupted beeps → power-on hum',
+    color: '#BA7517', bg: '#FAEEDA',
+    icon: '🔧',
+    build: (ctx, now, master, pm, sp) => {
+      const nLen=Math.floor(ctx.sampleRate*0.25/sp);
+      const nBuf=ctx.createBuffer(1,nLen,ctx.sampleRate);
+      const nd=nBuf.getChannelData(0);
+      for(let i=0;i<nLen;i++) nd[i]=(Math.random()*2-1);
+      const ns=ctx.createBufferSource(); ns.buffer=nBuf;
+      const nf=ctx.createBiquadFilter(); nf.type='bandpass'; nf.frequency.value=3000; nf.Q.value=2;
+      const ng=ctx.createGain(); ng.gain.setValueAtTime(0.5,now); ng.gain.exponentialRampToValueAtTime(0.001,now+0.25/sp);
+      ns.connect(nf);nf.connect(ng);ng.connect(master);ns.start(now);ns.stop(now+0.3/sp);
+      for(let b=0;b<12;b++){
+        const t=0.1/sp+b*0.09/sp;
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='square'; o.frequency.value=(Math.random()<0.5?440:880)*pm*(0.8+Math.random()*0.4);
+        g.gain.setValueAtTime(0.3,now+t); g.gain.exponentialRampToValueAtTime(0.001,now+t+0.06/sp);
+        o.connect(g);g.connect(master);o.start(now+t);o.stop(now+t+0.08/sp);
+      }
+      const hs=1.2/sp;
+      const ho=ctx.createOscillator(),hg=ctx.createGain();
+      ho.type='sawtooth'; ho.frequency.setValueAtTime(60*pm,now+hs);
+      ho.frequency.linearRampToValueAtTime(120*pm,now+hs+0.5/sp);
+      hg.gain.setValueAtTime(0.001,now+hs); hg.gain.linearRampToValueAtTime(0.35,now+hs+0.3/sp);
+      hg.gain.linearRampToValueAtTime(0.2,now+hs+0.5/sp); hg.gain.linearRampToValueAtTime(0.001,now+hs+0.7/sp);
+      const hf=ctx.createBiquadFilter(); hf.type='lowpass'; hf.frequency.value=400;
+      ho.connect(hf);hf.connect(hg);hg.connect(master);ho.start(now+hs);ho.stop(now+hs+0.8/sp);
+      const co=ctx.createOscillator(),cg=ctx.createGain();
+      co.type='sine'; co.frequency.value=440*pm;
+      cg.gain.setValueAtTime(0,now+hs+0.4/sp); cg.gain.linearRampToValueAtTime(0.25,now+hs+0.5/sp);
+      cg.gain.linearRampToValueAtTime(0.001,now+hs+0.9/sp);
+      co.connect(cg);cg.connect(master);co.start(now+hs+0.4/sp);co.stop(now+hs+1.0/sp);
+      return 2.2/sp;
+    }
+  },
+  {
+    id: 3,
+    name: 'Heaven drop',
+    desc: 'Silence → angelic descend → warm landing thud',
+    color: '#185FA5', bg: '#E6F1FB',
+    icon: '✨',
+    build: (ctx, now, master, pm, sp) => {
+      const ds=0.1/sp;
+      for(let i=0;i<6;i++){
+        const t=ds+i*0.18/sp;
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='sine'; const f=(2200-i*220)*pm;
+        o.frequency.value=f;
+        g.gain.setValueAtTime(0,now+t); g.gain.linearRampToValueAtTime(0.25,now+t+0.06/sp);
+        g.gain.exponentialRampToValueAtTime(0.001,now+t+0.35/sp);
+        o.connect(g);g.connect(master);o.start(now+t);o.stop(now+t+0.4/sp);
+      }
+      const cs=0.15/sp;
+      for(let h=0;h<4;h++){
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='sine'; o.frequency.value=(880+h*220)*pm;
+        g.gain.setValueAtTime(0,now+cs+h*0.05/sp); g.gain.linearRampToValueAtTime(0.15,now+cs+h*0.05/sp+0.1/sp);
+        g.gain.setValueAtTime(0.15,now+cs+0.8/sp); g.gain.exponentialRampToValueAtTime(0.001,now+cs+1.1/sp);
+        o.connect(g);g.connect(master);o.start(now+cs+h*0.05/sp);o.stop(now+cs+1.2/sp);
+      }
+      const ls=1.3/sp;
+      const lo=ctx.createOscillator(),lg=ctx.createGain();
+      lo.type='sine'; lo.frequency.setValueAtTime(100*pm,now+ls);
+      lo.frequency.exponentialRampToValueAtTime(50*pm,now+ls+0.3/sp);
+      lg.gain.setValueAtTime(0.7,now+ls); lg.gain.exponentialRampToValueAtTime(0.001,now+ls+0.4/sp);
+      lo.connect(lg);lg.connect(master);lo.start(now+ls);lo.stop(now+ls+0.45/sp);
+      for(let sp2=0;sp2<5;sp2++){
+        const t=ls+sp2*0.07/sp;
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='triangle'; o.frequency.value=(1500+sp2*300)*pm;
+        g.gain.setValueAtTime(0.12,now+t); g.gain.exponentialRampToValueAtTime(0.001,now+t+0.3/sp);
+        o.connect(g);g.connect(master);o.start(now+t);o.stop(now+t+0.35/sp);
+      }
+      return 2.0/sp;
+    }
+  },
+  {
+    id: 4,
+    name: 'Rage respawn',
+    desc: 'Brutal stomp → aggressive buzz → war cry blast',
+    color: '#A32D2D', bg: '#FCEBEB',
+    icon: '💥',
+    build: (ctx, now, master, pm, sp) => {
+      for(let i=0;i<2;i++){
+        const t=i*0.22/sp;
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='sine'; o.frequency.setValueAtTime(120*pm,now+t);
+        o.frequency.exponentialRampToValueAtTime(30*pm,now+t+0.18/sp);
+        g.gain.setValueAtTime(0.8,now+t); g.gain.exponentialRampToValueAtTime(0.001,now+t+0.2/sp);
+        o.connect(g);g.connect(master);o.start(now+t);o.stop(now+t+0.22/sp);
+      }
+      const bzs=0.45/sp;
+      const bzo=ctx.createOscillator(),bzg=ctx.createGain();
+      bzo.type='sawtooth'; bzo.frequency.setValueAtTime(100*pm,now+bzs);
+      bzo.frequency.linearRampToValueAtTime(200*pm,now+bzs+0.4/sp);
+      bzg.gain.setValueAtTime(0.001,now+bzs); bzg.gain.linearRampToValueAtTime(0.5,now+bzs+0.1/sp);
+      bzg.gain.setValueAtTime(0.5,now+bzs+0.3/sp); bzg.gain.exponentialRampToValueAtTime(0.001,now+bzs+0.5/sp);
+      const bzf=ctx.createBiquadFilter(); bzf.type='lowpass'; bzf.frequency.value=600;
+      bzo.connect(bzf);bzf.connect(bzg);bzg.connect(master);bzo.start(now+bzs);bzo.stop(now+bzs+0.55/sp);
+      const ws=1.0/sp;
+      [220,330,440,550,660].map(f=>f*pm).forEach((f,i)=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type=i%2===0?'sawtooth':'square'; o.frequency.value=f;
+        g.gain.setValueAtTime(0,now+ws+i*0.02/sp); g.gain.linearRampToValueAtTime(0.25,now+ws+i*0.02/sp+0.03/sp);
+        g.gain.linearRampToValueAtTime(0.2,now+ws+0.5/sp); g.gain.exponentialRampToValueAtTime(0.001,now+ws+0.8/sp);
+        const f2=ctx.createBiquadFilter(); f2.type='lowpass'; f2.frequency.value=800;
+        o.connect(f2);f2.connect(g);g.connect(master);o.start(now+ws+i*0.02/sp);o.stop(now+ws+0.85/sp);
+      });
+      return 2.0/sp;
+    }
+  },
+  {
+    id: 5,
+    name: 'Pixel pop',
+    desc: 'Retro 8-bit coins → chiptune fanfare',
+    color: '#3B6D11', bg: '#EAF3DE',
+    icon: '🎮',
+    build: (ctx, now, master, pm, sp) => {
+      const notes=[262,330,392,523,659,784,1047,1319].map(f=>f*pm);
+      notes.forEach((f,i)=>{
+        const t=i*0.08/sp;
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='square'; o.frequency.value=f;
+        g.gain.setValueAtTime(0.3,now+t); g.gain.setValueAtTime(0.3,now+t+0.06/sp);
+        g.gain.linearRampToValueAtTime(0,now+t+0.07/sp);
+        o.connect(g);g.connect(master);o.start(now+t);o.stop(now+t+0.08/sp);
+      });
+      const fs=0.7/sp;
+      const chord=[[523,659,784],[659,784,1047],[784,1047,1319]].map(arr=>arr.map(f=>f*pm));
+      chord.forEach((ch,ci)=>{
+        ch.forEach(f=>{
+          const t=fs+ci*0.12/sp;
+          const o=ctx.createOscillator(),g=ctx.createGain();
+          o.type='square'; o.frequency.value=f;
+          g.gain.setValueAtTime(0.15,now+t); g.gain.setValueAtTime(0.15,now+t+0.1/sp);
+          g.gain.linearRampToValueAtTime(0,now+t+0.11/sp);
+          o.connect(g);g.connect(master);o.start(now+t);o.stop(now+t+0.12/sp);
+        });
+      });
+      const ts=1.1/sp;
+      [1047,1319,1568,2093].map(f=>f*pm).forEach((f,i)=>{
+        const t=ts+i*0.1/sp;
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='square'; o.frequency.value=f;
+        g.gain.setValueAtTime(0.25,now+t); g.gain.setValueAtTime(0.25,now+t+0.08/sp);
+        g.gain.linearRampToValueAtTime(0,now+t+0.25/sp);
+        o.connect(g);g.connect(master);o.start(now+t);o.stop(now+t+0.3/sp);
+      });
+      return 2.0/sp;
+    }
+  }
+];
+
+let actx=null, analyser=null, animIds={};
+function ensureCtx(){
+  if(!actx){ actx=new(window.AudioContext||window.webkitAudioContext)(); analyser=actx.createAnalyser(); analyser.fftSize=256; analyser.connect(actx.destination); }
+  if(actx.state==='suspended') actx.resume();
+}
+
+function play(id){
+  ensureCtx();
+  const v=variants[id];
+  const master=actx.createGain(); master.gain.value=0.75;
+  master.connect(analyser);
+  const dur=v.build(actx,actx.currentTime,master,1,1);
+  const btn=document.getElementById('pb'+id);
+  btn.textContent='▶ Playing'; btn.classList.add('playing');
+  document.getElementById('card'+id).classList.add('playing');
+  drawViz(id);
+  setTimeout(()=>{ btn.textContent='▶ Play'; btn.classList.remove('playing'); document.getElementById('card'+id).classList.remove('playing'); cancelAnimationFrame(animIds[id]); }, dur*1000+200);
+}
+
+function drawViz(id){
+  const canvas=document.getElementById('canvas'+id);
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  canvas.width=canvas.offsetWidth*devicePixelRatio; canvas.height=canvas.offsetHeight*devicePixelRatio;
+  ctx.scale(devicePixelRatio,devicePixelRatio);
+  const W=canvas.offsetWidth,H=canvas.offsetHeight;
+  const data=new Uint8Array(analyser.frequencyBinCount);
+  const v=variants[id];
+  function frame(){
+    analyser.getByteFrequencyData(data);
+    ctx.clearRect(0,0,W,H);
+    const bw=W/data.length*2.8;
+    let x=0;
+    for(let i=0;i<data.length;i++){
+      const bh=(data[i]/255)*H;
+      ctx.fillStyle=v.color;
+      ctx.fillRect(x,H-bh,Math.max(bw-1,1),bh);
+      x+=bw;
+    }
+    animIds[id]=requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+async function dl(id){
+  ensureCtx();
+  const v=variants[id];
+  const sr=44100;
+  const dur=v.build({createOscillator:()=>{return{type:'',frequency:{setValueAtTime:()=>{},exponentialRampToValueAtTime:()=>{},linearRampToValueAtTime:()=>{},value:0},connect:()=>{},start:()=>{},stop:()=>{}};},createGain:()=>{return{gain:{setValueAtTime:()=>{},exponentialRampToValueAtTime:()=>{},linearRampToValueAtTime:()=>{}},connect:()=>{}};},createBuffer:()=>{return{getChannelData:()=>new Float32Array(1)};},createBufferSource:()=>{return{buffer:null,connect:()=>{},start:()=>{},stop:()=>{}};},createBiquadFilter:()=>{return{type:'',frequency:{value:0},Q:{value:0},connect:()=>{}};},sampleRate:sr,currentTime:0},0,{connect:()=>{},gain:{setValueAtTime:()=>{},value:0}},1,1)+0.3;
+  const offCtx=new OfflineAudioContext(1,Math.ceil(sr*dur),sr);
+  const master=offCtx.createGain(); master.gain.value=0.75; master.connect(offCtx.destination);
+  v.build(offCtx,0,master,1,1);
+  const rendered=await offCtx.startRendering();
+  const data2=rendered.getChannelData(0);
+  const ab=new ArrayBuffer(44+data2.length*2);
+  const dv=new DataView(ab);
+  function ws(o,s){for(let i=0;i<s.length;i++)dv.setUint8(o+i,s.charCodeAt(i));}
+  ws(0,'RIFF');dv.setUint32(4,36+data2.length*2,true);ws(8,'WAVE');ws(12,'fmt ');dv.setUint32(16,16,true);dv.setUint16(20,1,true);dv.setUint16(22,1,true);dv.setUint32(24,sr,true);dv.setUint32(28,sr*2,true);dv.setUint16(32,2,true);dv.setUint16(34,16,true);ws(36,'data');dv.setUint32(40,data2.length*2,true);
+  for(let i=0;i<data2.length;i++){const s=Math.max(-1,Math.min(1,data2[i]));dv.setInt16(44+i*2,s<0?s*0x8000:s*0x7FFF,true);}
+  const blob=new Blob([ab],{type:'audio/wav'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=`rebirth_${v.name.replace(/\s+/g,'_').toLowerCase()}.wav`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+const grid=document.getElementById('grid');
+variants.forEach(v=>{
+  grid.innerHTML+=`
+    <div class="card" id="card${v.id}">
+      <div class="icon" style="background:${v.bg};color:${v.color}">${v.icon}</div>
+      <div class="info">
+        <p class="name">${v.name}</p>
+        <p class="desc">${v.desc}</p>
+        <canvas class="viz" id="canvas${v.id}"></canvas>
+      </div>
+      <div class="btns">
+        <button class="pbtn" id="pb${v.id}" onclick="play(${v.id})">▶ Play</button>
+        <button class="dbtn" onclick="dl(${v.id})" title="Download .wav">⬇</button>
+      </div>
+    </div>`;
+});
+</script>

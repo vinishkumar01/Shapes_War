@@ -93,7 +93,7 @@ public class GrapplingGunConfig : MonoBehaviour
                 if(grappled)
                 {
                     player._playerDataSO._grappleAmmo--;
-                    player._grappleAmmoUI.text = player._playerDataSO._grappleAmmo.ToString();
+                    //UIManager.InvokeGrappleUpdate(_player._playerDataSO._grappleAmmo);
                 }
 
                 grappled = false;

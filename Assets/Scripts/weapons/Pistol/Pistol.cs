@@ -10,8 +10,6 @@ public class Pistol : MonoBehaviour, IUpdateObserver
     [Header("Reference")]
     [SerializeField] private WeaponSO _pistolAttributes;
     [SerializeField] private Transform _gunBarrel;
-    [SerializeField] private TextMeshProUGUI _modeText;
-    [SerializeField] private TextMeshProUGUI _bulletCountText;
     [SerializeField] private TextMeshPro _reloadText;
     [SerializeField] private Animator _muzzleFlashAnimator;
     private GunAiming _gunAimConfigs;
@@ -36,6 +34,10 @@ public class Pistol : MonoBehaviour, IUpdateObserver
     [Header("SFX")]
     [SerializeField]private AudioClip _pistolSoundClip;
 
+    [Header("LayerMask")]
+    //Taking reference of the platform layer to check the distance to find can shoot or not;
+    [SerializeField] private LayerMask _platformLayer;
+
     private void OnEnable()
     {
         //Getting the gunAimConfigs here
@@ -46,14 +48,18 @@ public class Pistol : MonoBehaviour, IUpdateObserver
 
         //Set the values when enabled
         _pistolAttributes.bulletsLeft = _pistolAttributes.magSize;
-        _bulletCountText.text = _pistolAttributes.bulletsLeft.ToString();
         _pistolAttributes.autoReload = true;
         _pistolAttributes.isPistolCanShoot = true;
-        _modeText.text = "SEMI - AUTO";
+        UIManager.InvokeBulletAndFireModeUpdate(_pistolAttributes.bulletsLeft, "SEMI - AUTO");
     }
 
     public void ObservedUpdate()
     {
+        if(!GameState.CanPlayerControl)
+        {
+            return;
+        }
+
         _gunAimConfigs.GunAim_with_CursorUI_To_World_Conversion();
 
 
@@ -113,6 +119,15 @@ public class Pistol : MonoBehaviour, IUpdateObserver
         Vector3 origin = _gunBarrel.position;
         Vector3 TargetDirection = (cursorWorldPos - origin).normalized;
 
+        Vector3 wallCheckOrigin = _gunBarrel.position - TargetDirection * 0.5f;
+        RaycastHit2D wallCheck = Physics2D.Raycast(wallCheckOrigin, TargetDirection, 1.5f, _platformLayer);
+
+        if(wallCheck.collider != null)
+        {
+            //Gun is too close to the wall, dont shoot
+            return;
+        }
+
         var RayHit = Physics2D.Raycast(origin, TargetDirection, _pistolAttributes.bulletRange, _pistolAttributes.hitLayer);
 
         Debug.DrawLine(origin, origin + TargetDirection * 100f, Color.magenta, .1f);
@@ -171,7 +186,7 @@ public class Pistol : MonoBehaviour, IUpdateObserver
 
         //Decrement the bullets at the end of the method 
         _pistolAttributes.bulletsLeft--;
-        _bulletCountText.text = _pistolAttributes.bulletsLeft.ToString();
+        UIManager.InvokeBulletAndFireModeUpdate(_pistolAttributes.bulletsLeft, "SEMI - AUTO");
     }
 
     public IEnumerator Reload()
@@ -181,7 +196,7 @@ public class Pistol : MonoBehaviour, IUpdateObserver
         yield return new WaitForSeconds(_pistolAttributes.reloadTime);
         _pistolAttributes.bulletsLeft = _pistolAttributes.magSize;
         //Debug.Log("Bullets Reloaded: " + BulletsLeft);
-        _bulletCountText.text = _pistolAttributes.bulletsLeft.ToString();
+        UIManager.InvokeBulletAndFireModeUpdate(_pistolAttributes.bulletsLeft, "SEMI - AUTO");
         _pistolAttributes.isReloading = false;
         _reloadText.text = " ";
     }

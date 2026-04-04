@@ -32,17 +32,17 @@ MonoBehaviour:
   accelerationTimeGround: 0.1
   ropeSwingForce: 8
   doubleJumpForce: 25
-  doubleJumpCount: 117
+  doubleJumpCount: 10
   airMovementSpeed: 16
   accelerationTimeAir: 0.15
   ropeSwingForceInJump: 8
   dashTime: 0.2
   dashSpeed: 50
   dashCoolDown: 2.5
-  dashCount: 106
-  _grappleAmmo: 105
+  dashCount: 10
+  _grappleAmmo: 10
   doubleJumpSkill: 1
   dashSkill: 1
   healthPack: 50
-  maxLives: 100
-  lives: 86
+  maxLives: 99
+  lives: 0

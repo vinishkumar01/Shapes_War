@@ -69,7 +69,7 @@ public class PlayerIdleState : PlayerState
         }
 
         //Transist to Dash
-        if (_player.DashPressed)
+        if (_player.DashPressed && _player._playerDataSO.dashCount > 0)
         {
             _playerStateMachine.ChangeState(_player._playerDashState);
         }

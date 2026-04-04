@@ -226,6 +226,7 @@ public class homingMissile : MonoBehaviour, IDamageable, IUpdateObserver, IFixed
         {
             Vector2 direction = obj.transform.position - transform.position;
 
+            //There is a bug that happens in this line when the missile hits by the shockwave(sometimes!)
             obj.GetComponent<Rigidbody2D>().AddForce(direction * force);
         }
     }

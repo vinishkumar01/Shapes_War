@@ -16,7 +16,7 @@ MonoBehaviour:
   bulletPrefab: {fileID: 5913132409892484899, guid: c584bf1370f73f841858fdf82a3cef80, type: 3}
   hitLayer:
     serializedVersion: 2
-    m_Bits: 71744
+    m_Bits: 2168896
   magSize: 15
   bulletRange: 40
   autoReload: 1

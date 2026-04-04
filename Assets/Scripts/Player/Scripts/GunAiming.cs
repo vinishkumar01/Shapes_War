@@ -61,6 +61,11 @@ public class GunAiming : MonoBehaviour , IUpdateObserver
 
     public void ObservedUpdate()
     {
+        if(!GameState.CanPlayerControl)
+        {
+            return;
+        }
+
         GunPivot.transform.position = Player.transform.position;
 
         //Checking whether the player body is active and if not we are deactivating this gun pivot
@@ -107,6 +112,11 @@ public class GunAiming : MonoBehaviour , IUpdateObserver
 
     public void GunAim_with_CursorUI_To_World_Conversion()
     {
+        if (!GameState.CanPlayerControl)
+        {
+            return;
+        }
+
         if (UserInputs.instance == null || UserInputs.instance._cursorTransform == null)
             return;
 

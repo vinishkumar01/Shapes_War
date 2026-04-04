@@ -28,7 +28,7 @@ public class PlayerDeadParticlesInitiation : MonoBehaviour
         {
             if(_spawnBodyParticles != null)
             {
-                StopCoroutine(SpawnBodyParticles());
+                StopCoroutine(_spawnBodyParticles);
             }
 
             _spawnBodyParticles = StartCoroutine(SpawnBodyParticles());
@@ -45,9 +45,16 @@ public class PlayerDeadParticlesInitiation : MonoBehaviour
 
             _rb = prefabs.GetComponent<Rigidbody2D>();
 
+            if (_rb == null) continue;
+
+            _rb.isKinematic = false;
+            _rb.WakeUp();
+            _rb.velocity = Vector2.zero;
+            _rb.angularVelocity = 0f;
+
             _force = new Vector2(Random.Range(_randomMin, _randomMax), Random.Range(_randomMin, _randomMax));
             _torqueForce = Random.Range(_randomMin, _randomMax);
-            _rb.AddForce(_force, ForceMode2D.Force);
+            _rb.AddForce(_force, ForceMode2D.Impulse);
             _rb.AddTorque(_torqueForce, ForceMode2D.Impulse);
 
             spawnedBodys.Add(prefabs);

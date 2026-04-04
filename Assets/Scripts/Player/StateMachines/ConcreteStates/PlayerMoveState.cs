@@ -44,6 +44,8 @@ public class PlayerMoveState : PlayerState
         _player._animator.SetBool("isMoving", false);
 
         _player._audioSource.Stop();
+
+        //_player._dust.Stop();
     }
 
     public override void FrameUpdate()
@@ -55,6 +57,9 @@ public class PlayerMoveState : PlayerState
         {
             _player._audioSource.Stop();
         }
+
+        //Dust Effect
+        _player._dust.Play();
 
         MovePlayer();
 
@@ -171,7 +176,7 @@ public class PlayerMoveState : PlayerState
         }
 
         //Transist to Dash
-        if (_player.DashPressed)
+        if (_player.DashPressed && _player._playerDataSO.dashCount > 0)
         {
             _playerStateMachine.ChangeState(_player._playerDashState);
         }

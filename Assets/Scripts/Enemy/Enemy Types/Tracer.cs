@@ -414,7 +414,7 @@ public class Tracer : Enemy
 
 
                 //Applying jump effect
-                SFXManager._instance.playSFX(_tracerJumpEffect, transform.position, 1f, true, false);
+                SFXManager._instance.playSFX(_tracerJumpEffect, transform.position, 0.05f, true, false);
             }
         }
 
@@ -490,7 +490,6 @@ public class Tracer : Enemy
             GameObject missile = PoolManager.SpawnObject(Missile, Origin, Quaternion.identity, PoolManager.PoolType.GameObjects);
 
             //Missile launch sound effect
-            //Applying jump effect
             SFXManager._instance.playSFX(_missileLaunchEffect, transform.position, 0.1f, true, false);
 
             missile.GetComponent<homingMissile>().SetOwnerTracer(this.gameObject);

@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Muffled Heartbeat SFX</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Share+Tech+Mono&display=swap');
+  :root {
+    --bg:#07080e; --panel:#0e0f18; --border:#1a1b2e;
+    --red:#cc2233; --red-dim:#2a0008; --red-glow:#ff0022;
+    --red2:#ee4455; --text:#c0b8c0; --muted:#302838;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:'Share Tech Mono',monospace;
+    min-height:100vh; padding:28px 16px 50px;
+    display:flex; flex-direction:column; align-items:center; gap:24px;
+  }
+  header{text-align:center;}
+  .hb-icon{
+    width:48px; height:44px; margin:0 auto 12px; position:relative;
+    animation:hbPulse 1s ease-in-out infinite;
+  }
+  .hb-icon svg{width:100%;height:100%;}
+  @keyframes hbPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+  header h1{
+    font-family:'Rajdhani',sans-serif;font-weight:700;
+    font-size:1.7rem;letter-spacing:7px;text-transform:uppercase;
+    color:var(--red); text-shadow:0 0 20px #cc223344;
+  }
+  header p{font-size:0.60rem;color:var(--muted);letter-spacing:5px;margin-top:5px;}
+  .hline{
+    height:1px;width:520px;max-width:90vw;margin:10px auto 0;
+    background:linear-gradient(90deg,transparent,var(--red),transparent);
+  }
+  .cards{
+    display:grid;grid-template-columns:1fr 1fr;gap:14px;
+    max-width:840px;width:100%;
+  }
+  .card{
+    background:var(--panel);border:1px solid var(--border);
+    border-radius:9px;padding:16px 15px 13px;
+    display:flex;flex-direction:column;gap:10px;
+    position:relative;overflow:hidden;
+    transition:border-color 0.15s,box-shadow 0.15s;
+  }
+  .card::after{
+    content:'';position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,transparent,var(--red),transparent);
+    opacity:0;transition:opacity 0.2s;
+  }
+  .card.playing{border-color:var(--red);box-shadow:0 0 22px #cc223320;}
+  .card.playing::after{opacity:1;}
+  .card-top{display:flex;align-items:flex-start;justify-content:space-between;}
+  .card-meta{display:flex;flex-direction:column;gap:2px;}
+  .card-tag{font-size:0.56rem;letter-spacing:3px;color:var(--muted);}
+  .card-name{
+    font-family:'Rajdhani',sans-serif;font-weight:700;
+    font-size:1.05rem;letter-spacing:1px;color:var(--red);
+  }
+  .card.playing .card-name{text-shadow:0 0 8px var(--red-glow);}
+  /* tiny animated heart */
+  .mini-heart{
+    width:20px;height:18px;flex-shrink:0;margin-top:2px;
+    transition:transform 0.1s;
+  }
+  .card.playing .mini-heart{animation:miniPulse 0.8s ease-in-out infinite;}
+  @keyframes miniPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+  /* waveform */
+  .waveform{height:30px;display:flex;align-items:center;gap:2px;}
+  .wb{flex:1;border-radius:1px;min-height:1px;background:var(--red);opacity:0.25;transition:height 0.06s;}
+  .card.playing .wb{opacity:0.85;}
+  /* BPM + loop badge */
+  .badges{display:flex;gap:6px;align-items:center;}
+  .badge{
+    font-size:0.54rem;letter-spacing:2px;padding:2px 8px;
+    border-radius:3px;border:1px solid var(--border);color:var(--muted);
+  }
+  .card.playing .badge{border-color:var(--red);color:var(--red);}
+  .card-desc{font-size:0.61rem;color:var(--muted);line-height:1.65;}
+  .card-actions{display:flex;gap:7px;}
+  .btn{
+    border:none;border-radius:5px;cursor:pointer;
+    font-family:'Share Tech Mono',monospace;font-size:0.61rem;letter-spacing:2px;
+    padding:9px 0;display:flex;align-items:center;justify-content:center;gap:5px;
+    transition:all 0.13s;
+  }
+  .btn-play{flex:1;background:transparent;border:1.5px solid var(--red);color:var(--red);}
+  .btn-play:hover{background:var(--red-dim);}
+  .btn-stop{flex:0 0 70px;background:transparent;border:1.5px solid #663344;color:#996688;display:none;}
+  .btn-stop:hover{background:#220011;}
+  .card.playing .btn-play{display:none;}
+  .card.playing .btn-stop{display:flex;}
+  .btn-dl{flex:0 0 42px;background:var(--border);color:var(--muted);border:1.5px solid transparent;}
+  .btn-dl:hover{background:#1e1828;color:var(--text);}
+  footer{font-size:0.57rem;color:var(--muted);letter-spacing:4px;}
+  @media(max-width:560px){.cards{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hb-icon">
+    <svg viewBox="0 0 48 44" xmlns="http://www.w3.org/2000/svg">
+      <path d="M24 40 C24 40 4 26 4 14 C4 8 8 4 14 4 C18 4 22 7 24 10 C26 7 30 4 34 4 C40 4 44 8 44 14 C44 26 24 40 24 40Z" fill="#cc2233" opacity="0.9"/>
+    </svg>
+  </div>
+  <h1>MUFFLED HEARTBEAT</h1>
+  <p>LOW HEALTH INDICATOR · 6 LOOPABLE VARIATIONS</p>
+  <div class="hline"></div>
+</header>
+
+<div class="cards" id="cards"></div>
+<footer>▶ LOOP PREVIEW &nbsp;|&nbsp; ■ STOP &nbsp;|&nbsp; ⬇ DOWNLOAD WAV</footer>
+
+<script>
+let actx = null;
+const getCtx = () => { if(!actx) actx = new(window.AudioContext||window.webkitAudioContext)(); return actx; };
+
+// ─── WAV encoder ──────────────────────────────────────────────────────────────
+function encodeWAV(buf) {
+  const sr=buf.sampleRate, s=buf.getChannelData(0), n=s.length;
+  const ab=new ArrayBuffer(44+n*2), v=new DataView(ab);
+  const ws=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i));};
+  ws(0,'RIFF'); v.setUint32(4,36+n*2,true); ws(8,'WAVE'); ws(12,'fmt ');
+  v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,sr,true); v.setUint32(28,sr*2,true);
+  v.setUint16(32,2,true);  v.setUint16(34,16,true);
+  ws(36,'data'); v.setUint32(40,n*2,true);
+  let o=44;
+  for(let i=0;i<n;i++){const x=Math.max(-1,Math.min(1,s[i]));v.setInt16(o,x<0?x*0x8000:x*0x7FFF,true);o+=2;}
+  return ab;
+}
+function dlBuf(buf,name){
+  const blob=new Blob([encodeWAV(buf)],{type:'audio/wav'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);
+}
+
+// ─── Core muffled heartbeat engine ───────────────────────────────────────────
+// Key technique: a real heartbeat has TWO thumps — "lub" (S1) and "dub" (S2)
+// Muffled = heavy low-pass filtering, no high frequencies, deep sub-bass body
+// Loop-friendly = we render exactly N beats so start & end crossfade cleanly
+
+function mkBrown(ctx, dur) {
+  const n=Math.ceil(ctx.sampleRate*dur), b=ctx.createBuffer(1,n,ctx.sampleRate);
+  const d=b.getChannelData(0); let last=0;
+  for(let i=0;i<n;i++){last+=(Math.random()*2-1)*0.04;last=Math.max(-1,Math.min(1,last));d[i]=last;}
+  return b;
+}
+
+// Single muffled heart thump: low sine sweep + filtered brown noise + body resonance
+// t = start time, f0 = fundamental, gain, muffle = LPF cutoff (lower=more muffled), roomVerb = add low freq resonance
+function thump(ctx, dest, {t=0, f0=60, f1=20, g=1.0, dur=0.18, muffle=180, bodyGain=0.6, delay=0}) {
+  const now = ctx.currentTime + t + delay;
+
+  // ① Main body sine — the chest cavity resonance
+  const o1 = ctx.createOscillator(); o1.type='sine';
+  o1.frequency.setValueAtTime(f0, now);
+  o1.frequency.exponentialRampToValueAtTime(Math.max(f1,8), now+dur);
+  const g1 = ctx.createGain();
+  g1.gain.setValueAtTime(g, now);
+  g1.gain.exponentialRampToValueAtTime(0.0001, now+dur);
+  // Muffle filter on body
+  const lp1 = ctx.createBiquadFilter(); lp1.type='lowpass'; lp1.frequency.value=muffle; lp1.Q.value=0.8;
+  o1.connect(lp1); lp1.connect(g1); g1.connect(dest||ctx.destination);
+  o1.start(now); o1.stop(now+dur+0.04);
+
+  // ② Sub harmonic — makes it feel like it's heard through a wall/chest
+  const o2 = ctx.createOscillator(); o2.type='sine';
+  o2.frequency.setValueAtTime(f0*0.5, now);
+  o2.frequency.exponentialRampToValueAtTime(Math.max(f1*0.4,5), now+dur*1.2);
+  const g2 = ctx.createGain();
+  g2.gain.setValueAtTime(g*0.55, now);
+  g2.gain.exponentialRampToValueAtTime(0.0001, now+dur*1.3);
+  const lp2 = ctx.createBiquadFilter(); lp2.type='lowpass'; lp2.frequency.value=muffle*0.5; lp2.Q.value=1.2;
+  o2.connect(lp2); lp2.connect(g2); g2.connect(dest||ctx.destination);
+  o2.start(now); o2.stop(now+dur*1.4);
+
+  // ③ Brown noise body — the meaty "thud" texture heard through tissue
+  const nb = ctx.createBufferSource(); nb.buffer = mkBrown(ctx, dur*1.1);
+  const lp3 = ctx.createBiquadFilter(); lp3.type='lowpass'; lp3.frequency.value=muffle*0.7; lp3.Q.value=0.6;
+  const g3 = ctx.createGain();
+  g3.gain.setValueAtTime(g*bodyGain, now);
+  g3.gain.exponentialRampToValueAtTime(0.0001, now+dur*1.0);
+  nb.connect(lp3); lp3.connect(g3); g3.connect(dest||ctx.destination);
+  nb.start(now); nb.stop(now+dur*1.1+0.02);
+}
+
+// Build one complete loop cycle and return AudioBuffer
+// bpm, beats = loop length in beats (must be integer for seamless loop)
+// pattern = array of beat definitions
+function renderLoop(sr, bpm, numBeats, genFn) {
+  const beatLen = 60/bpm;
+  const totalDur = beatLen * numBeats + 0.15; // tiny tail for loop crossfade
+  const off = new OfflineAudioContext(1, Math.ceil(sr*totalDur), sr);
+
+  // Master muffle chain — everything goes through this
+  const master = off.createGain(); master.gain.value = 0.92;
+  const finalLP = off.createBiquadFilter(); finalLP.type='lowpass'; finalLP.frequency.value=260; finalLP.Q.value=0.5;
+  const finalLP2 = off.createBiquadFilter(); finalLP2.type='lowpass'; finalLP2.frequency.value=320; finalLP2.Q.value=0.4;
+  // Subtle low-shelf boost — makes the muffled thump feel like it resonates in a chest cavity
+  const shelf = off.createBiquadFilter(); shelf.type='lowshelf'; shelf.frequency.value=80; shelf.gain.value=8;
+
+  master.connect(finalLP); finalLP.connect(finalLP2); finalLP2.connect(shelf); shelf.connect(off.destination);
+
+  genFn(off, master, beatLen);
+  return off.startRendering();
+}
+
+// ─── 6 HEARTBEAT VARIATIONS ───────────────────────────────────────────────────
+
+const hbDefs = [
+  {
+    name: 'DEEP MUFFLED',
+    file: 'heartbeat-deep-muffled.wav',
+    bpm: 58,
+    beats: 4,
+    desc: 'Heavy slow pulse through thick walls. Very deep sub-bass, barely audible — critical low health.',
+    gen(ctx, dest, beatLen) {
+      // 4 beats: lub-dub ... lub-dub ... lub-dub ... lub-dub
+      for(let i=0;i<4;i++){
+        const t = i * beatLen;
+        // LUB (S1) — louder, lower
+        thump(ctx,dest,{t, f0:58, f1:16, g:1.0, dur:0.22, muffle:140, bodyGain:0.7});
+        // DUB (S2) — softer, higher pitch, 280ms after
+        thump(ctx,dest,{t:t+0.28, f0:72, f1:28, g:0.55, dur:0.16, muffle:160, bodyGain:0.45});
+      }
+    }
+  },
+  {
+    name: 'TENSE PULSE',
+    file: 'heartbeat-tense-pulse.wav',
+    bpm: 72,
+    beats: 4,
+    desc: 'Mid-tempo anxious heartbeat. Slightly faster, more urgent. Muffled but present.',
+    gen(ctx, dest, beatLen) {
+      for(let i=0;i<4;i++){
+        const t = i * beatLen;
+        thump(ctx,dest,{t, f0:64, f1:18, g:1.0, dur:0.20, muffle:170, bodyGain:0.65});
+        thump(ctx,dest,{t:t+0.24, f0:80, f1:30, g:0.60, dur:0.14, muffle:185, bodyGain:0.5});
+      }
+    }
+  },
+  {
+    name: 'DYING ECHO',
+    file: 'heartbeat-dying-echo.wav',
+    bpm: 48,
+    beats: 2,
+    desc: 'Slowest — barely beating. Long silence between beats. Room echo from a hollow chest.',
+    gen(ctx, dest, beatLen) {
+      for(let i=0;i<2;i++){
+        const t = i * beatLen;
+        // Main lub
+        thump(ctx,dest,{t, f0:52, f1:14, g:1.0, dur:0.24, muffle:130, bodyGain:0.75});
+        // Dub — much softer, almost not there
+        thump(ctx,dest,{t:t+0.30, f0:65, f1:22, g:0.40, dur:0.16, muffle:145, bodyGain:0.35});
+        // Ghost echo — faint repeat at lower freq (room resonance)
+        thump(ctx,dest,{t:t+0.55, f0:42, f1:12, g:0.18, dur:0.20, muffle:110, bodyGain:0.25});
+      }
+    }
+  },
+  {
+    name: 'PANIC THUD',
+    file: 'heartbeat-panic-thud.wav',
+    bpm: 88,
+    beats: 4,
+    desc: 'Faster panic rate. Still muffled but hits harder each beat — desperation.',
+    gen(ctx, dest, beatLen) {
+      for(let i=0;i<4;i++){
+        const t = i * beatLen;
+        // Panic — the LUB hits noticeably harder
+        thump(ctx,dest,{t, f0:68, f1:20, g:1.1, dur:0.18, muffle:190, bodyGain:0.70});
+        thump(ctx,dest,{t:t+0.20, f0:82, f1:32, g:0.65, dur:0.13, muffle:200, bodyGain:0.55});
+      }
+    }
+  },
+  {
+    name: 'UNDERWATER',
+    file: 'heartbeat-underwater.wav',
+    bpm: 62,
+    beats: 4,
+    desc: 'Heard as if submerged. Extra narrow bandpass — hollow, pressure-distorted thud.',
+    gen(ctx, dest, beatLen) {
+      for(let i=0;i<4;i++){
+        const t = i * beatLen;
+        // Narrower muffle — bandpass-like effect (very underwater)
+        thump(ctx,dest,{t, f0:55, f1:15, g:1.0, dur:0.25, muffle:120, bodyGain:0.8});
+        thump(ctx,dest,{t:t+0.26, f0:68, f1:24, g:0.50, dur:0.18, muffle:130, bodyGain:0.5});
+        // Pressure pulse after dub — low frequency water resonance
+        const o = ctx.createOscillator(); o.type='sine'; o.frequency.value=38;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, ctx.currentTime+t+0.28);
+        g.gain.linearRampToValueAtTime(0.28, ctx.currentTime+t+0.36);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+t+0.70);
+        const lp = ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=90;
+        o.connect(lp); lp.connect(g); g.connect(dest||ctx.destination);
+        o.start(ctx.currentTime+t+0.28); o.stop(ctx.currentTime+t+0.75);
+      }
+    }
+  },
+  {
+    name: 'WARZONE PULSE',
+    file: 'heartbeat-warzone-pulse.wav',
+    bpm: 78,
+    beats: 4,
+    desc: 'Combat-grade — heard under gunfire noise. Heavy compression character, low and gritty.',
+    gen(ctx, dest, beatLen) {
+      for(let i=0;i<4;i++){
+        const t = i * beatLen;
+        // Main LUB — heavier, distorted body
+        thump(ctx,dest,{t, f0:62, f1:18, g:1.0, dur:0.20, muffle:175, bodyGain:0.80});
+        thump(ctx,dest,{t:t+0.22, f0:78, f1:28, g:0.58, dur:0.15, muffle:185, bodyGain:0.55});
+
+        // Gritty low noise underlayer — like heard over radio/comm static
+        const nb = ctx.createBufferSource(); nb.buffer = mkBrown(ctx, beatLen*0.4);
+        const lp = ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=100;
+        const ng = ctx.createGain();
+        ng.gain.setValueAtTime(0.0001, ctx.currentTime+t);
+        ng.gain.linearRampToValueAtTime(0.22, ctx.currentTime+t+0.04);
+        ng.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+t+beatLen*0.35);
+        nb.connect(lp); lp.connect(ng); ng.connect(dest||ctx.destination);
+        nb.start(ctx.currentTime+t); nb.stop(ctx.currentTime+t+beatLen*0.4+0.02);
+      }
+    }
+  }
+];
+
+// ─── Live preview engine (schedules looping via setTimeout) ───────────────────
+const liveNodes = {}; // tracks active preview loops
+
+function startLoop(idx) {
+  const ctx = getCtx();
+  if(ctx.state==='suspended') ctx.resume();
+  const def = hbDefs[idx];
+  const beatLen = 60/def.bpm;
+  const cycleDur = beatLen * def.beats;
+
+  function scheduleCycle() {
+    // route to a gain for easy stop
+    const gainNode = ctx.createGain(); gainNode.gain.value = 1.0;
+    gainNode.connect(ctx.destination);
+    def.gen(ctx, gainNode, beatLen);
+    liveNodes[idx] = gainNode;
+    liveNodes[idx]._timer = setTimeout(() => {
+      if(liveNodes[idx]) scheduleCycle();
+    }, (cycleDur - 0.02) * 1000);
+  }
+  scheduleCycle();
+}
+
+function stopLoop(idx) {
+  if(liveNodes[idx]) {
+    clearTimeout(liveNodes[idx]._timer);
+    try { liveNodes[idx].gain.setTargetAtTime(0, getCtx().currentTime, 0.05); } catch(e){}
+    delete liveNodes[idx];
+  }
+}
+
+// ─── Download: render 8-second seamless loop ─────────────────────────────────
+function downloadHB(idx) {
+  const def = hbDefs[idx];
+  const sr = 44100;
+  // Render enough beats to fill ~8s
+  const beatsNeeded = Math.ceil(8 / (60/def.bpm / def.beats)) * def.beats;
+  const beatLen = 60/def.bpm;
+  const totalDur = beatLen * beatsNeeded + 0.2;
+  const off = new OfflineAudioContext(1, Math.ceil(sr*totalDur), sr);
+
+  const master = off.createGain(); master.gain.value = 0.92;
+  const lp1 = off.createBiquadFilter(); lp1.type='lowpass'; lp1.frequency.value=260; lp1.Q.value=0.5;
+  const lp2 = off.createBiquadFilter(); lp2.type='lowpass'; lp2.frequency.value=320; lp2.Q.value=0.4;
+  const shelf = off.createBiquadFilter(); shelf.type='lowshelf'; shelf.frequency.value=80; shelf.gain.value=8;
+  master.connect(lp1); lp1.connect(lp2); lp2.connect(shelf); shelf.connect(off.destination);
+
+  // Render multiple cycles
+  const cyclesNeeded = Math.ceil(beatsNeeded / def.beats);
+  for(let c=0; c<cyclesNeeded; c++){
+    const timeOffset = c * def.beats * beatLen;
+    // temporarily shift currentTime via a scheduling trick using gain
+    const tmpGain = off.createGain(); tmpGain.gain.value=1; tmpGain.connect(master);
+    // Pass a proxy dest that adds timeOffset
+    const proxyDest = {
+      context: off,
+      currentTime: off.currentTime,
+      _offset: timeOffset,
+    };
+    // Direct call with offset
+    genWithOffset(off, master, def, beatLen, timeOffset, def.beats);
+  }
+
+  // Fade out last 0.15s for seamless loop
+  master.gain.setValueAtTime(1.0, off.currentTime + totalDur - 0.15);
+  master.gain.linearRampToValueAtTime(0.0, off.currentTime + totalDur - 0.01);
+
+  off.startRendering().then(buf => dlBuf(buf, def.file));
+}
+
+function genWithOffset(ctx, dest, def, beatLen, timeOffset, numBeats) {
+  // Temporarily patch ctx.currentTime reading inside thump via a wrapper
+  const proxy = {
+    currentTime: ctx.currentTime + timeOffset,
+    sampleRate: ctx.sampleRate,
+    createOscillator: ()=>ctx.createOscillator(),
+    createGain: ()=>ctx.createGain(),
+    createBiquadFilter: ()=>ctx.createBiquadFilter(),
+    createBufferSource: ()=>ctx.createBufferSource(),
+    createBuffer: (ch,n,sr)=>ctx.createBuffer(ch,n,sr),
+  };
+
+  for(let i=0; i<numBeats; i++){
+    const t = i * beatLen;
+    thumpOff(ctx, dest, def, t, timeOffset, beatLen);
+  }
+}
+
+// Offset-aware thump — adds timeOffset to all scheduling
+function thumpOff(ctx, dest, def, beatInCycle, timeOffset, beatLen) {
+  const base = ctx.currentTime + timeOffset + beatInCycle;
+
+  function schedOsc(f0,f1,g,dur,muffle) {
+    const o=ctx.createOscillator(); o.type='sine';
+    o.frequency.setValueAtTime(f0,base); o.frequency.exponentialRampToValueAtTime(Math.max(f1,8),base+dur);
+    const gn=ctx.createGain(); gn.gain.setValueAtTime(g,base); gn.gain.exponentialRampToValueAtTime(0.0001,base+dur);
+    const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=muffle; lp.Q.value=0.8;
+    o.connect(lp); lp.connect(gn); gn.connect(dest);
+    o.start(base); o.stop(base+dur+0.04);
+  }
+  function schedOsc2(f0,f1,g,dur,muffle) {
+    const o=ctx.createOscillator(); o.type='sine';
+    o.frequency.setValueAtTime(f0,base); o.frequency.exponentialRampToValueAtTime(Math.max(f1,5),base+dur*1.2);
+    const gn=ctx.createGain(); gn.gain.setValueAtTime(g,base); gn.gain.exponentialRampToValueAtTime(0.0001,base+dur*1.3);
+    const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=muffle*0.5; lp.Q.value=1.2;
+    o.connect(lp); lp.connect(gn); gn.connect(dest);
+    o.start(base); o.stop(base+dur*1.4);
+  }
+  function schedNoise(g,dur,muffle,bodyG) {
+    const nb=ctx.createBufferSource(); nb.buffer=mkBrown(ctx,dur*1.1);
+    const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=muffle*0.7; lp.Q.value=0.6;
+    const gn=ctx.createGain(); gn.gain.setValueAtTime(g*bodyG,base); gn.gain.exponentialRampToValueAtTime(0.0001,base+dur);
+    nb.connect(lp); lp.connect(gn); gn.connect(dest);
+    nb.start(base); nb.stop(base+dur*1.1+0.02);
+  }
+  function schedNoiseDub(g,dur,muffle,bodyG,tOffset) {
+    const at = ctx.currentTime + timeOffset + beatInCycle + tOffset;
+    const nb=ctx.createBufferSource(); nb.buffer=mkBrown(ctx,dur*1.1);
+    const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=muffle*0.7; lp.Q.value=0.6;
+    const gn=ctx.createGain(); gn.gain.setValueAtTime(g*bodyG,at); gn.gain.exponentialRampToValueAtTime(0.0001,at+dur);
+    nb.connect(lp); lp.connect(gn); gn.connect(dest);
+    nb.start(at); nb.stop(at+dur*1.1+0.02);
+  }
+  function schedOscDub(f0,f1,g,dur,muffle,tOffset) {
+    const at = ctx.currentTime + timeOffset + beatInCycle + tOffset;
+    const o=ctx.createOscillator(); o.type='sine';
+    o.frequency.setValueAtTime(f0,at); o.frequency.exponentialRampToValueAtTime(Math.max(f1,8),at+dur);
+    const gn=ctx.createGain(); gn.gain.setValueAtTime(g,at); gn.gain.exponentialRampToValueAtTime(0.0001,at+dur);
+    const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=muffle; lp.Q.value=0.8;
+    o.connect(lp); lp.connect(gn); gn.connect(dest);
+    o.start(at); o.stop(at+dur+0.04);
+    const o2=ctx.createOscillator(); o2.type='sine';
+    o2.frequency.setValueAtTime(f0*0.5,at); o2.frequency.exponentialRampToValueAtTime(Math.max(f1*0.4,5),at+dur*1.2);
+    const gn2=ctx.createGain(); gn2.gain.setValueAtTime(g*0.55,at); gn2.gain.exponentialRampToValueAtTime(0.0001,at+dur*1.3);
+    const lp2=ctx.createBiquadFilter(); lp2.type='lowpass'; lp2.frequency.value=muffle*0.5; lp2.Q.value=1.2;
+    o2.connect(lp2); lp2.connect(gn2); gn2.connect(dest);
+    o2.start(at); o2.stop(at+dur*1.4);
+  }
+
+  const p = [
+    {bpm:58,beats:4,lub:[58,16,1.0,0.22,140,0.7],dub:[72,28,0.55,0.16,160,0.45],dubT:0.28},
+    {bpm:72,beats:4,lub:[64,18,1.0,0.20,170,0.65],dub:[80,30,0.60,0.14,185,0.5],dubT:0.24},
+    {bpm:48,beats:2,lub:[52,14,1.0,0.24,130,0.75],dub:[65,22,0.40,0.16,145,0.35],dubT:0.30},
+    {bpm:88,beats:4,lub:[68,20,1.1,0.18,190,0.70],dub:[82,32,0.65,0.13,200,0.55],dubT:0.20},
+    {bpm:62,beats:4,lub:[55,15,1.0,0.25,120,0.8],dub:[68,24,0.50,0.18,130,0.5],dubT:0.26},
+    {bpm:78,beats:4,lub:[62,18,1.0,0.20,175,0.80],dub:[78,28,0.58,0.15,185,0.55],dubT:0.22},
+  ];
+  const d = p[def._idx];
+  const [lf0,lf1,lg,ldur,lmuffle,lbodyG] = d.lub;
+  const [df0,df1,dg,ddur,dmuffle,dbodyG] = d.dub;
+
+  // LUB
+  schedOsc(lf0,lf1,lg,ldur,lmuffle);
+  schedOsc2(lf0,lf1,lg,ldur,lmuffle);
+  schedNoise(lg,ldur,lmuffle,lbodyG);
+  // DUB
+  schedOscDub(df0,df1,dg,ddur,dmuffle,d.dubT);
+  schedNoiseDub(dg,ddur,dmuffle,dbodyG,d.dubT);
+
+  // Variation-specific extras
+  if(def._idx===2){ // dying echo
+    const eAt=ctx.currentTime+timeOffset+beatInCycle+0.55;
+    const eo=ctx.createOscillator();eo.type='sine';eo.frequency.value=42;
+    const eg=ctx.createGain();
+    eg.gain.setValueAtTime(0.18,eAt);eg.gain.exponentialRampToValueAtTime(0.0001,eAt+0.20);
+    const elp=ctx.createBiquadFilter();elp.type='lowpass';elp.frequency.value=110;
+    eo.connect(elp);elp.connect(eg);eg.connect(dest);eo.start(eAt);eo.stop(eAt+0.25);
+  }
+  if(def._idx===4){ // underwater pressure pulse
+    const pAt=ctx.currentTime+timeOffset+beatInCycle+0.28;
+    const po=ctx.createOscillator();po.type='sine';po.frequency.value=38;
+    const pg=ctx.createGain();
+    pg.gain.setValueAtTime(0.0001,pAt);pg.gain.linearRampToValueAtTime(0.28,pAt+0.08);
+    pg.gain.exponentialRampToValueAtTime(0.0001,pAt+0.70);
+    const plp=ctx.createBiquadFilter();plp.type='lowpass';plp.frequency.value=90;
+    po.connect(plp);plp.connect(pg);pg.connect(dest);po.start(pAt);po.stop(pAt+0.75);
+  }
+  if(def._idx===5){ // warzone grit
+    const wAt=ctx.currentTime+timeOffset+beatInCycle;
+    const wdur=beatLen*0.4;
+    const nb=ctx.createBufferSource();nb.buffer=mkBrown(ctx,wdur);
+    const wlp=ctx.createBiquadFilter();wlp.type='lowpass';wlp.frequency.value=100;
+    const wg=ctx.createGain();
+    wg.gain.setValueAtTime(0.0001,wAt);wg.gain.linearRampToValueAtTime(0.22,wAt+0.04);
+    wg.gain.exponentialRampToValueAtTime(0.0001,wAt+wdur);
+    nb.connect(wlp);wlp.connect(wg);wg.connect(dest);nb.start(wAt);nb.stop(wAt+wdur+0.02);
+  }
+}
+
+// ─── Build UI ─────────────────────────────────────────────────────────────────
+const container = document.getElementById('cards');
+const BARS = 26;
+
+hbDefs.forEach((def, i) => {
+  def._idx = i;
+  const card = document.createElement('div');
+  card.className='card'; card.id=`card-${i}`;
+
+  const bars = Array.from({length:BARS},()=>{
+    const h=1+Math.random()*20; return `<div class="wb" style="height:${h}px" data-h="${h}"></div>`;
+  }).join('');
+
+  card.innerHTML=`
+    <div class="card-top">
+      <div class="card-meta">
+        <span class="card-tag">VAR ${String(i+1).padStart(2,'0')} · HEARTBEAT</span>
+        <span class="card-name">${def.name}</span>
+      </div>
+      <svg class="mini-heart" viewBox="0 0 24 22" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 20C12 20 2 13 2 7C2 4 4 2 7 2C9 2 11 3.5 12 5C13 3.5 15 2 17 2C20 2 22 4 22 7C22 13 12 20 12 20Z" fill="#cc2233" opacity="0.85"/>
+      </svg>
+    </div>
+    <div class="badges">
+      <span class="badge">${def.bpm} BPM</span>
+      <span class="badge">LOOPABLE</span>
+      <span class="badge">MUFFLED</span>
+    </div>
+    <div class="waveform">${bars}</div>
+    <div class="card-desc">${def.desc}</div>
+    <div class="card-actions">
+      <button class="btn btn-play"  onclick="previewHB(${i})">▶ LOOP</button>
+      <button class="btn btn-stop"  onclick="stopHB(${i})">■ STOP</button>
+      <button class="btn btn-dl"    title="Download 8s loop WAV" onclick="downloadHB(${i})">⬇</button>
+    </div>
+  `;
+  container.appendChild(card);
+});
+
+// ─── Preview controls ─────────────────────────────────────────────────────────
+const animTimers = {};
+
+function previewHB(idx) {
+  const card = document.getElementById(`card-${idx}`);
+  const bars = card.querySelectorAll('.wb');
+  card.classList.add('playing');
+  startLoop(idx);
+
+  // Beat-synced waveform animation
+  const def = hbDefs[idx];
+  const beatMs = (60/def.bpm)*1000;
+  function pulse(){
+    bars.forEach(b=>{ const h=parseFloat(b.dataset.h); b.style.height=(h*(0.2+Math.random()*2.0))+'px'; });
+    setTimeout(()=>{ bars.forEach(b=>{b.style.height=b.dataset.h+'px';}); }, 180);
+  }
+  pulse();
+  animTimers[idx]=setInterval(pulse, beatMs);
+}
+
+function stopHB(idx) {
+  stopLoop(idx);
+  const card=document.getElementById(`card-${idx}`);
+  const bars=card.querySelectorAll('.wb');
+  card.classList.remove('playing');
+  clearInterval(animTimers[idx]);
+  bars.forEach(b=>{b.style.height=b.dataset.h+'px';});
+}
+</script>
+</body>
+</html>

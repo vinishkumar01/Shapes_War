@@ -24,6 +24,9 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
     [SerializeField] private WeaponSO _rifleAttributes;
     [SerializeField] private Pistol _pistol;
     [SerializeField] private Rifle _rifle;
+    //dust effect
+    public ParticleSystem _dust;
+
 
     [Header("player SFX")]
     public AudioSource _audioSource;
@@ -91,20 +94,16 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
     public float _distancebetweenImages;
     public GameObject _playerAfterImage;
 
-    [Header("Power Ups")]
-    [Header("UI")]
-    public TextMeshProUGUI _doubleJumpSkill;
-    public TextMeshProUGUI _doubleJumpCountUI;
-    public TextMeshProUGUI _dashSkill;
-    public TextMeshProUGUI _dashCountUI;
-    public TextMeshProUGUI _grappleAmmoUI;
-
     //to Store the last Death Position of the player 
     public Vector3 lastDeathPosition { get; private set; }
 
     [Header("Player Visuals")]
     [SerializeField] private GameObject _playerVisuals;
     public SquashAndStretch _playerSquashandStretch;
+
+    [Header("Low Health Sound Effect")]
+    [SerializeField] private AudioClip _lowHealthSFX;
+    private AudioSource _lowHealthAudioSource;
 
     #endregion
 
@@ -220,14 +219,6 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         //Player Visual Reference
         _playerSquashandStretch = _playerVisuals.GetComponent<SquashAndStretch>();
 
-        //UI
-        _doubleJumpSkill = GameObject.FindGameObjectWithTag("DJSUI").GetComponent<TextMeshProUGUI>();
-        _doubleJumpCountUI = GameObject.FindGameObjectWithTag("DJCUI").GetComponent<TextMeshProUGUI>();
-        _dashSkill = GameObject.FindGameObjectWithTag("DSUI").GetComponent<TextMeshProUGUI>();
-        _dashCountUI = GameObject.FindGameObjectWithTag("DSCUI").GetComponent<TextMeshProUGUI>();
-        _grappleAmmoUI = GameObject.FindGameObjectWithTag("GrappleCount").GetComponent<TextMeshProUGUI>();
-
-
         //Player Hinge Joint Configs for Rope Config
         _hingeJoint = GetComponent<HingeJoint2D>();
 
@@ -297,6 +288,7 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
 
         lastDeathPosition = transform.position; 
         _playerDataSO.lives--;
+        UIManager.InvokeLivesUpdate(_playerDataSO.lives);
         Debug.Log($"Player Lives: {_playerDataSO.lives}");
 
         if(_playerDataSO.lives > 0)
@@ -315,22 +307,27 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
 
     #region Inputs for Players
 
-    public float MovementInputXDirection => UserInputs.instance.moveInputs.x;
+    public float MovementInputXDirection => GameState.CanPlayerControl ? UserInputs.instance.moveInputs.x : 0f;
 
-    public float MovementInputYDirection => UserInputs.instance.moveInputs.y;
+    public float MovementInputYDirection => GameState.CanPlayerControl ? UserInputs.instance.moveInputs.y : 0f;
 
-    public bool JumpPressed => UserInputs.instance._playerInputs.Player.Jump.WasPressedThisFrame();
-    public bool JumpHeld => UserInputs.instance._playerInputs.Player.Jump.IsPressed();
-    public bool JumpReleased => UserInputs.instance._playerInputs.Player.Jump.WasReleasedThisFrame();
-    public bool DashPressed => UserInputs.instance._playerInputs.Player.Dash.WasPressedThisFrame();
+    public bool JumpPressed => GameState.CanPlayerControl && UserInputs.instance._playerInputs.Player.Jump.WasPressedThisFrame();
+    public bool JumpHeld => GameState.CanPlayerControl && UserInputs.instance._playerInputs.Player.Jump.IsPressed();
+    public bool JumpReleased => GameState.CanPlayerControl && UserInputs.instance._playerInputs.Player.Jump.WasReleasedThisFrame();
+    public bool DashPressed => GameState.CanPlayerControl && UserInputs.instance._playerInputs.Player.Dash.WasPressedThisFrame();
 
     #endregion
 
     public void ObservedUpdate()
     {
+        if (!GameState.CanPlayerControl) return;
+
         //Check for player Health t upgrade in every wave
         GameManager._instance.CheckPlayerHealthEveryFrame(this);
-        Debug.Log($" Regular print: Maxhealth: {MaxHealth}, Current Health: {CurrentHealth}");
+
+        //Dash UI
+        float elapsed = Time.time - _playerDashState._lastDash;
+        UIManager.InvokeDashCoolDownUpdate(elapsed, _playerDataSO.dashCoolDown, _playerDataSO.dashCount);
 
         CheckPlayerAttachedToRope();
         JumpCounters();
@@ -347,6 +344,8 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
             _fullScreenEffectController._lowHealthEffectActive = true;
 
             _fullScreenEffectController.lowHealthEffectCoroutine = StartCoroutine(_fullScreenEffectController.LowHealthEffect());
+            //Low health sound Effect
+            _lowHealthAudioSource = SFXManager._instance.playSFX(_lowHealthSFX, transform.position, 1f, false, true);
         }
         else if(CurrentHealth >= 42 && _fullScreenEffectController._lowHealthEffectActive)
         {
@@ -358,6 +357,11 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
                 _fullScreenEffectController.lowHealthEffectCoroutine = null;
             }
 
+            //Return the SFX to Pool
+            _lowHealthAudioSource.loop = false;
+            _lowHealthAudioSource.Stop();
+            PoolManager.ReturnObjectToPool(_lowHealthAudioSource.gameObject, PoolManager.PoolType.SoundFX);
+
             _fullScreenEffectController.ResetLowHealthEffect();
         }
         #endregion
@@ -367,6 +371,8 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
 
     public void ObservedFixedUpdate()
     {
+        if (!GameState.CanPlayerControl) return;
+
         CheckSurroundingAndRope();
         GravityConfigs();
 
@@ -375,6 +381,8 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
 
     public void ObservedLateUpdate()
     {
+        if (!GameState.CanPlayerControl) return;
+
         _playerStateMachine._currentPlayerState.LateFrameUpdate();
     }
 
@@ -501,6 +509,11 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
 
     private void PlayerFacing()
     {
+        if(!GameState.CanPlayerControl)
+        {
+            return;
+        }
+
         if (UserInputs.instance == null || UserInputs.instance._cursorTransform == null)
             return;
 
@@ -603,10 +616,9 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         if(collision.CompareTag("JumpPowerUp"))
         {
             _playerDataSO.doubleJumpSkill = true;
-            _doubleJumpSkill.text = _playerDataSO.doubleJumpSkill.ToString();
 
             _playerDataSO.doubleJumpCount += 5;
-            _doubleJumpCountUI.text = _playerDataSO.doubleJumpCount.ToString();
+            UIManager.InvokeDoubleJumpUpdate(_playerDataSO.doubleJumpCount);
 
             PoolManager.ReturnObjectToPool(collision.gameObject, PoolManager.PoolType.GameObjects);
             
@@ -615,10 +627,10 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         if(collision.CompareTag("DashPowerUp"))
         {
             _playerDataSO.dashSkill = true;
-            _dashSkill.text = _playerDataSO.dashSkill.ToString();
+
+            UIManager.InvokeDashCoolDownUpdate(0,_playerDataSO.dashCoolDown,_playerDataSO.dashCount);
 
             _playerDataSO.dashCount += 5;
-            _dashCountUI.text = _playerDataSO.dashCount.ToString();
 
             PoolManager.ReturnObjectToPool(collision.gameObject, PoolManager.PoolType.GameObjects);
         }
@@ -626,7 +638,8 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         if (collision.CompareTag("GrappleGunBullet"))
         {
             _playerDataSO._grappleAmmo += 5;
-            _grappleAmmoUI.text = _playerDataSO._grappleAmmo.ToString();
+
+            UIManager.InvokeGrappleUpdate(_playerDataSO._grappleAmmo);
 
             PoolManager.ReturnObjectToPool(collision.gameObject, PoolManager.PoolType.GameObjects);
         }

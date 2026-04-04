@@ -12,7 +12,8 @@ public class BulletTracer : MonoBehaviour
     [Header("Tracer Cofigs")]
     [SerializeField] float _speed = 80f;
     [SerializeField] float _trialLife = 0.1f;
-    [SerializeField] GameObject Bullet_Collision;
+    [SerializeField] GameObject _bulletCollision;
+    [SerializeField] GameObject _underGroundBulletCollision;
     [SerializeField] bool hasHit = false;
     bool hasBeenReturnedToPool = false;
 
@@ -65,12 +66,20 @@ public class BulletTracer : MonoBehaviour
             if (storedHit.collider != null)
             {
 
-                if(storedHit.collider.CompareTag("Platform") || storedHit.collider.CompareTag("PlatformwithNoNodes"))
+                if(storedHit.collider.CompareTag("Platform") || storedHit.collider.CompareTag("PlatformwithNoNodes") || storedHit.collider.CompareTag("UnderGroundPlatform"))
                 {
                     // We spawn the particle slightly outward of the platform so that the collision doesnt affects between particle and platform
                     Vector3 fxpos = _targetposition + (Vector3)(storedHit.normal * 0.2f);
 
-                    SpawnDustParticle(fxpos, storedHit.normal);
+                    if(storedHit.collider.CompareTag("UnderGroundPlatform"))
+                    {
+                        SpawnDustParticle(fxpos, storedHit.normal, _underGroundBulletCollision);
+                    }
+                    else
+                    {
+                        SpawnDustParticle(fxpos, storedHit.normal, _bulletCollision);
+                    }
+
                     //StartCoroutine(ReturnAfterSeconds(impact, 1f));
 
                     //Play Collision Sound Effect
@@ -92,9 +101,9 @@ public class BulletTracer : MonoBehaviour
     }
 
 
-    private void SpawnDustParticle(Vector2 hitPoint, Vector2 hitNormal)
+    private void SpawnDustParticle(Vector2 hitPoint, Vector2 hitNormal, GameObject collisionEffect)
     {
-        var dustParticle = PoolManager.SpawnObject(Bullet_Collision, hitPoint, Quaternion.identity, PoolManager.PoolType.ParticleSystem).GetComponent<ParticleSystem>();
+        var dustParticle = PoolManager.SpawnObject(collisionEffect, hitPoint, Quaternion.identity, PoolManager.PoolType.ParticleSystem).GetComponent<ParticleSystem>();
 
         float zRotation;
 

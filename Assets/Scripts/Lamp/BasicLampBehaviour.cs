@@ -8,8 +8,11 @@ public class BasicLampbehaviour : MonoBehaviour, IDamageable, IUpdateObserver
     [SerializeField] private ParticleSystem _lightImpactCollision;
 
     [Header("Light Attributes")]
-    [SerializeField] private int _maxHealth = 20;
+    [SerializeField] private int _maxHealth = 10;
     [SerializeField] private int _damageAmount = 10;
+
+    [Header("Light Shatter SoundEffect")]
+    [SerializeField] private AudioClip _lightShatter;
 
     public int MaxHealth { get; set; }
     public int CurrentHealth { get; set; }
@@ -48,6 +51,8 @@ public class BasicLampbehaviour : MonoBehaviour, IDamageable, IUpdateObserver
     {
         //Spawn Light shatter effect
         PoolManager.SpawnObject(_lightImpactCollision, transform.position, Quaternion.identity, PoolManager.PoolType.ParticleSystem);
+
+        SFXManager._instance.playSFX(_lightShatter, transform.position, 1f, true, false);
 
         gameObject.SetActive(false);
     }

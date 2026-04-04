@@ -1,0 +1,336 @@
+
+<style>
+  .wrap { padding: 1rem; max-width: 480px; margin: 0 auto; }
+  .grid { display: flex; flex-direction: column; gap: 10px; }
+  .card {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-lg);
+    padding: 12px 14px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .card.playing { border-color: #FAC775; }
+  .icon { width: 38px; height: 38px; border-radius: var(--border-radius-md); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .info { flex: 1; min-width: 0; }
+  .vname { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin: 0 0 2px; }
+  .vdesc { font-size: 12px; color: var(--color-text-secondary); margin: 0 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .viz { width: 100%; height: 32px; display: block; border-radius: 4px; background: var(--color-background-secondary); }
+  .btns { display: flex; gap: 6px; flex-shrink: 0; }
+  .pbtn {
+    padding: 6px 12px; font-size: 13px; font-weight: 500;
+    border: 0.5px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary); cursor: pointer;
+  }
+  .pbtn:hover { background: var(--color-background-secondary); }
+  .pbtn:active { transform: scale(0.97); }
+  .pbtn.playing { color: #BA7517; border-color: #EF9F27; }
+  .dbtn {
+    padding: 6px 10px; font-size: 13px;
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-secondary);
+    color: var(--color-text-secondary); cursor: pointer;
+  }
+  .dbtn:hover { color: var(--color-text-primary); background: var(--color-background-primary); }
+</style>
+
+<div class="wrap">
+  <div class="grid" id="grid"></div>
+</div>
+
+<script>
+const variants = [
+  {
+    id: 0, name: 'Clean shatter', desc: 'Crisp pop · glass ping · quick fizzle',
+    color: '#BA7517', bg: '#FAEEDA', icon: '💡',
+    build(ctx, now, out) {
+      const sr = ctx.sampleRate;
+      // pixel pop transient
+      pixelPop(ctx, now, out, sr, 0.9, 800);
+      // glass crack noise
+      noiseShot(ctx, now, out, sr, 0, 0.06, 4500, 0.6, 1.8);
+      // 3 clean tinkle pings
+      [[4200,0.08],[5800,0.11],[7100,0.16]].forEach(([f,t])=> ping(ctx,now+t,out,f,0.09,0.07));
+      // short fizzle
+      fizzle(ctx, now+0.22, out, sr, 2, 0.08);
+      return 0.38;
+    }
+  },
+  {
+    id: 1, name: 'Pixel crunch', desc: '8-bit noise burst · bit-crushed tinkle · chiptune fizzle',
+    color: '#3B6D11', bg: '#EAF3DE', icon: '🎮',
+    build(ctx, now, out) {
+      const sr = ctx.sampleRate;
+      // square wave pop
+      sqPop(ctx, now, out, 220, 0.06, 0.7);
+      // crushed noise
+      noiseShot(ctx, now+0.02, out, sr, 0.02, 0.08, 3000, 0.5, 2.5);
+      // square tinkles
+      [[880,0.09],[1320,0.13],[1760,0.18],[2640,0.22]].forEach(([f,t])=>{
+        sqPop(ctx, now+t, out, f, 0.045, 0.18);
+      });
+      // chip fizzle — rapid square blips
+      for(let i=0;i<5;i++){
+        const t=now+0.26+i*0.025;
+        sqPop(ctx, t, out, 440+i*220, 0.02, 0.12-i*0.02);
+      }
+      return 0.42;
+    }
+  },
+  {
+    id: 2, name: 'Dull thud break', desc: 'Muffled impact · low crack · debris settle',
+    color: '#5F5E5A', bg: '#F1EFE8', icon: '🔩',
+    build(ctx, now, out) {
+      const sr = ctx.sampleRate;
+      // low thud
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.type='sine'; o.frequency.setValueAtTime(140,now); o.frequency.exponentialRampToValueAtTime(40,now+0.07);
+      g.gain.setValueAtTime(0.75,now); g.gain.exponentialRampToValueAtTime(0.001,now+0.08);
+      o.connect(g);g.connect(out);o.start(now);o.stop(now+0.09);
+      // low crack
+      noiseShot(ctx,now+0.02,out,sr,0.02,0.09,1200,0.55,2.0);
+      // pixel chunky tinkles — low freq
+      [[1800,0.1],[2200,0.16],[1500,0.21]].forEach(([f,t])=>ping(ctx,now+t,out,f,0.07,0.06));
+      // debris settle noise
+      noiseShot(ctx,now+0.22,out,sr,0.22,0.12,800,0.2,1.5);
+      return 0.38;
+    }
+  },
+  {
+    id: 3, name: 'Electric zap', desc: 'Voltage snap · arc crackle · dying hum',
+    color: '#534AB7', bg: '#EEEDFE', icon: '⚡',
+    build(ctx, now, out) {
+      const sr = ctx.sampleRate;
+      // sharp electric snap
+      pixelPop(ctx, now, out, sr, 1.0, 2000);
+      // arc noise burst
+      noiseShot(ctx,now,out,sr,0,0.05,6000,0.65,3.0);
+      // sawtooth zap
+      const zo=ctx.createOscillator(),zg=ctx.createGain(),zf=ctx.createBiquadFilter();
+      zo.type='sawtooth'; zo.frequency.setValueAtTime(800,now+0.04); zo.frequency.exponentialRampToValueAtTime(200,now+0.13);
+      zf.type='bandpass'; zf.frequency.value=2000; zf.Q.value=2;
+      zg.gain.setValueAtTime(0.4,now+0.04); zg.gain.exponentialRampToValueAtTime(0.001,now+0.14);
+      zo.connect(zf);zf.connect(zg);zg.connect(out);zo.start(now+0.04);zo.stop(now+0.15);
+      // pixel crackle blips
+      for(let i=0;i<4;i++){
+        const t=now+0.15+i*0.035;
+        sqPop(ctx,t,out,300+i*150,0.02,0.15-i*0.03);
+      }
+      // 60hz hum dying
+      const ho=ctx.createOscillator(),hg=ctx.createGain();
+      ho.type='square'; ho.frequency.value=60;
+      hg.gain.setValueAtTime(0.08,now+0.18); hg.gain.exponentialRampToValueAtTime(0.001,now+0.38);
+      ho.connect(hg);hg.connect(out);ho.start(now+0.18);ho.stop(now+0.4);
+      return 0.42;
+    }
+  },
+  {
+    id: 4, name: 'Distant pop', desc: 'Soft bullet hit · faint glass · echo tail',
+    color: '#185FA5', bg: '#E6F1FB', icon: '🔫',
+    build(ctx, now, out) {
+      const sr = ctx.sampleRate;
+      // soft distant pop
+      const o=ctx.createOscillator(),g=ctx.createGain(),f=ctx.createBiquadFilter();
+      o.type='sine'; o.frequency.setValueAtTime(300,now); o.frequency.exponentialRampToValueAtTime(80,now+0.05);
+      f.type='lowpass'; f.frequency.value=600;
+      g.gain.setValueAtTime(0.4,now); g.gain.exponentialRampToValueAtTime(0.001,now+0.06);
+      o.connect(f);f.connect(g);g.connect(out);o.start(now);o.stop(now+0.07);
+      // faint high crack
+      noiseShot(ctx,now+0.02,out,sr,0.02,0.06,5000,0.25,1.5);
+      // soft distant tinkles
+      [[3500,0.07,0.06],[4800,0.12,0.05],[6200,0.17,0.04],[3900,0.22,0.04]].forEach(([f2,t,vol])=>ping(ctx,now+t,out,f2,0.08,vol));
+      // faint echo noise
+      noiseShot(ctx,now+0.24,out,sr,0.24,0.1,2000,0.12,1.2);
+      return 0.38;
+    }
+  },
+  {
+    id: 5, name: 'Violent smash', desc: 'Hard impact · wide crack · heavy scatter',
+    color: '#993C1D', bg: '#FAECE7', icon: '💥',
+    build(ctx, now, out) {
+      const sr = ctx.sampleRate;
+      // hard kick thud
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.type='sine'; o.frequency.setValueAtTime(200,now); o.frequency.exponentialRampToValueAtTime(45,now+0.06);
+      g.gain.setValueAtTime(0.95,now); g.gain.exponentialRampToValueAtTime(0.001,now+0.07);
+      o.connect(g);g.connect(out);o.start(now);o.stop(now+0.08);
+      // wide crack — two noise layers
+      noiseShot(ctx,now,out,sr,0,0.07,5500,0.7,2.2);
+      noiseShot(ctx,now+0.01,out,sr,0.01,0.06,1500,0.45,1.8);
+      // pixel pop on impact
+      pixelPop(ctx,now,out,sr,0.6,1200);
+      // heavy tinkle scatter
+      [[5000,0.08,0.09],[3800,0.1,0.1],[6500,0.12,0.08],[4200,0.16,0.09],[7000,0.19,0.07],[3300,0.23,0.08],[5500,0.27,0.06]].forEach(([f2,t,vol])=>ping(ctx,now+t,out,f2,0.07,vol));
+      // heavy debris noise
+      noiseShot(ctx,now+0.08,out,sr,0.08,0.18,3000,0.35,1.6);
+      // chip fizzle end
+      for(let i=0;i<3;i++) sqPop(ctx,now+0.3+i*0.03,out,600+i*300,0.025,0.1-i*0.025);
+      return 0.44;
+    }
+  }
+];
+
+// --- Shared primitives ---
+function pixelPop(ctx, now, out, sr, vol, hpFreq) {
+  const len = Math.floor(sr * 0.025);
+  const buf = ctx.createBuffer(1, len, sr);
+  const d = buf.getChannelData(0);
+  // bit-crush style: step quantize noise
+  for (let i = 0; i < len; i++) {
+    const raw = Math.random() * 2 - 1;
+    const crushed = Math.round(raw * 8) / 8; // 4-bit feel
+    d[i] = crushed * Math.exp(-i / (len * 0.2));
+  }
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const f = ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = hpFreq;
+  const g = ctx.createGain(); g.gain.setValueAtTime(vol, now);
+  src.connect(f); f.connect(g); g.connect(out);
+  src.start(now); src.stop(now + 0.03);
+}
+
+function noiseShot(ctx, now, out, sr, delay, dur, bpFreq, vol, envPow) {
+  const len = Math.floor(sr * dur);
+  const buf = ctx.createBuffer(1, len, sr);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) {
+    // pixel quantize
+    const raw = Math.random() * 2 - 1;
+    const q = Math.round(raw * 16) / 16;
+    d[i] = q * Math.pow(1 - i / len, envPow);
+  }
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = bpFreq; f.Q.value = 0.8;
+  const g = ctx.createGain(); g.gain.setValueAtTime(vol, now);
+  src.connect(f); f.connect(g); g.connect(out);
+  src.start(now); src.stop(now + dur + 0.02);
+}
+
+function ping(ctx, now, out, freq, dur, vol) {
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(freq, now);
+  o.frequency.linearRampToValueAtTime(freq * 0.94, now + dur);
+  g.gain.setValueAtTime(vol, now);
+  g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+  o.connect(g); g.connect(out);
+  o.start(now); o.stop(now + dur + 0.01);
+}
+
+function sqPop(ctx, now, out, freq, dur, vol) {
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = 'square';
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(vol, now);
+  g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+  o.connect(g); g.connect(out);
+  o.start(now); o.stop(now + dur + 0.005);
+}
+
+function fizzle(ctx, now, out, sr, count, dur) {
+  for (let i = 0; i < count; i++) {
+    const t = now + i * (dur / count);
+    const len = Math.floor(sr * 0.018);
+    const buf = ctx.createBuffer(1, len, sr);
+    const d = buf.getChannelData(0);
+    for (let j = 0; j < len; j++) {
+      const q = Math.round((Math.random()*2-1)*8)/8;
+      d[j] = q * Math.exp(-j/(len*0.25));
+    }
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const f = ctx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=2500+Math.random()*2000; f.Q.value=3;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.15-i*0.03, t);
+    src.connect(f); f.connect(g); g.connect(out);
+    src.start(t); src.stop(t+0.025);
+  }
+}
+
+// --- Engine ---
+let actx=null, analyser=null, animIds={};
+function ensureCtx(){
+  if(!actx){ actx=new(window.AudioContext||window.webkitAudioContext)(); analyser=actx.createAnalyser(); analyser.fftSize=256; analyser.connect(actx.destination); }
+  if(actx.state==='suspended') actx.resume();
+}
+
+function playV(id){
+  ensureCtx();
+  const v=variants[id];
+  const master=actx.createGain(); master.gain.value=0.8; master.connect(analyser);
+  const dur=v.build(actx, actx.currentTime, master);
+  const btn=document.getElementById('pb'+id);
+  btn.textContent='▶ Playing'; btn.classList.add('playing');
+  document.getElementById('card'+id).classList.add('playing');
+  drawViz(id,v.color);
+  setTimeout(()=>{ btn.textContent='▶ Play'; btn.classList.remove('playing'); document.getElementById('card'+id).classList.remove('playing'); cancelAnimationFrame(animIds[id]); }, dur*1000+200);
+}
+
+function drawViz(id, color){
+  cancelAnimationFrame(animIds[id]);
+  const canvas=document.getElementById('cv'+id);
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  canvas.width=canvas.offsetWidth*devicePixelRatio; canvas.height=canvas.offsetHeight*devicePixelRatio;
+  ctx.scale(devicePixelRatio,devicePixelRatio);
+  const W=canvas.offsetWidth, H=canvas.offsetHeight;
+  const data=new Uint8Array(analyser.frequencyBinCount);
+  function frame(){
+    analyser.getByteFrequencyData(data);
+    ctx.clearRect(0,0,W,H);
+    const bw=Math.max(W/data.length*2.8,1);
+    let x=0;
+    for(let i=0;i<data.length;i++){
+      const bh=(data[i]/255)*H;
+      ctx.fillStyle=color;
+      ctx.fillRect(Math.floor(x),H-Math.floor(bh),Math.max(Math.floor(bw)-1,1),Math.floor(bh));
+      x+=bw;
+    }
+    animIds[id]=requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+async function dlV(id){
+  ensureCtx();
+  const v=variants[id];
+  // dry run to get dur
+  const fakeMaster={connect:()=>{},gain:{value:0}};
+  const sr=44100, dur=0.55;
+  const offCtx=new OfflineAudioContext(1,Math.ceil(sr*dur),sr);
+  const master=offCtx.createGain(); master.gain.value=0.8; master.connect(offCtx.destination);
+  v.build(offCtx,0,master);
+  const rendered=await offCtx.startRendering();
+  const d=rendered.getChannelData(0);
+  const ab=new ArrayBuffer(44+d.length*2);
+  const dv=new DataView(ab);
+  function ws(o,s){for(let i=0;i<s.length;i++)dv.setUint8(o+i,s.charCodeAt(i));}
+  ws(0,'RIFF');dv.setUint32(4,36+d.length*2,true);ws(8,'WAVE');ws(12,'fmt ');
+  dv.setUint32(16,16,true);dv.setUint16(20,1,true);dv.setUint16(22,1,true);
+  dv.setUint32(24,sr,true);dv.setUint32(28,sr*2,true);dv.setUint16(32,2,true);dv.setUint16(34,16,true);
+  ws(36,'data');dv.setUint32(40,d.length*2,true);
+  for(let i=0;i<d.length;i++){const s=Math.max(-1,Math.min(1,d[i]));dv.setInt16(44+i*2,s<0?s*0x8000:s*0x7FFF,true);}
+  const blob=new Blob([ab],{type:'audio/wav'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=`bulb_${v.name.replace(/\s+/g,'_').toLowerCase()}.wav`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// --- Render cards ---
+const grid=document.getElementById('grid');
+variants.forEach(v=>{
+  const el=document.createElement('div');
+  el.className='card'; el.id='card'+v.id;
+  el.innerHTML=`
+    <div class="icon" style="background:${v.bg};color:${v.color}">${v.icon}</div>
+    <div class="info">
+      <p class="vname">${v.name}</p>
+      <p class="vdesc">${v.desc}</p>
+      <canvas class="viz" id="cv${v.id}"></canvas>
+    </div>
+    <div class="btns">
+      <button class="pbtn" id="pb${v.id}" onclick="playV(${v.id})">▶ Play</button>
+      <button class="dbtn" onclick="dlV(${v.id})">⬇</button>
+    </div>`;
+  grid.appendChild(el);
+});
+</script>

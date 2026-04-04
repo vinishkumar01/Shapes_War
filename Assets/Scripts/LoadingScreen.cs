@@ -5,16 +5,25 @@ using UnityEngine.SceneManagement;
 
 public class LoadingScreen : MonoBehaviour
 {
-    private void Start()
+    private void OnEnable()
     {
         StartCoroutine(LoadNextScene());
     }
 
     private IEnumerator LoadNextScene()
     {
-        yield return new WaitForSeconds(1f); // wait 2–3 seconds for transition
+        yield return new WaitForSecondsRealtime(1f); // wait 2–3 seconds for transition
 
-        int nextScene = PlayerPrefs.GetInt("NextScene", 0);
+        string nextScene = SceneLoader.NextSceneName;
+        Debug.Log("Loading next scene: " + nextScene);
+        if(string.IsNullOrEmpty(nextScene))
+        {
+            Debug.LogError("NextSceneName is null or empty");
+            yield break;
+        }
+
         SceneManager.LoadScene(nextScene);
+
+        
     }
 }

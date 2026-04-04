@@ -34,7 +34,15 @@ public class Smasher_Chase_State : EnemyState
         ((Smasher)enemy).DrawRaysAndSpheres();
 
         //Move the Character
-        ((Smasher)enemy).Move();
+        if (GameState.CanPlayerControl)
+        {
+            ((Smasher)enemy).Move();
+        }
+        else
+        {
+            //Stopping the sound manually
+            enemy._audioSource.Stop();
+        }
 
         //Flip the NPC when it hits the edge
         ((Smasher)enemy).FlipToAvoidEdges();

@@ -32,7 +32,11 @@ public class GrappleGun : MonoBehaviour, IUpdateObserver
 
     [Header("Grapple Gun SFX")]
     [SerializeField] private AudioClip _grappleShotDeploy;
-    
+
+    [Header("LayerMask")]
+    //Taking reference of the platform layer to check the distance to find can shoot or not;
+    [SerializeField] private LayerMask _platformLayer;
+
 
     #endregion
 
@@ -66,6 +70,11 @@ public class GrappleGun : MonoBehaviour, IUpdateObserver
 
     public void ObservedUpdate()
     {
+        if (!GameState.CanPlayerControl)
+        {
+            return;
+        }
+
         GetGrappleInputs();
     }
 
@@ -109,7 +118,7 @@ public class GrappleGun : MonoBehaviour, IUpdateObserver
                 if(_grappled)
                 {
                     _player._playerDataSO._grappleAmmo--;
-                    _player._grappleAmmoUI.text = _player._playerDataSO._grappleAmmo.ToString();
+                    UIManager.InvokeGrappleUpdate(_player._playerDataSO._grappleAmmo);
                 }
 
                 _grappled = false;
@@ -131,7 +140,14 @@ public class GrappleGun : MonoBehaviour, IUpdateObserver
 
         RaycastHit2D hit = Physics2D.Raycast(origin, direction, _grappleAttributes.maxDistance ,_grappleAttributes.hitLayer);
 
+        Vector2 wallCheckOrigin = (Vector2)_firePoint.position - direction * 0.5f;
+        RaycastHit2D wallCheck = Physics2D.Raycast(wallCheckOrigin, direction, 1.5f, _platformLayer);
 
+        if (wallCheck.collider != null)
+        {
+            //Gun is too close to the wall, dont shoot
+            return false;
+        }
         if (!hit)
         {
             return false;

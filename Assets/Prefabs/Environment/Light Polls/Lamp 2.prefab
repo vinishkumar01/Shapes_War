@@ -312,5 +312,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _lightImpactCollision: {fileID: 558299074034243505, guid: be24cae37cbe9d045b9e851e4ae1e11b, type: 3}
-  _maxHealth: 20
+  _maxHealth: 10
   _damageAmount: 10
+  _lightShatter: {fileID: 8300000, guid: 53c0d0b9011c2cb4ca6b56e53ab0d5e8, type: 3}

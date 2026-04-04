@@ -7,7 +7,7 @@ public class PlayerDashState : PlayerState
 
     [Header("Player Dash")]
     private float _dashTimeLeft;
-    private float _lastDash = -100f;
+    public float _lastDash = -100f;
     private float _defaultGravity;
 
     public PlayerDashState(Player player, PlayerStateMachine playerStateMachine, PlayerDataSO playerDataSO) : base(player, playerStateMachine, playerDataSO)
@@ -30,6 +30,7 @@ public class PlayerDashState : PlayerState
 
             //if/else if/ if ternary operator
             //first it checks if the player is grounded if no -> then changes to player jump state, if yes -> then it comes to check the middle condition check if button pressed for hmovement if yes -> state changes to Move else changes to idle state
+
             _playerStateMachine.ChangeState(_player._isGrounded ? (Mathf.Abs(_player.MovementInputXDirection) > 0.01f ? _player._playerMoveState : _player._playerIdleState) : _player._playerJumpState);
             return;
         }
@@ -55,6 +56,8 @@ public class PlayerDashState : PlayerState
             Dash();
             SFXManager._instance.playSFX(_player._dashSoundClip, _player.transform.position, 1f, false, false);
         }
+
+        _player._dust.Play();
     }
 
     public override void ExitState()
@@ -66,6 +69,8 @@ public class PlayerDashState : PlayerState
         _player._dashText.text = " ";
 
         _player._animator.SetBool("isDashing", false);
+
+        _player._dust.Play();
     }
 
     public override void FrameUpdate()
@@ -142,14 +147,14 @@ public class PlayerDashState : PlayerState
 
         #region Dash UI
         _playerDataSO.dashCount--;
-        _player._dashCountUI.text = _playerDataSO.dashCount.ToString();
+        
 
         if(_playerDataSO.dashCount <= 0)
         {
             _playerDataSO.dashSkill = false;
-            _player._dashSkill.text = _playerDataSO.dashSkill.ToString();
         }
 
+        UIManager.InvokeDashCoolDownUpdate(0f,_playerDataSO.dashCoolDown, _playerDataSO.dashCount);
         _player._dashText.text = "Dash Recharging";
         #endregion
     }

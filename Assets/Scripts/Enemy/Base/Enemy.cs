@@ -39,6 +39,9 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver,
     [SerializeField] private AudioClip _hurtSoundEffect;
     [SerializeField] private AudioClip _deathSoundEffect;
 
+    [Header("Deady Body Particles")]
+    private EnemyDeadParticleInitiation _deadParticlesInitiation;
+
     #region State Machine Variables
 
     // We are using this variable to grab the instance of these classes they are not monobehaviour so the instance isnt created automatically
@@ -175,6 +178,9 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver,
         _animator = _enemyVisuals.GetComponent<Animator>();
         _flashEffect = _enemyVisuals.GetComponent<EnemyFlashEffect>();
 
+        //Dead body particles
+        _deadParticlesInitiation = GetComponent<EnemyDeadParticleInitiation>();
+
         //Enemy Starting Position
         _startingPos = _enemyVisuals.transform.localScale;
     }
@@ -224,7 +230,7 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver,
         //Hurt SoundEffect
         if(_hurtSoundEffect != null)
         {
-            SFXManager._instance.playSFX(_hurtSoundEffect, transform.position, 1f, true, false);
+            SFXManager._instance.playSFX(_hurtSoundEffect, transform.position, 0.2f, true, false);
         }
 
 
@@ -263,8 +269,11 @@ public class Enemy : MonoBehaviour, IDamageable, IEnemyMovable, IUpdateObserver,
         //Death Sound Effect
         if(_deathSoundEffect != null)
         {
-            SFXManager._instance.playSFX(_deathSoundEffect, transform.position, 1f, true, false);
+            SFXManager._instance.playSFX(_deathSoundEffect, transform.position, 0.5f, true, false);
         }
+
+        //Call the Body particles
+        _deadParticlesInitiation.CallSpawnBodyParticle();
 
         //Notify Game Manager before pooling/destroying
         GameManager._instance.EnemyDestroyed(gameObject);

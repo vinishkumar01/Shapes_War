@@ -39,6 +39,8 @@ TagManager:
   - PlatformwithNoNodes
   - MenuPanel
   - OptionPanel
+  - DialogueBox
+  - UnderGroundPlatform
   layers:
   - Default
   - TransparentFX

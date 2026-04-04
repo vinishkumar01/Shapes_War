@@ -33,6 +33,9 @@ public class PlayerJumpState : PlayerState
         _groundExitLockTime = 0.1f;
 
         SFXManager._instance.playSFX(_player._jumpSoundClip, _player.transform.position, 1f,false, false);
+
+        //We are calling the first jump dust here from the ground
+        _player._dust.Play();
     }
 
     public override void ExitState()
@@ -40,6 +43,7 @@ public class PlayerJumpState : PlayerState
         base.ExitState();
         _player._animator.SetBool("isJumping", false);
         _jumpWasExecuted = false;
+        _player._dust.Stop();
     }
 
     public override void FrameUpdate()
@@ -103,17 +107,19 @@ public class PlayerJumpState : PlayerState
             //we are calling the Jump SFX here too so that it can trigger when in the mid air
             SFXManager._instance.playSFX(_player._jumpSoundClip, _player.transform.position, 1f, false , false);
 
+            //Second Dust VFX mid air
+            _player._dust.Play();
+
             //Flag hasDoubleJumped
             _hasDoubleJumped = true;
 
             _playerDataSO.doubleJumpCount--;
-            _player._doubleJumpCountUI.text = _playerDataSO.doubleJumpCount.ToString();
+            UIManager.InvokeDoubleJumpUpdate(_playerDataSO.doubleJumpCount);
 
             if (_playerDataSO.doubleJumpCount <= 0)
             {
                 _playerDataSO.doubleJumpSkill = false;
                 _player._doubleJump = false;
-                _player._doubleJumpSkill.text = _playerDataSO.doubleJumpSkill.ToString();
             }
 
             //reset the jump Buffer Counter 
@@ -188,7 +194,7 @@ public class PlayerJumpState : PlayerState
     private void StateTransitions()
     {
         //Transist to Dash
-        if (_player.DashPressed)
+        if (_player.DashPressed && _player._playerDataSO.dashCount > 0)
         {
             _playerStateMachine.ChangeState(_player._playerDashState);
             return;

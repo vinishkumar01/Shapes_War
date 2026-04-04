@@ -161,7 +161,7 @@ public class Chaser : Enemy
                 RB.AddForce(new Vector2(direction * Movespeed * speedMultiplier, 0));
 
                 //we play the movement sound here
-                if(!_audioSource.isPlaying)
+                if (!_audioSource.isPlaying)
                 {
                     _audioSource.Play();
                 }

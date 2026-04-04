@@ -72,7 +72,15 @@ public class Tracer_Retreat_State : EnemyState
     {
         base.PhysicsUpdate();
 
-        ((Tracer)enemy).Retreat();
+        if (GameState.CanPlayerControl)
+        {
+            ((Tracer)enemy).Retreat();
+        }
+        else
+        {
+            //Stopping the sound manually
+            enemy._audioSource.Stop();
+        }
     }
 
 }

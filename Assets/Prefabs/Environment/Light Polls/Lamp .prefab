@@ -104,10 +104,11 @@ MonoBehaviour:
   _light: {fileID: 3508049719961062371}
   _lightCollider: {fileID: 0}
   _lightImpactCollision: {fileID: 558299074034243505, guid: be24cae37cbe9d045b9e851e4ae1e11b, type: 3}
-  _maxHealth: 20
+  _maxHealth: 10
   _damageAmount: 10
   _replaceTime: 3
   _targetPosition: {x: 0, y: 0}
+  _lightShatter: {fileID: 8300000, guid: 53c0d0b9011c2cb4ca6b56e53ab0d5e8, type: 3}
 --- !u!61 &7606302145187596841
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -345,7 +346,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8833861907291377085}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -8.98, y: 0.988, z: 0.01407209}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0

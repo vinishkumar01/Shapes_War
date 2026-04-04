@@ -1,0 +1,190 @@
+
+<style>
+  .wrap { padding: 1.5rem 1rem; max-width: 420px; margin: 0 auto; }
+  .card {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-lg);
+    padding: 16px;
+  }
+  .card.playing { border-color: var(--color-border-danger); }
+  .head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .icon { width: 44px; height: 44px; border-radius: var(--border-radius-md); background: #FCEBEB; color: #A32D2D; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .name { font-size: 16px; font-weight: 500; color: var(--color-text-primary); margin: 0 0 2px; }
+  .desc { font-size: 12px; color: var(--color-text-secondary); margin: 0; }
+  .viz { width: 100%; height: 56px; display: block; border-radius: var(--border-radius-md); background: var(--color-background-secondary); margin-bottom: 12px; }
+  .dur { font-size: 11px; color: var(--color-text-tertiary); text-align: right; margin: -8px 0 10px; }
+  .btns { display: flex; gap: 8px; }
+  .pbtn {
+    flex: 1; padding: 10px; font-size: 14px; font-weight: 500;
+    border: 0.5px solid #A32D2D; border-radius: var(--border-radius-md);
+    background: #FCEBEB; color: #A32D2D; cursor: pointer; transition: background 0.12s;
+  }
+  .pbtn:hover { background: #F7C1C1; }
+  .pbtn:active { transform: scale(0.97); }
+  .pbtn.playing { background: #F09595; }
+  .dbtn {
+    padding: 10px 16px; font-size: 14px;
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-secondary);
+    color: var(--color-text-secondary); cursor: pointer;
+  }
+  .dbtn:hover { background: var(--color-background-primary); color: var(--color-text-primary); }
+  .phases { display: flex; gap: 6px; margin-bottom: 10px; }
+  .phase { flex: 1; padding: 5px 4px; border-radius: var(--border-radius-md); background: var(--color-background-secondary); text-align: center; font-size: 11px; color: var(--color-text-secondary); }
+  .phase span { display: block; font-size: 10px; color: var(--color-text-tertiary); margin-top: 1px; }
+</style>
+
+<div class="wrap">
+  <div class="card" id="card">
+    <div class="head">
+      <div class="icon">💥</div>
+      <div>
+        <p class="name">Rage respawn</p>
+        <p class="desc">Short · punchy · effective — ~0.6s total</p>
+      </div>
+    </div>
+
+    <div class="phases">
+      <div class="phase">SLAM<span>0–0.1s</span></div>
+      <div class="phase">BUZZ<span>0.1–0.35s</span></div>
+      <div class="phase">BLAST<span>0.35–0.6s</span></div>
+    </div>
+
+    <canvas class="viz" id="viz"></canvas>
+
+    <div class="btns">
+      <button class="pbtn" id="pb" onclick="play()">▶ Play</button>
+      <button class="dbtn" onclick="dl()">⬇ .wav</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let actx=null, analyser=null, animId=null;
+
+function ensureCtx(){
+  if(!actx){ actx=new(window.AudioContext||window.webkitAudioContext)(); analyser=actx.createAnalyser(); analyser.fftSize=256; analyser.connect(actx.destination); }
+  if(actx.state==='suspended') actx.resume();
+}
+
+function buildRage(ctx, now, master) {
+  // Phase 1: brutal low SLAM (0–0.1s) — sub kick punch
+  const kick = ctx.createOscillator(), kg = ctx.createGain();
+  kick.type = 'sine';
+  kick.frequency.setValueAtTime(180, now);
+  kick.frequency.exponentialRampToValueAtTime(40, now + 0.08);
+  kg.gain.setValueAtTime(1.0, now);
+  kg.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+  kick.connect(kg); kg.connect(master);
+  kick.start(now); kick.stop(now + 0.12);
+
+  // distortion crunch layered on slam
+  const crunch = ctx.createOscillator(), cg = ctx.createGain(), cf = ctx.createBiquadFilter();
+  crunch.type = 'sawtooth'; crunch.frequency.value = 90;
+  cf.type = 'lowpass'; cf.frequency.value = 300;
+  cg.gain.setValueAtTime(0.6, now);
+  cg.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+  crunch.connect(cf); cf.connect(cg); cg.connect(master);
+  crunch.start(now); crunch.stop(now + 0.1);
+
+  // Phase 2: aggressive BUZZ sweep (0.1–0.35s)
+  const buz = ctx.createOscillator(), bg = ctx.createGain(), bf = ctx.createBiquadFilter();
+  buz.type = 'sawtooth';
+  buz.frequency.setValueAtTime(80, now + 0.1);
+  buz.frequency.exponentialRampToValueAtTime(320, now + 0.35);
+  bf.type = 'bandpass'; bf.frequency.setValueAtTime(200, now + 0.1); bf.frequency.exponentialRampToValueAtTime(600, now + 0.35); bf.Q.value = 2;
+  bg.gain.setValueAtTime(0.001, now + 0.1);
+  bg.gain.linearRampToValueAtTime(0.55, now + 0.15);
+  bg.gain.linearRampToValueAtTime(0.001, now + 0.35);
+  buz.connect(bf); bf.connect(bg); bg.connect(master);
+  buz.start(now + 0.1); buz.stop(now + 0.36);
+
+  // Phase 3: war blast chord (0.35–0.6s) — power fifth + octave
+  [[110,165,220],[220,330,440]].forEach((chord, ci) => {
+    chord.forEach((f, fi) => {
+      const o = ctx.createOscillator(), g = ctx.createGain(), flt = ctx.createBiquadFilter();
+      o.type = fi % 2 === 0 ? 'sawtooth' : 'square';
+      o.frequency.value = f;
+      flt.type = 'lowpass'; flt.frequency.value = 700;
+      g.gain.setValueAtTime(0, now + 0.35 + ci * 0.04);
+      g.gain.linearRampToValueAtTime(0.28, now + 0.37 + ci * 0.04);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.62);
+      o.connect(flt); flt.connect(g); g.connect(master);
+      o.start(now + 0.35 + ci * 0.04); o.stop(now + 0.65);
+    });
+  });
+
+  // snap transient at blast start
+  const snap = ctx.createOscillator(), sg = ctx.createGain();
+  snap.type = 'square'; snap.frequency.value = 880;
+  sg.gain.setValueAtTime(0.4, now + 0.35);
+  sg.gain.exponentialRampToValueAtTime(0.001, now + 0.41);
+  snap.connect(sg); sg.connect(master);
+  snap.start(now + 0.35); snap.stop(now + 0.42);
+
+  return 0.65;
+}
+
+function play(){
+  ensureCtx();
+  const master = actx.createGain(); master.gain.value = 0.8;
+  master.connect(analyser);
+  const dur = buildRage(actx, actx.currentTime, master);
+  const btn = document.getElementById('pb');
+  btn.textContent = '▶ Playing...'; btn.classList.add('playing');
+  document.getElementById('card').classList.add('playing');
+  drawViz();
+  setTimeout(() => {
+    btn.textContent = '▶ Play'; btn.classList.remove('playing');
+    document.getElementById('card').classList.remove('playing');
+    cancelAnimationFrame(animId);
+  }, dur * 1000 + 150);
+}
+
+function drawViz(){
+  cancelAnimationFrame(animId);
+  const canvas = document.getElementById('viz');
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * devicePixelRatio;
+  canvas.height = canvas.offsetHeight * devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  const W = canvas.offsetWidth, H = canvas.offsetHeight;
+  const data = new Uint8Array(analyser.frequencyBinCount);
+  function frame(){
+    analyser.getByteFrequencyData(data);
+    ctx.clearRect(0,0,W,H);
+    const bw = W / data.length * 2.8;
+    let x = 0;
+    for(let i = 0; i < data.length; i++){
+      const bh = (data[i]/255)*H;
+      ctx.fillStyle = '#E24B4A';
+      ctx.fillRect(x, H-bh, Math.max(bw-1,1), bh);
+      x += bw;
+    }
+    animId = requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+async function dl(){
+  ensureCtx();
+  const sr = 44100;
+  const dur = 0.65 + 0.1;
+  const offCtx = new OfflineAudioContext(1, Math.ceil(sr*dur), sr);
+  const master = offCtx.createGain(); master.gain.value = 0.8; master.connect(offCtx.destination);
+  buildRage(offCtx, 0, master);
+  const rendered = await offCtx.startRendering();
+  const d = rendered.getChannelData(0);
+  const ab = new ArrayBuffer(44 + d.length*2);
+  const dv = new DataView(ab);
+  function ws(o,s){for(let i=0;i<s.length;i++)dv.setUint8(o+i,s.charCodeAt(i));}
+  ws(0,'RIFF');dv.setUint32(4,36+d.length*2,true);ws(8,'WAVE');ws(12,'fmt ');dv.setUint32(16,16,true);dv.setUint16(20,1,true);dv.setUint16(22,1,true);dv.setUint32(24,sr,true);dv.setUint32(28,sr*2,true);dv.setUint16(32,2,true);dv.setUint16(34,16,true);ws(36,'data');dv.setUint32(40,d.length*2,true);
+  for(let i=0;i<d.length;i++){const s=Math.max(-1,Math.min(1,d[i]));dv.setInt16(44+i*2,s<0?s*0x8000:s*0x7FFF,true);}
+  const blob = new Blob([ab],{type:'audio/wav'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='rage_respawn.wav'; a.click();
+  URL.revokeObjectURL(url);
+}
+</script>

@@ -48,8 +48,15 @@ public class Chaser_Chase_State : EnemyState
     public override void PhysicsUpdate()
     {
         base.PhysicsUpdate();
-
-        ((Chaser)enemy).FollowPlayer();
+        if (GameState.CanPlayerControl)
+        { 
+            ((Chaser)enemy).FollowPlayer(); 
+        }
+        else
+        {
+            //Stopping the sound manually
+            enemy._audioSource.Stop();
+        }
 
         if (!enemy.IsPlayerActive())
         {

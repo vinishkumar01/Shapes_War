@@ -38,7 +38,16 @@ public class UserInputs : MonoBehaviour
 
         _playerInputs = new PlayerInputsScheme();
 
-        _playerInputs.Player.Move.performed += ctx => moveInputs = ctx.ReadValue<Vector2>();
+        _playerInputs.Player.Move.performed += ctx =>
+        {
+            if (!GameState.CanPlayerControl)
+            {
+                moveInputs = Vector2.zero;
+                return;
+            }
+
+            moveInputs = ctx.ReadValue<Vector2>();
+        };
     }
 
     private void OnEnable()

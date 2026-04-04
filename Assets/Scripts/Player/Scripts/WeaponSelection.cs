@@ -86,6 +86,7 @@ public class WeaponSelection : MonoBehaviour, IUpdateObserver
     {
         selectedWeapon = Mathf.Clamp(selectedWeapon, 0, weaponImage.Length - 1);
         RectImage.position = weaponImage[selectedWeapon].position;
+        RectImage.sizeDelta = weaponImage[selectedWeapon].sizeDelta;
     }
 
     private void OnDisable()

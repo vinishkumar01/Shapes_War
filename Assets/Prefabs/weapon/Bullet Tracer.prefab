@@ -162,7 +162,8 @@ MonoBehaviour:
   ScriptIsBeingCalled: 1
   _speed: 150
   _trialLife: 0.03
-  Bullet_Collision: {fileID: 1383114442019371328, guid: 20b97e31a0c3b7646b3f62dfd9be3a5c, type: 3}
+  _bulletCollision: {fileID: 1383114442019371328, guid: 20b97e31a0c3b7646b3f62dfd9be3a5c, type: 3}
+  _underGroundBulletCollision: {fileID: 1383114442019371328, guid: 583c55cb3becc1e49a63a01b786b6479, type: 3}
   hasHit: 0
   _collisionEffect: {fileID: 8300000, guid: 3fe0043a0f4a03743897bf16a697e1d3, type: 3}
 --- !u!58 &7890664359629403694

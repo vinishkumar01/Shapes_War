@@ -9,8 +9,6 @@ public class Rifle : MonoBehaviour, IUpdateObserver
     [Header("Reference")]
     [SerializeField] private WeaponSO _rifleAttributes;
     [SerializeField] private Transform _gunBarrel;
-    [SerializeField] private TextMeshProUGUI _modeText;
-    [SerializeField] private TextMeshProUGUI _bulletCountText;
     [SerializeField] private TextMeshPro _reloadText;
     [SerializeField] private Animator _muzzleFlashAnimator;
     private GunAiming _gunAimConfigs;
@@ -36,6 +34,10 @@ public class Rifle : MonoBehaviour, IUpdateObserver
     [Header("SFX")]
     [SerializeField] private AudioClip _rifleSoundClip;
 
+    [Header("LayerMask")]
+    //Taking reference of the platform layer to check the distance to find can shoot or not;
+    [SerializeField] private LayerMask _platformLayer;
+
     private void OnEnable()
     {
         //Getting the gunAimConfigs here
@@ -46,13 +48,18 @@ public class Rifle : MonoBehaviour, IUpdateObserver
 
         //Set the values when enabled
         _rifleAttributes.bulletsLeft = _rifleAttributes.magSize;
-        _bulletCountText.text = _rifleAttributes.bulletsLeft.ToString();
+        UIManager.InvokeBulletAndFireModeUpdate(_rifleAttributes.bulletsLeft, "FULL - AUTO");
         _rifleAttributes.autoReload = true;
         _rifleAttributes.isRifleCanShoot = true;
     }
 
     public void ObservedUpdate()
     {
+        if (!GameState.CanPlayerControl)
+        {
+            return;
+        }
+
         _gunAimConfigs.GunAim_with_CursorUI_To_World_Conversion();
 
         if (UserInputs.instance._playerInputs.Player.Fire.WasPressedThisFrame())
@@ -94,13 +101,11 @@ public class Rifle : MonoBehaviour, IUpdateObserver
         switch(_fireMode)
         {
             case FireMode.FullAuto:
-                if (_modeText != null)
-                    _modeText.text = "Full Auto";
+                UIManager.InvokeBulletAndFireModeUpdate(_rifleAttributes.bulletsLeft, "FULL - AUTO");
                 StartCoroutine(FireAuto());
                 break;
             case FireMode.Burst:
-                if (_modeText != null)
-                    _modeText.text = "Burst";
+                UIManager.InvokeBulletAndFireModeUpdate(_rifleAttributes.bulletsLeft, "BURST");
                 StartCoroutine(FireBurst());
                 break;
 
@@ -169,6 +174,15 @@ public class Rifle : MonoBehaviour, IUpdateObserver
         Vector3 origin = _gunBarrel.position;
         Vector3 TargetDirection = (cursorWorldPos - origin).normalized;
 
+        Vector3 wallCheckOrigin = _gunBarrel.position - TargetDirection * 0.5f;
+        RaycastHit2D wallCheck = Physics2D.Raycast(wallCheckOrigin, TargetDirection, 1.5f, _platformLayer);
+
+        if (wallCheck.collider != null)
+        {
+            //Gun is too close to the wall, dont shoot
+            return;
+        }
+
         var RayHit = Physics2D.Raycast(origin, TargetDirection, _rifleAttributes.bulletRange, _rifleAttributes.hitLayer);
 
         Debug.DrawLine(origin, origin + TargetDirection * 100f, Color.magenta, .1f);
@@ -227,7 +241,7 @@ public class Rifle : MonoBehaviour, IUpdateObserver
 
         //Decrement the bullets at the end of the method 
         _rifleAttributes.bulletsLeft--;
-        _bulletCountText.text = _rifleAttributes.bulletsLeft.ToString();
+        UIManager.InvokeBulletAndFireModeUpdate(_rifleAttributes.bulletsLeft, GetFireModeText());
     }
 
     public IEnumerator Reload()
@@ -237,7 +251,7 @@ public class Rifle : MonoBehaviour, IUpdateObserver
         yield return new WaitForSeconds(_rifleAttributes.reloadTime);
         _rifleAttributes.bulletsLeft = _rifleAttributes.magSize;
         //Debug.Log("Bullets Reloaded: " + BulletsLeft);
-        _bulletCountText.text = _rifleAttributes.bulletsLeft.ToString();
+        UIManager.InvokeBulletAndFireModeUpdate(_rifleAttributes.bulletsLeft, GetFireModeText());
         _rifleAttributes.isReloading = false;
         _reloadText.text = " ";
     }
@@ -293,5 +307,16 @@ public class Rifle : MonoBehaviour, IUpdateObserver
 
         //UnRegister
         UpdateManager.UnregisterObserver(this);
+    }
+
+    private string GetFireModeText()
+    {
+        return _fireMode switch
+        {
+            FireMode.FullAuto => "FULL - AUTO",
+            FireMode.Burst => "BURST",
+            _ => " "
+        };
+
     }
 }
