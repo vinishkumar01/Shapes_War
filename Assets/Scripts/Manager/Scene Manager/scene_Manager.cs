@@ -13,11 +13,13 @@ public class scene_Manager : MonoBehaviour
     public string[] _sceneNames = new string[] { "abandoned City", "UnderGround - Area" };
     public string[] _sceneNamesForMenuPanel = new string[] { "abandoned City", "UnderGround - Area", "Tutorial" };
     private string _loadingSceneName = "Loading Screen";
-    private string _menuSceneName = "Menu Scene";
-    private string _tutorialSceneName = "Tutorial";
+    public string _menuSceneName = "Menu Scene";
+    public string _tutorialSceneName = "Tutorial";
 
-    [SerializeField] private GameObject _menuPanel;
+    private GameObject _menuPanel;
     private GameObject _optionPanel;
+    private GameObject _gameOverPanel;
+    private GameObject _tutorialOverPanel;
 
     [Header("Seperate Scene Check")]
     public int _abandonedCity = 3;
@@ -67,7 +69,7 @@ public class scene_Manager : MonoBehaviour
 
         Debug.Log("Current Scene" + sceneName);
 
-        //Option Panel
+        //Option Panel-------------------------------
         if (sceneName == _menuSceneName)
         {
             GameObject optionPanel = GameObject.FindGameObjectWithTag("OptionPanel");
@@ -76,7 +78,6 @@ public class scene_Manager : MonoBehaviour
             {
                 Debug.LogWarning("Option panel not found in the scene");
                 _optionPanel = null;
-                return;
             }
             if (optionPanel != null)
             {
@@ -86,25 +87,62 @@ public class scene_Manager : MonoBehaviour
            
         }
 
-        //Menu Panel
-        if (!IsGameplayScenesToCheckForMenuPanel(sceneName))
+        //Menu Panel-------------------------------
+        if (IsGameplayScenesToCheckForMenuPanel(sceneName))
+        {
+            GameObject panel = GameObject.FindGameObjectWithTag("MenuPanel");
+
+            if (panel != null)
+            {
+                _menuPanel = panel;
+                _menuPanel.SetActive(false);
+            }
+        }
+        else
         {
             Debug.Log("no menu panel in this: " + sceneName);
             _menuPanel = null;
-            return;
         }
 
-        GameObject panel = GameObject.FindGameObjectWithTag("MenuPanel");
+        
 
-        if (panel == null)
+        //GameOver Panel-----------------------------
+        if(IsGameplayScenes(sceneName))
         {
-            Debug.LogWarning("MenuPanel not Found in scene");
-            _menuPanel = null;
-            return;
+            GameObject gameOverPanel = GameObject.FindGameObjectWithTag("GameOverPanel");
+
+            if (gameOverPanel != null)
+            {
+                _gameOverPanel = gameOverPanel;
+                _gameOverPanel.SetActive(false);
+            }
+        }
+        else
+        {
+            Debug.Log("no GameOver panel in this: " + sceneName);
+            _gameOverPanel = null;
         }
 
-        _menuPanel = panel;
-        _menuPanel.SetActive(false);
+        //Tutorial Over Panel-----------------------------
+        if (sceneName == _tutorialSceneName)
+        {
+            GameObject tutorialOverPanel = GameObject.FindGameObjectWithTag("TutorialOverPanel");
+
+            if (tutorialOverPanel == null)
+            {
+                Debug.LogWarning("Tutorialover panel not Found in scene");
+                _tutorialOverPanel = null;
+                return;
+            }
+
+            _tutorialOverPanel = tutorialOverPanel;
+            _tutorialOverPanel.SetActive(false);
+        }  
+        else
+        {
+            Debug.Log("no tutorialOver panel in this: " + sceneName);
+            _tutorialOverPanel = null;
+        }
     }
 
     public void OnSurvivalButtonPressed()
@@ -238,7 +276,38 @@ public class scene_Manager : MonoBehaviour
         // Load transition (black screen) scene
         SceneManager.LoadScene(_loadingSceneName, LoadSceneMode.Single);
     }
-
     #endregion
+
+    public void OpenGameOverPanel()
+    {
+        Debug.Log("Trying to open GameOver panel: " + _gameOverPanel);
+
+        if (_gameOverPanel == null)
+        {
+            _gameOverPanel = GameObject.FindGameObjectWithTag("GameOverPanel");
+            Debug.Log("gameOver panel was null: re-found" + _gameOverPanel);
+        }
+
+       if(_gameOverPanel != null)
+        {
+            _gameOverPanel.SetActive(true);
+        }
+       else
+        {
+            Debug.LogError("gameOver panel is still null");
+        }
+    }
+
+    public void OpenTutorialOverPanel()
+    {
+        _tutorialOverPanel.SetActive(true);
+    }
+
+    public void OnDialougeToggleChanged(bool isOn)
+    {
+        GameState.DialougeEnabled = isOn;
+        PlayerPrefs.SetInt("DialogueEnabled", isOn ? 1 : 0);
+    }
+
 
 }

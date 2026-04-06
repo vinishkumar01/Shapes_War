@@ -416,7 +416,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -913,7 +913,7 @@ SpriteRenderer:
   m_SortingLayer: 4
   m_SortingOrder: 1
   m_Sprite: {fileID: 2006135429, guid: ade1025f773f55740a7a92e54bdd2c8f, type: 3}
-  m_Color: {r: 0.9764706, g: 0.6156863, b: 0.15294118, a: 0.7372549}
+  m_Color: {r: 1, g: 0.9647059, b: 0.4, a: 0.7372549}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -1282,8 +1282,8 @@ LineRenderer:
       m_RotationOrder: 4
     colorGradient:
       serializedVersion: 2
-      key0: {r: 1, g: 1, b: 1, a: 1}
-      key1: {r: 1, g: 1, b: 1, a: 1}
+      key0: {r: 0.3207547, g: 0.3207547, b: 0.3207547, a: 1}
+      key1: {r: 0.4490565, g: 0.4490565, b: 0.4490565, a: 1}
       key2: {r: 0, g: 0, b: 0, a: 0}
       key3: {r: 0, g: 0, b: 0, a: 0}
       key4: {r: 0, g: 0, b: 0, a: 0}
@@ -1307,7 +1307,7 @@ LineRenderer:
       atime6: 0
       atime7: 0
       m_Mode: 0
-      m_ColorSpace: -1
+      m_ColorSpace: 0
       m_NumColorKeys: 2
       m_NumAlphaKeys: 2
     numCornerVertices: 1
@@ -7206,7 +7206,7 @@ SpriteRenderer:
   m_SortingLayer: 4
   m_SortingOrder: 1
   m_Sprite: {fileID: 2006135429, guid: ade1025f773f55740a7a92e54bdd2c8f, type: 3}
-  m_Color: {r: 0.97735846, g: 0.6151658, b: 0.15305795, a: 0.7607843}
+  m_Color: {r: 1, g: 0.96185356, b: 0.39811313, a: 0.7607843}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -7553,7 +7553,7 @@ MonoBehaviour:
   - {x: 0.50827336, y: -0.66984826, z: 0}
   m_ShapePathHash: 752698669
   m_Mesh: {fileID: 0}
-  m_InstanceId: 811708
+  m_InstanceId: 1541734
   m_LocalBounds:
     m_Center: {x: 0.00010877848, y: -0.056918323, z: 0}
     m_Extent: {x: 0.55650276, y: 0.61292994, z: 0}
@@ -7575,7 +7575,6 @@ MonoBehaviour:
   - {fileID: 4211104694878314259, guid: d5050c01b8c3a374da4afc1c7d0a40c0, type: 3}
   - {fileID: 3645373081025930733, guid: 65bce1010eedf654597240feabb5c3ab, type: 3}
   - {fileID: 1321692212000062459, guid: 15a496b292fe8524abeeb359806c57d2, type: 3}
-  - {fileID: 6870151623896535222, guid: 2a2cb86502c44f54eb904101cae26065, type: 3}
   _player: {fileID: 2501491490684738850}
   _randomMin: -5
   _randomMax: 7

@@ -24,6 +24,7 @@ public class GameManager : MonoBehaviour, IUpdateObserver
     [SerializeField] private PlayerDataSO _playerSO;
     [SerializeField] public bool _playerGotInDeathZone = false;
     [SerializeField] public bool _playerGotInSpikesZone = false;
+    private bool _livesInitiated = false;
 
     [Header("Enemy Spawn System")]
     [SerializeField] private Dictionary<GameObject, EnemySpawnData> _enemies = new ();
@@ -57,6 +58,7 @@ public class GameManager : MonoBehaviour, IUpdateObserver
     [SerializeField] private bool _waitingForNextWave = false;
     [SerializeField] private bool _healthUpdatedInWave;
     private Coroutine _spawnCoroutine;
+    private Coroutine _powerUpCoroutine;
 
     [Header("Score")]
     private int _score;
@@ -71,7 +73,7 @@ public class GameManager : MonoBehaviour, IUpdateObserver
     private Coroutine _dialogueCoroutine;
 
     [Header("Scene")]
-    private string currentSceneName;
+    private string _currentSceneName;
 
     [Header("SFX for Re-spawn")]
     [SerializeField] private AudioClip _respawnSFX;
@@ -121,29 +123,12 @@ public class GameManager : MonoBehaviour, IUpdateObserver
 
     private void OnEnable()
     {
-
+        DialogueManager.OnDialogueEnded += StartWaveFromDialouge;
+        DialogueManager.OnGameOverDialogueEnded += HandleGameOverUIPanel;
         SceneManager.sceneLoaded += OnSceneLoaded;
         UpdateManager.RegisterObserver(this);
 
-        DialogueManager.OnDialogueEnded += StartWaveFromDialouge;
-
         Debug.Log("[GameManager] OnEnable completed, event subscribed");
-
-        if (_currentWave <= 0)
-        {
-            //Reset the count and the UI on Every Enable
-            _playerSO.doubleJumpCount = 10;
-            _playerSO.dashCount = 10;
-            _playerSO._grappleAmmo = 10;
-            _playerSO.lives = _playerSO.maxLives;
-
-            _playerSO.dashSkill = true;
-            _playerSO.doubleJumpSkill = true;
-
-            //Reset the Score on beginning 
-            _score = 0;
-            _highScore = _gameManagerSpawnListSO.highScore;
-        }
     }
 
     private void OnDisable()
@@ -157,27 +142,89 @@ public class GameManager : MonoBehaviour, IUpdateObserver
         _enemiesSpawnedCount = 0;
         _enemiesAlive = 0;
         _currentWave = 0;
+        _livesInitiated = false;
 
         SceneManager.sceneLoaded -= OnSceneLoaded;
         UpdateManager.UnregisterObserver(this);
-
         DialogueManager.OnDialogueEnded -= StartWaveFromDialouge;
+        DialogueManager.OnGameOverDialogueEnded -= HandleGameOverUIPanel;
     }
+
+    #region Tutorial Settings And Normal settings for Abilities
+
+    private void TutorialSettings()
+    {
+        //Reset the count and the UI on Every Enable
+        _playerSO.doubleJumpCount = 100;
+        _playerSO.dashCount = 100;
+        _playerSO._grappleAmmo = 100;
+
+        _playerSO.dashSkill = true;
+        _playerSO.doubleJumpSkill = true;
+
+        //Reset the Score on beginning 
+        _score = 0;
+        _highScore = PlayerPrefs.GetInt("HighScore", 0);
+
+        if (!_livesInitiated)
+        {
+            _playerSO.lives = 100;
+            _livesInitiated = true;
+        }
+    }
+
+    private void NormalSettings()
+    {
+        if (_currentWave <= 0)
+        {
+            //Reset the count and the UI on Every Enable
+            _playerSO.doubleJumpCount = 10;
+            _playerSO.dashCount = 10;
+            _playerSO._grappleAmmo = 10;
+
+            _playerSO.dashSkill = true;
+            _playerSO.doubleJumpSkill = true;
+
+            //Reset the Score on beginning 
+            _score = 0;
+            _highScore = PlayerPrefs.GetInt("HighScore", 0);
+
+            if (!_livesInitiated)
+            {
+                _playerSO.lives = _playerSO.maxLives;
+                _livesInitiated = true;
+            }
+        }
+    }
+
+    #endregion
 
     #region Scene Configs
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        currentSceneName = scene.name;
+        _currentSceneName = scene.name;
+
+        //Ability Settings
+        if(scene_Manager._instance.IsTutorialScene(_currentSceneName))
+        {
+            TutorialSettings();
+        }
+        else
+        {
+            NormalSettings();
+        }
+
 
         // If the survival scene is detected we are following the wave system
-        if(scene_Manager._instance.IsGameplayScenes(currentSceneName))
+        if(scene_Manager._instance.IsGameplayScenes(_currentSceneName))
         {
             GameState.CanPlayerControl = false;
             _activateWave = false;
             _waveActive = false;
             _spawningCompleted = false;
             _waveCompletedTriggered = false;
+            _waitingForNextWave = false;
             _enemiesSpawnedCount = 0;
             _enemiesAlive = 0;
             _currentWave = 0;
@@ -220,7 +267,8 @@ public class GameManager : MonoBehaviour, IUpdateObserver
         }
 
 
-        //Re - cache the spawn zone for the smasher enemy
+        //Clear the list and Re - cache the spawn zone for the smasher enemy
+        _cachedSmasherZone.Clear();
         cachedZone();
 
         yield return new WaitForSeconds(0.5f);
@@ -228,14 +276,22 @@ public class GameManager : MonoBehaviour, IUpdateObserver
         if(_dialogueTriggered) yield break ;
 
         _dialogueTriggered = true;
-        _dialogueTrigger.TriggerDialouge();
+        if(GameState.DialougeEnabled)
+        {
+            _dialogueTrigger.TriggerDialouge();
+        }
+        else
+        {
+            //Skip Dialogue -> skip to game
+            StartWaveFromDialouge();
+        }
 
     }
 
     private void StartWaveFromDialouge()
     {
         Debug.Log($"[GameManager] StartWaveFromDialogue called! " +
-              $"playerNull:{_playerPrefab == null} " +           // ADD
+              $"playerNull:{_playerPrefab == null} " +           
               $"playerActive:{_playerPrefab?.activeInHierarchy}");
 
         GameState.CanPlayerControl = true;
@@ -376,6 +432,7 @@ public class GameManager : MonoBehaviour, IUpdateObserver
 
     public void ObservedUpdate()
     {
+
         if (!_waveActive && !_waitingForNextWave &&_activateWave && _playerPrefab != null && _playerPrefab.gameObject.activeInHierarchy)
         {
             if (_activateWave)
@@ -461,17 +518,13 @@ public class GameManager : MonoBehaviour, IUpdateObserver
         _enemiesSpawnedCount = 0;
         _enemiesAlive = 0;
 
-        if (_currentWave <= 1)
-        {
-            // Setting the max lives for the player when starting the game.
-            _playerSO.lives = _playerSO.maxLives;
-            Debug.Log($"Player Lives: {_playerSO.lives}");
-        }
+        
         _currentWave++;
         _enemiesSpawnedCount = 0;
         _enemiesAlive = 0;
 
         UIManager.InvokeWaveAndEnemyCountUpdate(_currentWave, _enemiesAlive);
+        UIManager.InvokeWaveTilteUpdate("Wave ", _currentWave);
 
         ConfigureWave(_currentWave);
 
@@ -488,7 +541,14 @@ public class GameManager : MonoBehaviour, IUpdateObserver
 
         _spawnCoroutine = StartCoroutine(SpawnWaveCoroutine());
 
-        StartCoroutine(PowerUpsSpawnCoroutine());
+        //PowerUp Coroutine
+        if (_powerUpCoroutine != null)
+        {
+            StopCoroutine(_powerUpCoroutine);
+            _powerUpCoroutine = null;
+        }
+
+        _powerUpCoroutine = StartCoroutine(PowerUpsSpawnCoroutine());
     }
 
     private void OnWaveComplete()
@@ -498,6 +558,13 @@ public class GameManager : MonoBehaviour, IUpdateObserver
         Debug.Log($"Wave {_currentWave} Complete!");
 
         StartCoroutine(WaveCompleteCoroutine());
+
+        //stoping Power Up Coroutine 
+        if(_powerUpCoroutine != null)
+        {
+            StopCoroutine (_powerUpCoroutine);
+            _powerUpCoroutine = null;
+        }
     }
 
     private IEnumerator WaveCompleteCoroutine()
@@ -527,9 +594,11 @@ public class GameManager : MonoBehaviour, IUpdateObserver
 
                 //Debug.Log("[PowerUp] Spawning " + powerUpPrefab.name + " at " + node.transform.position);
 
+                Vector3 spawnOffset = new Vector3(0f, 0.5f, 0f);
+
                 if (node != null)
                 {
-                    PoolManager.SpawnObject(powerUpPrefab, node.transform.position, Quaternion.identity);
+                    PoolManager.SpawnObject(powerUpPrefab, node.transform.position + spawnOffset, Quaternion.identity);
                 }
             }
 
@@ -777,7 +846,7 @@ public class GameManager : MonoBehaviour, IUpdateObserver
             switch (wave)
             {
                 case 1:
-                    SetSpawnChances(10, 0, 100); // Chances for Chaser 100%, Smasher 0%, Tracer 0%
+                    SetSpawnChances(100, 0, 0); // Chances for Chaser 100%, Smasher 0%, Tracer 0%
                     break;
                 case 2:
                 case 3:
@@ -860,7 +929,7 @@ public class GameManager : MonoBehaviour, IUpdateObserver
 
             data._moveSpeed = Mathf.RoundToInt(data._moveSpeed * multiplier);
 
-            //Clamp ma MoveSpeed for each enemy
+            //Clamp max MoveSpeed for each enemy
             if(prefab == _gameManagerSpawnListSO.chaser)
             {
                 data._moveSpeed = Mathf.Clamp(data._moveSpeed, 5, 15);
@@ -975,6 +1044,11 @@ public class GameManager : MonoBehaviour, IUpdateObserver
 
     private void ApplyWaveScalingToPlayerData()
     {
+        if(scene_Manager._instance.IsTutorialScene(_currentSceneName))
+        {
+            return;
+        }
+
         //Compute multiplier based on current wave
         float multiplier = 1f + _currentWave * _playerSpawnScalingFactor;
 
@@ -1089,7 +1163,7 @@ public class GameManager : MonoBehaviour, IUpdateObserver
     {
         yield return new WaitForSeconds(1.5f);
 
-        if (scene_Manager._instance.IsTutorialScene(currentSceneName) && !TutorialManager.instance._enteredEnemyIntroArea && _playerGotInDeathZone)
+        if (scene_Manager._instance.IsTutorialScene(_currentSceneName) && !TutorialManager.instance._enteredEnemyIntroArea && _playerGotInDeathZone)
         {
             player.transform.position = TutorialManager.instance._playerSpawnPoint.transform.position;
         }
@@ -1126,6 +1200,29 @@ public class GameManager : MonoBehaviour, IUpdateObserver
     public void ONPlayerGameOver(Player player)
     {
         Debug.Log("Game Over");
+        _livesInitiated = false;
+
+        if(GameState.DialougeEnabled)
+        {
+            _dialogueTrigger.TriggerGameOverDialogue();
+        }
+        else
+        {
+            scene_Manager._instance.OpenGameOverPanel();
+        }
+        
+    }
+
+    private void HandleGameOverUIPanel()
+    {
+        StartCoroutine(OpenGameOverPanelwithDelay());
+    }
+
+    private IEnumerator OpenGameOverPanelwithDelay()
+    {
+        yield return new WaitForSeconds(0.5f);
+
+        scene_Manager._instance.OpenGameOverPanel();
     }
 
     #region Score
@@ -1148,7 +1245,8 @@ public class GameManager : MonoBehaviour, IUpdateObserver
       
         if(_score > _highScore)
         {
-            _gameManagerSpawnListSO.highScore = _score;
+            _highScore = _score;
+            PlayerPrefs.SetInt("HighScore", _highScore);
         }
 
         UpdateScoreUI();

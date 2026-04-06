@@ -5,4 +5,6 @@ using UnityEngine;
 public static class GameState 
 {
     public static bool CanPlayerControl = true;
+
+    public static bool DialougeEnabled = true;
 }

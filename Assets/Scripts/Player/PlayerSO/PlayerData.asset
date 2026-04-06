@@ -44,5 +44,5 @@ MonoBehaviour:
   doubleJumpSkill: 1
   dashSkill: 1
   healthPack: 50
-  maxLives: 99
+  maxLives: 3
   lives: 0

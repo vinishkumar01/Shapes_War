@@ -18,6 +18,13 @@ public class DialogueManager : MonoBehaviour
 
     public static event Action OnDialogueEnded;
     public static event Action OnTutorialDialogueEnded;
+    public static event Action OnGameOverDialogueEnded;
+
+    [SerializeField] private Button _continueButton;
+
+    private bool _isTyping = false;
+    private string _currentSentence;
+    private Coroutine _typingCoroutine;
 
     private void Awake()
     {
@@ -34,6 +41,10 @@ public class DialogueManager : MonoBehaviour
 
     public void StartDialouge(Dialogues dialogue)
     {
+        //Assign the method to continue button
+        _continueButton.onClick.RemoveAllListeners();
+        _continueButton.onClick.AddListener(DisplayNextSentence);
+
         _animator.SetBool("isOpen", true);
 
         _nameText.text = dialogue.Name;
@@ -50,15 +61,23 @@ public class DialogueManager : MonoBehaviour
 
     public void DisplayNextSentence()
     {
+        if(_isTyping)
+        {
+            StopCoroutine(_typingCoroutine);
+            _dialogueText.text = _currentSentence;
+            _isTyping = false;
+            return;
+        }
+
         if(_sentences.Count == 0)
         {
             EndDialogue();
             return;
         }
+        
+        _currentSentence = _sentences.Dequeue();
 
-        string sentence = _sentences.Dequeue();
-        StopAllCoroutines();
-        StartCoroutine(TypeSentence(sentence));
+        _typingCoroutine = StartCoroutine(TypeSentence(_currentSentence));
     }
 
     public void EndDialogue()
@@ -73,8 +92,63 @@ public class DialogueManager : MonoBehaviour
 
     #endregion
 
+    #region GameOver Dialouge
+    public void StartGameOverDialogue(Dialogues dialogue)
+    {
+        //Assign the method to continue button
+        _continueButton.onClick.RemoveAllListeners();
+        _continueButton.onClick.AddListener(DisplayNextGameOverSentence);
+
+        Debug.Log("Starting Game Over Dialogues");
+        _animator.SetBool("isOpen", true);
+
+        _nameText.text = dialogue.Name;
+
+        _sentences.Clear();
+
+        foreach (string sentence in dialogue.Sentences)
+        {
+            _sentences.Enqueue(sentence);
+        }
+
+        DisplayNextGameOverSentence();
+    }
+
+    public void DisplayNextGameOverSentence()
+    {
+        if (_isTyping)
+        {
+            StopCoroutine(_typingCoroutine);
+            _dialogueText.text = _currentSentence;
+            _isTyping = false;
+            return;
+        }
+
+        if (_sentences.Count == 0)
+        {
+            EndGameOverDialogue();
+            return;
+        }
+
+        _currentSentence = _sentences.Dequeue();
+
+        _typingCoroutine = StartCoroutine(TypeSentence(_currentSentence));
+    }
+
+    public void EndGameOverDialogue()
+    {
+        Debug.Log("End of GameOver Conversation");
+        _animator.SetBool("isOpen", false);
+
+        OnGameOverDialogueEnded?.Invoke();
+
+    }
+
+    #endregion 
+
     private IEnumerator TypeSentence(string sentence)
     {
+        _isTyping = true;
         _dialogueText.text = " ";
 
         foreach(char letter in sentence.ToCharArray())
@@ -82,12 +156,18 @@ public class DialogueManager : MonoBehaviour
             _dialogueText.text += letter;
             yield return new WaitForSeconds(0.01f);
         }
+
+        _isTyping = false;
     }
 
     #region Tutorial----
 
     public void StartTutorialDialouges(Dialogues dialogue)
     {
+        //Assign the method to continue button
+        _continueButton.onClick.RemoveAllListeners();
+        _continueButton.onClick.AddListener(DisplayNextTutorialSentence);
+
         _animator.SetBool("isOpen", true);
 
         _nameText.text = dialogue.Name;
@@ -104,15 +184,23 @@ public class DialogueManager : MonoBehaviour
 
     public void DisplayNextTutorialSentence()
     {
+        if (_isTyping)
+        {
+            StopCoroutine(_typingCoroutine);
+            _dialogueText.text = _currentSentence;
+            _isTyping = false;
+            return;
+        }
+
         if (_sentences.Count == 0)
         {
             EndTutorialDialogue();
             return;
         }
 
-        string sentence = _sentences.Dequeue();
-        StopAllCoroutines();
-        StartCoroutine(TypeSentence(sentence));
+        _currentSentence = _sentences.Dequeue();
+
+        _typingCoroutine = StartCoroutine(TypeSentence(_currentSentence));
     }
 
     public void EndTutorialDialogue()

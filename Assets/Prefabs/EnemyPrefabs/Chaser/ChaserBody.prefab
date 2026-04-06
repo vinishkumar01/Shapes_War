@@ -652,7 +652,7 @@ MonoBehaviour:
   - {x: -0.16602612, y: -0.45986748, z: 0}
   m_ShapePathHash: -1521805297
   m_Mesh: {fileID: 0}
-  m_InstanceId: 1102964
+  m_InstanceId: 1552026
   m_LocalBounds:
     m_Center: {x: 0.0032618046, y: 0.0071730614, z: 0}
     m_Extent: {x: 0.49529767, y: 0.49361205, z: 0}
@@ -765,15 +765,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _bodyParts:
-  - {fileID: 297652329095811744, guid: 5326075cdeb4e4c4b92fc5199085795d, type: 3}
-  - {fileID: 6870151623896535222, guid: c4b7e6d9f4b07b84b893f2034926d680, type: 3}
-  - {fileID: 3566276747638707343, guid: 448849f2abd71784295386f4bbfc9fc2, type: 3}
-  - {fileID: 4211104694878314259, guid: f8648e828bfafdf43b9d519e942daf1e, type: 3}
-  - {fileID: 3645373081025930733, guid: b6835d729048c974abbde58314aea87c, type: 3}
-  - {fileID: 1321692212000062459, guid: a30408c268ece7d41ba82670bfade842, type: 3}
+  - {fileID: 297652329095811744, guid: 032b2834f38e86b4cbc2ff7b0feff0ab, type: 3}
+  - {fileID: 6870151623896535222, guid: 2eac3def54ba87041ae6ab5dcae56f02, type: 3}
+  - {fileID: 3566276747638707343, guid: ccc30818630491040aa344ac834f948a, type: 3}
+  - {fileID: 4211104694878314259, guid: 84d7f94bab61f324fb2c3ae08aa242ad, type: 3}
   _enemy: {fileID: 1657396521369607425}
   _randomMin: -5
-  _randomMax: 7
+  _randomMax: 6.2
 --- !u!1 &5025056383554602544
 GameObject:
   m_ObjectHideFlags: 0
@@ -5828,7 +5826,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

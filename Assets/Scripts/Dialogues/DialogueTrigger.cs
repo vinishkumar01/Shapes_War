@@ -5,6 +5,7 @@ using UnityEngine;
 public class DialogueTrigger : MonoBehaviour
 {
     public Dialogues _dialouge;
+    public Dialogues _gameOverDialogue;
     public Dialogues _chaserDialogue;
     public Dialogues _smasherDialogue;
     public Dialogues _tracerDialogue;
@@ -13,6 +14,11 @@ public class DialogueTrigger : MonoBehaviour
     public void TriggerDialouge()
     {
         DialogueManager.instance.StartDialouge(_dialouge);
+    }
+
+    public void TriggerGameOverDialogue()
+    {
+        DialogueManager.instance.StartGameOverDialogue(_gameOverDialogue);
     }
 
     //Tutorial

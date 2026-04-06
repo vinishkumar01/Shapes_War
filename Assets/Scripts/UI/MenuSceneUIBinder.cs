@@ -10,6 +10,8 @@ public class MenuSceneUIBinder : MonoBehaviour
     [SerializeField] private Button _optionButton;
     [SerializeField] private Button _returnButton;
     [SerializeField] private Button _quitButton;
+    [SerializeField] private Toggle _dialogueSystem;
+    [SerializeField] private Button _resetHighScoreButton;
 
     private void Start()
     {
@@ -18,6 +20,14 @@ public class MenuSceneUIBinder : MonoBehaviour
             Debug.LogError("scene_Manager is null");
             return;
         }
+
+        //saving the dialogue playerPrefs
+        int saved = PlayerPrefs.GetInt("DialogueEnabled", 1);
+        bool isOn = saved == 1;
+
+        GameState.DialougeEnabled = isOn;
+        _dialogueSystem.isOn = isOn;
+
 
         //survival button
         _survivalButton.onClick.RemoveAllListeners();
@@ -38,5 +48,19 @@ public class MenuSceneUIBinder : MonoBehaviour
         //Return Button
         _returnButton.onClick.RemoveAllListeners();
         _returnButton.onClick.AddListener(scene_Manager._instance.OnReturnButtonPressed);
+
+        //Reset HighScore Button
+        _resetHighScoreButton.onClick.RemoveAllListeners();
+        _resetHighScoreButton.onClick.AddListener(() =>
+        {
+            PlayerPrefs.DeleteKey("HighScore");
+            PlayerPrefs.Save();
+
+            UIManager.InvokeScoreUpdate(0, 0);
+        });
+
+        //toggle
+        _dialogueSystem.onValueChanged.RemoveAllListeners();
+        _dialogueSystem.onValueChanged.AddListener(scene_Manager._instance.OnDialougeToggleChanged);
     }
 }

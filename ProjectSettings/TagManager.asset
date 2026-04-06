@@ -41,6 +41,11 @@ TagManager:
   - OptionPanel
   - DialogueBox
   - UnderGroundPlatform
+  - GameOverPanel
+  - TutorialOverPanel
+  - MasterVolumeSlider
+  - SFXVolumeSlider
+  - MusicVolumeSlider
   layers:
   - Default
   - TransparentFX

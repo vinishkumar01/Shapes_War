@@ -86,6 +86,10 @@ public class TutorialManager : MonoBehaviour
 
         Debug.Log("Tutorial enemy intro complete!");
         _restrictCollider.enabled = false;
+
+        //restrict player movements and open the tutorial Over panel
+        GameState.CanPlayerControl = false;
+        scene_Manager._instance.OpenTutorialOverPanel();
     }
 
     private void SpawnEnemy(EnemyType enemyType)
