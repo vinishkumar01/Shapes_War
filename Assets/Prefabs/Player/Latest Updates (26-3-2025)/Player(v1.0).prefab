@@ -1871,7 +1871,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -1165586547
   m_SortingLayer: 4
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_Sprite: {fileID: -49248018, guid: 401900b57370bb0499187d181e4fcd5d, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -7380,7 +7380,7 @@ SpringJoint2D:
   m_Anchor: {x: 0, y: 0}
   m_ConnectedAnchor: {x: 7.88, y: -3.07}
   m_AutoConfigureDistance: 1
-  m_Distance: 7.311019
+  m_Distance: 7.3371606
   m_DampingRatio: 1
   m_Frequency: 1
 --- !u!114 &3380033075483046487
@@ -7553,7 +7553,7 @@ MonoBehaviour:
   - {x: 0.50827336, y: -0.66984826, z: 0}
   m_ShapePathHash: 752698669
   m_Mesh: {fileID: 0}
-  m_InstanceId: 1541734
+  m_InstanceId: 38454
   m_LocalBounds:
     m_Center: {x: 0.00010877848, y: -0.056918323, z: 0}
     m_Extent: {x: 0.55650276, y: 0.61292994, z: 0}
