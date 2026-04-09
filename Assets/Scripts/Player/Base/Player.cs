@@ -603,10 +603,12 @@ public class Player : MonoBehaviour, IPlayerDamageable, IUpdateObserver, IFixedU
         StopAllCoroutines();
     }
 
-    private void OnGUI()
-    {
-        GUI.Label(new Rect(650, 10, 500, 300), $"Current State: {_playerStateMachine._currentPlayerState?.GetType().Name}");
-    }
+    #region OnGUI - Prints the Player State in the screen
+    //private void OnGUI()
+    //{
+    //    GUI.Label(new Rect(650, 10, 500, 300), $"Current State: {_playerStateMachine._currentPlayerState?.GetType().Name}");
+    //}
+    #endregion 
 
     #region PowerUp Interactions
 
