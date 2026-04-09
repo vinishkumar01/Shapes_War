@@ -1,12 +1,12 @@
-"Note:- The Latest changes are done in the (Tracer(NPC)_Animation_And_Behaviout )branch, these will be merged to main after completing the tasks"
 
-# Game Prototype
+# Game 
 
-##Demo
+##Shape Wars
 
-Note: -This is early build-
-You can Download and try the Demo build of the game:
+Note: -For now this can be considered as the final Build. (I will be working on this game again in the future).
 
-[Download Demo](Demo%20Game/Prototype.zip)
+You can Download and try the build:
 
-**This is a playable demo build of the game showcasing basic mechanics and features. Feel free to download and test it**
+[Download Game](Game/Shape%20Wars.zip)
+
+**This is a playable build of the game showcasing basic mechanics and features. Feel free to download and play it**
