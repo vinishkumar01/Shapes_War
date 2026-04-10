@@ -9,4 +9,6 @@ You can Download and try the game:
 
 [Download Zip](Game/Shape%20Wars.zip)
 
+or you can try on the browser: https://vinishkumar.itch.io/shape-wars
+
 **This is a playable build of the game showcasing basic mechanics and features. Feel free to download and play it**
