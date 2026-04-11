@@ -1,7 +1,5 @@
 
-# Game 
-
-##Shape Wars
+# Shape Wars
 
 Note: - For now this can be considered as the final Build. (I will be working on this game again in the future).
 
